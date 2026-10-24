@@ -1,4 +1,4 @@
-import { DOCK_RANGE, type SafeZone, type SelfState } from '@arena/shared';
+import { DOCK_RANGE, SALVAGE_CAPACITY, type SafeZone, type SelfState } from '@arena/shared';
 
 export function dockPrompt(self: SelfState, inRange: boolean): string | null {
   if (self.docked) return 'Docked — press E to undock';
@@ -13,6 +13,7 @@ export function hudLines(self: SelfState, prompt: string | null): string[] {
     `Shield ${Math.floor(self.shieldEnergy)} / ${Math.round(self.maxShield)}${self.shieldUp ? ' (UP)' : ''}`,
     `Rockets ${self.rockets} / ${self.maxRockets}`,
     `Cargo ${self.ore} / ${self.cargoCapacity} ore`,
+    `Salvage ${self.salvage.length} / ${SALVAGE_CAPACITY}`,
     `Carried ${self.carriedCredits} cr (at risk)`,
     `Banked ${self.bankedCredits} cr`,
   ];

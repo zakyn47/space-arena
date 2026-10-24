@@ -11,6 +11,7 @@ const KEY_MAP: Readonly<Record<string, InputKey>> = {
   ShiftLeft: 'shield',
   ShiftRight: 'shield',
   KeyR: 'rocket',
+  KeyF: 'mine',
 };
 
 const DOCK_KEY = 'KeyE';
@@ -70,6 +71,7 @@ export class InputSampler {
       fire: this.pressed.has('fire'),
       shield: this.pressed.has('shield'),
       rocket: this.pressed.has('rocket'),
+      mine: this.pressed.has('mine'),
     };
   }
 }

@@ -7,6 +7,7 @@ export function selfState(overrides: Partial<SelfState> = {}): SelfState {
     ore: 0, cargoCapacity: 15, carriedCredits: 0, bankedCredits: 0,
     build: STARTER_BUILD, rockets: 10, maxRockets: 10,
     docked: false, canDock: false, dockCooldown: 0,
+    salvage: [], miningTargetId: null,
     ...overrides,
   };
 }

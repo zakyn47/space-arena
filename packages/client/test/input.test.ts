@@ -3,10 +3,10 @@ import { describe, expect, it } from 'vitest';
 import { InputSampler } from '../src/input/InputSampler';
 
 describe('InputSampler', () => {
-  it('maps WASD, Space, Shift and R', () => {
+  it('maps WASD, Space, Shift, R and F', () => {
     const sampler = new InputSampler();
-    for (const code of ['KeyW', 'KeyS', 'KeyA', 'KeyD', 'Space', 'ShiftLeft', 'KeyR']) sampler.handleKey(code, true, false);
-    expect(sampler.sample()).toEqual({ thrust: true, reverse: true, left: true, right: true, fire: true, shield: true, rocket: true });
+    for (const code of ['KeyW', 'KeyS', 'KeyA', 'KeyD', 'Space', 'ShiftLeft', 'KeyR', 'KeyF']) sampler.handleKey(code, true, false);
+    expect(sampler.sample()).toEqual({ thrust: true, reverse: true, left: true, right: true, fire: true, shield: true, rocket: true, mine: true });
   });
 
   it('releases keys', () => {

@@ -22,7 +22,7 @@ describe('slotRows', () => {
       'Weapon 1: Pulse Laser Mk1',
       'Shield 1: Shield Generator Mk1',
       'Engine 1: Thruster Mk1',
-      'Utility 1: Empty',
+      'Utility 1: Mining Laser Mk1',
     ]);
   });
 });
@@ -34,6 +34,7 @@ describe('gearOptions', () => {
       'Armor Plating Mk1', 'Armor Plating Mk2', 'Armor Plating Mk3',
       'Cargo Pod Mk1', 'Cargo Pod Mk2', 'Cargo Pod Mk3',
       'Rocket Rack Mk1', 'Rocket Rack Mk2', 'Rocket Rack Mk3',
+      'Mining Laser Mk1', 'Mining Laser Mk2', 'Mining Laser Mk3',
     ]);
     expect(options[0]).toMatchObject({ gearId: 'armor', mk: 1, price: 200, affordable: true, delta: 'Hull +30' });
     expect(options[1]?.affordable).toBe(false);

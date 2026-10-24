@@ -9,7 +9,7 @@ function bulletSprite(weaponId: GearId, mk: Mk): string {
 export function spriteIdFor(entity: EntityState): string {
   switch (entity.kind) {
     case 'ship':
-      return `ship_${entity.hullId}`;
+      return entity.npc ? `pirate_${entity.npc}` : `ship_${entity.hullId}`;
     case 'bullet':
       return bulletSprite(entity.weaponId, entity.mk);
     case 'rocket':

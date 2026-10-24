@@ -26,6 +26,20 @@ describe('InputSampler', () => {
     expect(sampler.sample()).toEqual(IDLE_INPUT);
   });
 
+  it('leaves bound keys available while editing and clears held controls', () => {
+    let docks = 0;
+    const sampler = new InputSampler(() => (docks += 1));
+    sampler.handleKey('KeyW', true, false);
+    for (const code of ['KeyW', 'KeyS', 'KeyA', 'KeyD', 'Space', 'ShiftLeft', 'KeyR', 'KeyF', 'KeyE']) {
+      expect(sampler.handleKey(code, true, false, true)).toBe(false);
+      expect(sampler.handleKey(code, false, false, true)).toBe(false);
+    }
+    expect(sampler.sample()).toEqual(IDLE_INPUT);
+    expect(docks).toBe(0);
+    sampler.handleKey('KeyW', true, false);
+    expect(sampler.sample().thrust).toBe(true);
+  });
+
   it('ignores unmapped keys', () => {
     expect(new InputSampler().handleKey('KeyQ', true, false)).toBe(false);
   });

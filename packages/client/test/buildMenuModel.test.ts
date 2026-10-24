@@ -1,4 +1,4 @@
-import { STARTER_BUILD, statsFor } from '@arena/shared';
+import { HULLS, HULL_IDS, STARTER_BUILD, refitToHull, statsFor } from '@arena/shared';
 import { describe, expect, it } from 'vitest';
 import { describeDelta, gearOptions, hullCards, rocketOffer, salvageRows, slotRows, statSummary } from '../src/ui/buildMenuModel';
 import { selfState } from './support/self';
@@ -18,6 +18,21 @@ describe('statSummary', () => {
 });
 
 describe('slotRows', () => {
+  it('gives every hull slot a unique visible hardpoint', () => {
+    for (const hullId of HULL_IDS) {
+      const rows = slotRows(refitToHull(STARTER_BUILD, hullId).build);
+      expect(rows).toHaveLength(Object.values(HULLS[hullId].slots).reduce((a, b) => a + b, 0));
+      const positions = rows.map((row) => row.position);
+      expect(new Set(positions.map((point) => JSON.stringify(point))).size).toBe(rows.length);
+      for (const point of positions) {
+        expect(point.x).toBeGreaterThan(0);
+        expect(point.x).toBeLessThan(100);
+        expect(point.y).toBeGreaterThan(0);
+        expect(point.y).toBeLessThan(100);
+      }
+    }
+  });
+
   it('lists every slot with its gear', () => {
     expect(slotRows(STARTER_BUILD).map((row) => row.label)).toEqual([
       'Weapon 1: Pulse Laser Mk1',
@@ -66,6 +81,33 @@ describe('describeDelta', () => {
 });
 
 describe('hullCards', () => {
+  it('shows each hull’s base handling and cargo properties', () => {
+    for (const card of hullCards(STARTER_BUILD, 0)) {
+      const hull = HULLS[card.hullId];
+      expect(card.stats).toContain(`Thrust ${hull.thrust}`);
+      expect(card.stats).toContain(`Turn ${hull.turnRate} rad/s`);
+      expect(card.stats).toContain(`Cargo ${hull.cargoCapacity}`);
+    }
+  });
+
+  it('includes overflow gear refunds when changing to a smaller hull', () => {
+    const gunship = refitToHull(STARTER_BUILD, 'gunship').build;
+    const build = {
+      ...gunship,
+      slots: { ...gunship.slots,
+        utility: [{ gearId: 'armor', mk: 3 }],
+      },
+    } as const;
+    const freighter = hullCards(build, 500).find((card) => card.hullId === 'freighter');
+    expect(freighter?.affordable).toBe(true);
+    const armed = { ...build, slots: { ...build.slots, weapon: [
+      { gearId: 'heavy_cannon', mk: 3 },
+      { gearId: 'heavy_cannon', mk: 3 },
+      { gearId: 'heavy_cannon', mk: 3 },
+    ] } } as const;
+    expect(hullCards(armed, 0).find((card) => card.hullId === 'freighter')?.affordable).toBe(true);
+  });
+
   it('marks the current hull and affordability', () => {
     const cards = hullCards(STARTER_BUILD, 1_500);
     expect(cards.map((c) => [c.hullId, c.current, c.affordable])).toEqual([

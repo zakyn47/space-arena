@@ -1,5 +1,11 @@
 import {
+  HULLS,
   MAX_ROCKETS_PER_PURCHASE,
+  gearAt,
+  gearCost,
+  resaleValue,
+  slotExists,
+  type HullId,
   statsFor,
   type ClientMessage,
   type SelfState,
@@ -7,15 +13,22 @@ import {
   type ShopResultMessage,
   type SlotRef,
 } from '@arena/shared';
-import { gearOptions, hullCards, rocketOffer, salvageRows, slotRows, statSummary } from './buildMenuModel';
+import { gearLabel, gearOptions, hullCards, rocketOffer, salvageRows, slotRows, statSummary } from './buildMenuModel';
 
 type Tab = 'ship' | 'hulls' | 'rockets';
 
 const TABS: readonly { readonly id: Tab; readonly label: string }[] = [
-  { id: 'ship', label: 'Ship' },
-  { id: 'hulls', label: 'Hulls' },
-  { id: 'rockets', label: 'Rockets' },
+  { id: 'ship', label: 'Loadout' },
+  { id: 'hulls', label: 'Hull exchange' },
+  { id: 'rockets', label: 'Ammunition' },
 ];
+
+const HULL_ROLES: Readonly<Record<HullId, string>> = {
+  scout: 'Interceptor · Light frame, high speed and agile handling.',
+  fighter: 'Frontline · Twin weapon mounts for a balanced combat build.',
+  freighter: 'Industrial · Large cargo hold and three utility bays.',
+  gunship: 'Heavy assault · Three weapons, twin shields, reinforced hull.',
+};
 
 const FAILURE_TEXT: Readonly<Record<ShopFailure, string>> = {
   not_docked: 'Dock first',
@@ -59,6 +72,7 @@ export class BuildMenu {
       this.selectedSlot = null;
       return;
     }
+    if (this.selectedSlot && !slotExists(self.build, this.selectedSlot)) this.selectedSlot = null;
     this.render();
   }
 
@@ -73,13 +87,22 @@ export class BuildMenu {
     const key = JSON.stringify([self.build, self.salvage, self.bankedCredits, self.rockets, this.tab, this.selectedSlot, this.resultText]);
     if (!force && key === this.renderedKey) return;
     this.renderedKey = key;
-    this.root.replaceChildren(
-      this.tabBar(),
-      element('div', statSummary(statsFor(self.build)).join(' · '), 'summary'),
-      element('div', `Banked ${self.bankedCredits} cr`, 'summary'),
-      this.tabBody(self),
-      element('div', this.resultText, 'result'),
-    );
+    const focusKey = document.activeElement instanceof HTMLElement ? document.activeElement.dataset.focus : undefined;
+    const heading = element('div', '', 'hangar-header');
+    const title = element('div');
+    title.append(element('div', 'STATION SERVICES / DOCKED', 'eyebrow'), element('h2', 'Ship hangar'));
+    const actions = element('div', '', 'hangar-actions');
+    actions.append(element('strong', `${self.bankedCredits.toLocaleString()} cr`, 'credits'), button('Undock [E] →', true, () => this.send({ type: 'dock' })));
+    heading.append(title, actions);
+    const summary = element('div', '', 'stat-strip');
+    for (const stat of statSummary(statsFor(self.build))) summary.append(element('span', stat));
+    const result = element('div', this.resultText, 'result');
+    result.setAttribute('role', 'status');
+    this.root.replaceChildren(heading, this.tabBar(), summary, this.tabBody(self), result);
+    if (focusKey) {
+      const target = Array.from(this.root.querySelectorAll<HTMLElement>('[data-focus]')).find((node) => node.dataset.focus === focusKey);
+      target?.focus({ preventScroll: true });
+    }
   }
 
   private select(tab: Tab): void {
@@ -90,7 +113,9 @@ export class BuildMenu {
   private tabBar(): HTMLElement {
     const bar = element('div', '', 'tabs');
     for (const tab of TABS) {
-      const node = button(tab.label, tab.id !== this.tab, () => this.select(tab.id));
+      const node = button(tab.label, true, () => this.select(tab.id));
+      node.setAttribute('aria-pressed', String(tab.id === this.tab));
+      node.dataset.focus = `tab-${tab.id}`;
       bar.append(node);
     }
     return bar;
@@ -104,24 +129,49 @@ export class BuildMenu {
 
   private shipTab(self: SelfState): HTMLElement {
     const body = element('div', '', 'list');
+    const layout = element('div', '', 'loadout-layout');
+    const preview = element('section', '', 'ship-preview');
+    const hull = HULLS[self.build.hullId];
+    preview.append(element('div', 'ACTIVE HULL', 'eyebrow'), element('h3', hull.name), element('p', HULL_ROLES[hull.id], 'muted'));
+    const diagram = element('div', '', 'ship-diagram');
+    const ship = element('img', '', 'hangar-ship');
+    ship.src = `/ships/ship_${hull.id}.png`;
+    ship.alt = `${hull.name} with selectable module hardpoints`;
+    diagram.append(ship);
+    const slots = element('div', '', 'module-list');
+    slots.append(element('h3', 'Installed modules'), element('p', 'Select a hardpoint to fit or upgrade its module.', 'muted'));
     for (const row of slotRows(self.build)) {
-      const line = element('div', '', 'row');
+      const selected = this.selectedSlot?.type === row.slot.type && this.selectedSlot.index === row.slot.index;
+      const select = (): void => {
+        this.selectedSlot = row.slot;
+        this.render();
+      };
+      const point = button(row.code, true, select);
+      point.className = `hardpoint ${row.slot.type}`;
+      point.style.left = `${row.position.x}%`;
+      point.style.top = `${row.position.y}%`;
+      point.title = row.label;
+      point.setAttribute('aria-label', row.label);
+      point.setAttribute('aria-pressed', String(selected));
+      point.dataset.focus = `point-${row.code}`;
+      diagram.append(point);
+      const module = button('', true, select);
+      module.className = 'module-card';
+      module.setAttribute('aria-pressed', String(selected));
+      module.dataset.focus = `slot-${row.code}`;
       const icon = element('img');
       icon.alt = '';
       if (row.gear) icon.src = `/ui/gear_${row.gear.gearId}.png`;
-      line.append(
-        icon,
-        element('span', row.label),
-        button('Change', true, () => {
-          this.selectedSlot = row.slot;
-          this.render();
-        }),
-        button('Sell', row.gear !== null, () => this.send({ type: 'sellGear', slot: row.slot })),
-      );
-      body.append(line);
+      else icon.style.visibility = 'hidden';
+      module.append(element('span', row.code, 'module-code'), icon, element('span', row.label), element('span', '›', 'module-arrow'));
+      slots.append(module);
     }
+    preview.append(diagram, element('p', 'Top view / select a labeled hardpoint', 'diagram-caption'));
+    layout.append(preview, slots);
+    body.append(layout);
     if (this.selectedSlot) body.append(this.gearList(self, this.selectedSlot));
-    if (self.salvage.length > 0) body.append(element('div', 'Salvage', 'summary'), ...this.salvageLines(self));
+    else body.append(element('p', 'Choose a module above to browse compatible equipment.', 'empty-state'));
+    if (self.salvage.length > 0) body.append(element('h3', 'Recovered salvage'), ...this.salvageLines(self));
     return body;
   }
 
@@ -148,6 +198,13 @@ export class BuildMenu {
 
   private gearList(self: SelfState, slot: SlotRef): HTMLElement {
     const list = element('div', '', 'list options');
+    const installed = gearAt(self.build, slot);
+    const header = element('div', '', 'equipment-header');
+    header.append(element('h3', `${slot.type.charAt(0).toUpperCase()}${slot.type.slice(1)} ${slot.index + 1} / Equipment`));
+    if (installed) {
+      header.append(button(`Sell ${gearLabel(installed)} · ${resaleValue(gearCost(installed))} cr`, true, () => this.send({ type: 'sellGear', slot })));
+    }
+    list.append(header, element('p', 'Your installed module trades in for 50% of its value toward the listed price. Stat changes compare against your current build.', 'muted'));
     for (const option of gearOptions(self.build, slot, self.bankedCredits)) {
       const line = element('div', '', 'row');
       line.append(
@@ -164,20 +221,30 @@ export class BuildMenu {
   }
 
   private hullsTab(self: SelfState): HTMLElement {
-    const body = element('div', '', 'list');
+    const body = element('div', '', 'hull-grid');
     for (const card of hullCards(self.build, self.bankedCredits)) {
-      const line = element('div', '', 'row');
+      const panel = element('section', '', `hull-card${card.current ? ' current' : ''}`);
       const icon = element('img');
       icon.src = `/ships/ship_${card.hullId}.png`;
-      icon.alt = '';
-      line.append(
+      icon.alt = card.name;
+      const properties = element('div', '', 'hull-properties');
+      for (const stat of card.stats) properties.append(element('span', stat));
+      panel.append(
         icon,
-        element('span', `${card.name} — ${card.slots} — ${card.stats.join(', ')}`),
-        element('span', card.current ? 'Current' : `${card.price} cr`),
-        button('Buy', card.affordable, () => this.send({ type: 'buyHull', hullId: card.hullId })),
+        element('div', card.current ? 'ACTIVE HULL' : 'AVAILABLE FRAME', 'eyebrow'),
+        element('h3', card.name),
+        element('p', HULL_ROLES[card.hullId], 'muted'),
+        properties,
+        element('p', card.slots, 'slot-capacity'),
+        button(card.current ? 'Currently flying' : `Buy hull · ${card.price.toLocaleString()} cr`, card.affordable, () => {
+          this.selectedSlot = null;
+          this.send({ type: 'buyHull', hullId: card.hullId });
+        }),
       );
-      body.append(line);
+      body.append(panel);
     }
+    const note = element('p', 'W = weapons · S = shields · E = engine · U = utility. Base hull properties shown; installed gear modifies your final stats. Hull and overflow equipment trade in for 50%; compatible modules transfer automatically.', 'muted hull-note');
+    body.append(note);
     return body;
   }
 

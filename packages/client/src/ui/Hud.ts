@@ -1,4 +1,4 @@
-import { DOCK_RANGE, SALVAGE_CAPACITY, type RadarBlip, type SafeZone, type SelfState } from '@arena/shared';
+import { DOCK_RANGE, SALVAGE_CAPACITY, statsFor, type RadarBlip, type SafeZone, type SelfState } from '@arena/shared';
 
 const RADAR_COLORS: Readonly<Record<RadarBlip['kind'], string>> = { player: '#ffffff', pirate: '#ff4d4d' };
 const RADAR_DOT = 2;
@@ -33,8 +33,89 @@ export function hudLines(self: SelfState, prompt: string | null): string[] {
   return prompt ? [...lines, prompt] : lines;
 }
 
+export interface AbilityState {
+  readonly label: string;
+  readonly key: string;
+  readonly icon: string;
+  readonly status: string;
+  readonly active: boolean;
+  readonly unavailable: boolean;
+}
+
+export function abilityStates(self: SelfState, inSafeZone: boolean): AbilityState[] {
+  const stats = statsFor(self.build);
+  const blocked = self.docked ? 'Docked' : inSafeZone ? 'Safe zone' : null;
+  const attackBlocked = blocked ?? (self.shieldUp ? 'Shield up' : null);
+  const noWeapon = stats.weapons.length === 0;
+  const noShield = self.maxShield === 0;
+  const noMining = stats.miningRate === 0;
+  const cargoFull = self.ore >= self.cargoCapacity;
+  return [
+    {
+      label: 'Guns', key: 'Space', icon: `/ui/gear_${stats.weapons[0]?.gearId ?? 'pulse_laser'}.png`,
+      status: noWeapon ? 'No weapon' : attackBlocked ?? 'Hold to fire',
+      active: false, unavailable: noWeapon || attackBlocked !== null,
+    },
+    {
+      label: 'Shield', key: 'Shift', icon: '/ui/gear_shield_gen.png',
+      status: noShield ? 'No generator' : blocked ?? (self.shieldUp ? 'Active' : self.shieldEnergy <= 0 ? 'Depleted' : 'Hold to raise'),
+      active: self.shieldUp && blocked === null, unavailable: noShield || blocked !== null || self.shieldEnergy <= 0,
+    },
+    {
+      label: 'Rockets', key: 'R', icon: '/ui/icon_rocket.png',
+      status: self.rockets === 0 ? 'Empty' : attackBlocked ?? 'Hold to fire',
+      active: false, unavailable: self.rockets === 0 || attackBlocked !== null,
+    },
+    {
+      label: 'Mining', key: 'F', icon: '/ui/gear_mining_laser.png',
+      status: noMining ? 'Not installed' : attackBlocked ?? (cargoFull ? 'Cargo full' : self.miningTargetId !== null ? 'Mining' : 'Aim at rock'),
+      active: self.miningTargetId !== null && attackBlocked === null && !noMining && !cargoFull,
+      unavailable: noMining || attackBlocked !== null || cargoFull,
+    },
+    {
+      label: 'Dock', key: 'E', icon: '/world/safe_zone_station.png',
+      status: self.docked ? 'Undock' : self.canDock ? 'Dock' : self.dockCooldown > 0 ? `${Math.ceil(self.dockCooldown)}s` : 'Near station',
+      active: self.docked, unavailable: !self.docked && !self.canDock,
+    },
+  ];
+}
+
+function textNode(tag: 'div' | 'span' | 'kbd', className: string, text: string): HTMLElement {
+  const node = document.createElement(tag);
+  node.className = className;
+  node.textContent = text;
+  return node;
+}
+
+function resourceMeter(label: string, current: number, maximum: number, className: 'hull' | 'shield'): HTMLElement {
+  const panel = textNode('div', `hud-resource ${className}`, '');
+  const displayed = className === 'shield' ? Math.floor(current) : Math.ceil(current);
+  panel.append(textNode('span', 'hud-label', label), textNode('span', 'hud-value', `${displayed} / ${Math.round(maximum)}`));
+  const meter = document.createElement('meter');
+  meter.min = 0;
+  meter.max = Math.max(1, maximum);
+  meter.value = Math.max(0, Math.min(current, maximum));
+  meter.setAttribute('aria-label', label);
+  if (maximum > 0 && current / maximum <= 0.25) panel.classList.add('low');
+  panel.append(meter);
+  return panel;
+}
+
+function abilityTile(ability: AbilityState): HTMLElement {
+  const tile = textNode('div', 'hud-ability', '');
+  tile.classList.toggle('active', ability.active);
+  tile.classList.toggle('unavailable', ability.unavailable);
+  tile.title = `${ability.label} [${ability.key}] — ${ability.status}`;
+  const icon = document.createElement('img');
+  icon.src = ability.icon;
+  icon.alt = '';
+  tile.append(textNode('kbd', 'hud-key', ability.key), icon, textNode('span', 'hud-ability-name', ability.label), textNode('span', 'hud-ability-status', ability.status));
+  return tile;
+}
+
 export class Hud {
   private radar: readonly RadarBlip[] = [];
+  private renderedKey = '';
 
   constructor(
     private readonly root: HTMLElement,
@@ -49,14 +130,29 @@ export class Hud {
 
   update(self: SelfState): void {
     const inRange = this.zones.some((zone) => Math.hypot(self.x - zone.x, self.y - zone.y) <= DOCK_RANGE);
-    const lines = hudLines(self, dockPrompt(self, inRange));
-    this.root.replaceChildren(
-      ...lines.map((line) => {
-        const row = document.createElement('div');
-        row.textContent = line;
-        return row;
-      }),
-    );
+    const prompt = dockPrompt(self, inRange);
+    const lines = hudLines(self, null).slice(3);
+    const inSafeZone = this.zones.some((zone) => Math.hypot(self.x - zone.x, self.y - zone.y) <= zone.radius);
+    const abilities = abilityStates(self, inSafeZone);
+    const key = JSON.stringify([lines, prompt, self.hull, self.maxHull, self.shieldEnergy, self.maxShield, self.rockets, self.maxRockets, abilities]);
+    if (key !== this.renderedKey) {
+      this.renderedKey = key;
+      const info = textNode('div', 'flight-info', '');
+      for (const line of lines) info.append(textNode('div', '', line));
+      const bar = textNode('div', 'combat-bar', '');
+      bar.setAttribute('role', 'group');
+      bar.setAttribute('aria-label', 'Ship status and abilities');
+      const resources = textNode('div', 'hud-resources', '');
+      const ammo = textNode('div', `hud-resource ammo${self.rockets === 0 ? ' low' : ''}`, '');
+      ammo.append(textNode('span', 'hud-label', 'Rocket ammo'), textNode('span', 'hud-value', `${self.rockets} / ${self.maxRockets}`));
+      resources.append(resourceMeter('Hull integrity', self.hull, self.maxHull, 'hull'), resourceMeter('Shield energy', self.shieldEnergy, self.maxShield, 'shield'), ammo);
+      const tiles = textNode('div', 'hud-abilities', '');
+      tiles.append(...abilities.map(abilityTile));
+      bar.append(resources, tiles);
+      const promptNode = textNode('div', 'hud-dock-prompt', prompt ?? '');
+      promptNode.hidden = prompt === null;
+      this.root.replaceChildren(info, promptNode, bar);
+    }
     this.drawMinimap(self);
   }
 

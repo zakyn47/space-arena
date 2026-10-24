@@ -7,20 +7,38 @@
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
-    <form id="login">
-      <h1>Space Arena</h1>
-      <input name="username" autocomplete="username" placeholder="Pilot name" required />
-      <input name="password" type="password" autocomplete="current-password" placeholder="Password" required />
-      <div class="actions">
-        <button type="submit" value="login">Log in</button>
-        <button type="submit" value="register">Register</button>
-      </div>
-      <p id="login-error" role="alert"></p>
+    <form id="login" hidden>
+      <section class="login-intro" aria-labelledby="arena-title">
+        <div class="eyebrow">ONE WORLD · EVERY PILOT FOR THEMSELVES</div>
+        <h1 id="arena-title">SPACE<br /><span>ARENA</span></h1>
+        <p class="login-tagline">Your ship. Your build.<br />Your corner of the void.</p>
+        <div class="login-fleet" aria-hidden="true">
+          <img src="/ships/ship_fighter.png" alt="" />
+          <img src="/ships/ship_gunship.png" alt="" />
+          <img src="/ships/ship_scout.png" alt="" />
+        </div>
+        <p class="login-caption">FLY · MINE · UPGRADE · SURVIVE</p>
+      </section>
+      <section class="login-panel" aria-labelledby="login-title">
+        <div class="eyebrow">PILOT ACCESS / 01</div>
+        <h2 id="login-title">Ready for launch?</h2>
+        <p class="muted">Sign in to your ship or start a new flight.</p>
+        <label for="pilot-name">Pilot name</label>
+        <input id="pilot-name" name="username" autocomplete="username" placeholder="Enter your callsign" required />
+        <label for="pilot-password">Password</label>
+        <input id="pilot-password" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" required />
+        <div class="actions">
+          <button type="submit" value="login" class="primary">Launch →</button>
+          <button type="submit" value="register">Create pilot</button>
+        </div>
+        <p id="login-error" role="alert"></p>
+        <div class="login-help"><span><kbd>W A S D</kbd> Fly</span><span><kbd>E</kbd> Dock & refit</span><span><kbd>F</kbd> Mine</span></div>
+      </section>
     </form>
     <div id="game" hidden>
       <div id="hud"></div>
       <canvas id="minimap" width="160" height="160"></canvas>
-      <div id="shop" hidden></div>
+      <div id="shop" role="region" aria-label="Station hangar" hidden></div>
       <div id="toast" role="status"></div>
     </div>
     <script type="module" src="/src/main.ts"></script>

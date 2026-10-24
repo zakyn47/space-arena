@@ -16,20 +16,28 @@ const KEY_MAP: Readonly<Record<string, InputKey>> = {
 
 const DOCK_KEY = 'KeyE';
 
+function isEditing(target: EventTarget | null): boolean {
+  return target instanceof HTMLElement && (target.isContentEditable || target.closest('input, textarea, select') !== null);
+}
+
 export class InputSampler {
   private readonly pressed = new Set<InputKey>();
   private target: Window | null = null;
 
   private readonly onKeyDown = (event: KeyboardEvent): void => {
-    if (this.handleKey(event.code, true, event.repeat)) event.preventDefault();
+    if (this.handleKey(event.code, true, event.repeat, isEditing(event.target))) event.preventDefault();
   };
 
   private readonly onKeyUp = (event: KeyboardEvent): void => {
-    if (this.handleKey(event.code, false, false)) event.preventDefault();
+    if (this.handleKey(event.code, false, false, isEditing(event.target))) event.preventDefault();
   };
 
   private readonly onBlur = (): void => {
     this.pressed.clear();
+  };
+
+  private readonly onFocusIn = (event: FocusEvent): void => {
+    if (isEditing(event.target)) this.pressed.clear();
   };
 
   constructor(private readonly onDock: () => void = () => {}) {}
@@ -39,17 +47,23 @@ export class InputSampler {
     target.addEventListener('keydown', this.onKeyDown);
     target.addEventListener('keyup', this.onKeyUp);
     target.addEventListener('blur', this.onBlur);
+    target.addEventListener('focusin', this.onFocusIn);
   }
 
   detach(): void {
     this.target?.removeEventListener('keydown', this.onKeyDown);
     this.target?.removeEventListener('keyup', this.onKeyUp);
     this.target?.removeEventListener('blur', this.onBlur);
+    this.target?.removeEventListener('focusin', this.onFocusIn);
     this.target = null;
     this.pressed.clear();
   }
 
-  handleKey(code: string, down: boolean, repeat: boolean): boolean {
+  handleKey(code: string, down: boolean, repeat: boolean, editing = false): boolean {
+    if (editing) {
+      this.pressed.clear();
+      return false;
+    }
     if (code === DOCK_KEY) {
       if (down && !repeat) this.onDock();
       return true;

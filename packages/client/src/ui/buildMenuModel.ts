@@ -9,6 +9,7 @@ import {
   gearAt,
   gearCost,
   resaleValue,
+  refitToHull,
   statsFor,
   withGear,
   type Build,
@@ -67,6 +68,8 @@ export interface SlotRow {
   readonly slot: SlotRef;
   readonly label: string;
   readonly gear: InstalledGear | null;
+  readonly code: string;
+  readonly position: { readonly x: number; readonly y: number };
 }
 
 export function slotRows(build: Build): SlotRow[] {
@@ -75,6 +78,11 @@ export function slotRows(build: Build): SlotRow[] {
       slot: { type, index },
       label: `${SLOT_LABELS[type]} ${index + 1}: ${gear ? gearLabel(gear) : 'Empty'}`,
       gear,
+      code: `${SLOT_LETTERS[type]}${index + 1}`,
+      position: {
+        x: 20 + ((index + 1) / (build.slots[type].length + 1)) * 60,
+        y: { weapon: 22, shield: 43, utility: 64, engine: 85 }[type],
+      },
     })),
   );
 }
@@ -144,14 +152,15 @@ export function hullCards(build: Build, banked: number): HullCard[] {
   return HULL_IDS.map((hullId) => {
     const hull = HULLS[hullId];
     const current = hullId === build.hullId;
+    const overflowRefund = refitToHull(build, hullId).leftovers.reduce((sum, gear) => sum + resaleValue(gearCost(gear)), 0);
     return {
       hullId,
       name: hull.name,
       price: hull.cost,
       current,
-      affordable: !current && banked + refund >= hull.cost,
+      affordable: !current && banked + refund + overflowRefund >= hull.cost,
       slots: SLOT_TYPES.map((type) => `${SLOT_LETTERS[type]}${hull.slots[type]}`).join(' '),
-      stats: [`Hull ${hull.maxHull}`, `Speed ${hull.maxSpeed}`, `Cargo ${hull.cargoCapacity}`],
+      stats: [`Hull ${hull.maxHull}`, `Speed ${hull.maxSpeed}`, `Thrust ${hull.thrust}`, `Turn ${hull.turnRate} rad/s`, `Cargo ${hull.cargoCapacity}`],
     };
   });
 }

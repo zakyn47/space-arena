@@ -1,4 +1,4 @@
-import { PIRATE_NAMES, VIEW_RADIUS, type EntityState, type HitEvent, type SafeZone } from '@arena/shared';
+import { NPC_NAMES, VIEW_RADIUS, type EntityState, type HitEvent, type SafeZone } from '@arena/shared';
 import { Application, Container, Graphics, Rectangle, Text, TilingSprite, type Texture } from 'pixi.js';
 import { Effects } from './Effects';
 import type { SpriteFactory } from './SpriteFactory';
@@ -15,6 +15,7 @@ const LAYER_FOR: Readonly<Record<EntityState['kind'], LayerName>> = {
   ship: 'ships',
   bullet: 'bullets',
   rocket: 'bullets',
+  orb: 'bullets',
   spaceMine: 'ground',
   asteroid: 'ground',
   ore: 'ground',
@@ -204,7 +205,7 @@ export class Renderer {
 
   private createLabel(entity: EntityState): Text | null {
     if (entity.kind !== 'ship' || !entity.npc) return null;
-    const label = new Text({ text: PIRATE_NAMES[entity.npc], style: { fill: 0xff5a4f, fontSize: 12, fontFamily: 'system-ui' } });
+    const label = new Text({ text: NPC_NAMES[entity.npc], style: { fill: 0xff5a4f, fontSize: 12, fontFamily: 'system-ui' } });
     label.anchor.set(0.5);
     this.layers.labels.addChild(label);
     return label;

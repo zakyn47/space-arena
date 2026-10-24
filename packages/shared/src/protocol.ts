@@ -4,7 +4,7 @@ import { MkSchema, type Build, type InstalledGear } from './build';
 import { GEAR_IDS, type GearId, type Mk } from './catalog/gear';
 import { ORDNANCE_TYPES, type Ordnance } from './catalog/ordnance';
 import { HULL_IDS, SLOT_TYPES, type HullId } from './catalog/hulls';
-import type { PirateTier } from './catalog/pirates';
+import type { NpcKind } from './catalog/leviathan';
 import { MAX_ROCKETS_PER_PURCHASE, SALVAGE_CAPACITY } from './constants';
 import type { SafeZone } from './world';
 
@@ -94,7 +94,7 @@ export interface ShipState {
   readonly angle: number;
   readonly shieldUp: boolean;
   readonly hullId: HullId;
-  readonly npc: PirateTier | null;
+  readonly npc: NpcKind | null;
   readonly miningTargetId: number | null;
 }
 
@@ -143,6 +143,15 @@ export interface CrateState {
   readonly hasGear: boolean;
 }
 
+export interface OrbState {
+  readonly kind: 'orb';
+  readonly id: number;
+  readonly x: number;
+  readonly y: number;
+  readonly vx: number;
+  readonly vy: number;
+}
+
 export interface SpaceMineState {
   readonly kind: 'spaceMine';
   readonly id: number;
@@ -150,7 +159,7 @@ export interface SpaceMineState {
   readonly y: number;
 }
 
-export type EntityState = ShipState | BulletState | RocketState | SpaceMineState | AsteroidState | OreState | CrateState;
+export type EntityState = ShipState | BulletState | RocketState | OrbState | SpaceMineState | AsteroidState | OreState | CrateState;
 
 export interface SelfState {
   readonly id: number;
@@ -190,7 +199,7 @@ export interface WelcomeMessage {
 export interface RadarBlip {
   readonly x: number;
   readonly y: number;
-  readonly kind: 'player' | 'pirate';
+  readonly kind: 'player' | 'pirate' | 'boss';
 }
 
 export interface HitEvent {

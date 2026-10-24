@@ -8,4 +8,5 @@ export * from './catalog/gear';
 export * from './catalog/ordnance';
 export * from './build';
 export * from './catalog/pirates';
+export * from './catalog/leviathan';
 export * from './captain';

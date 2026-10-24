@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { ShipStats } from './build';
+import type { NpcKind } from './catalog/leviathan';
 
 export const CAPTAIN_SKILLS = ['gunnery', 'engineering', 'piloting', 'mining'] as const;
 export type CaptainSkill = (typeof CAPTAIN_SKILLS)[number];
@@ -9,6 +10,7 @@ export const STARTING_SKILL_POINTS = 3;
 export const ORE_EXPERIENCE = 10;
 export const PLAYER_KILL_EXPERIENCE = 100;
 export const PIRATE_EXPERIENCE = { raider: 50, marauder: 100, warlord: 250 } as const;
+export const NPC_EXPERIENCE: Readonly<Record<NpcKind, number>> = { ...PIRATE_EXPERIENCE, leviathan: 500 };
 
 export interface Captain {
   readonly xp: number;

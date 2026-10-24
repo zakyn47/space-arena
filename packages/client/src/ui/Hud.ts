@@ -1,6 +1,6 @@
 import { DOCK_RANGE, ORDNANCE_NAMES, SALVAGE_CAPACITY, captainLevel, captainPoints, captainNeedsTraining, statsFor, type Ordnance, type RadarBlip, type SafeZone, type SelfState } from '@arena/shared';
 
-const RADAR_COLORS: Readonly<Record<RadarBlip['kind'], string>> = { player: '#ffffff', pirate: '#ff4d4d' };
+const RADAR_COLORS: Readonly<Record<RadarBlip['kind'], string>> = { player: '#ffffff', pirate: '#ff4d4d', boss: '#c04bff' };
 const RADAR_DOT = 2;
 
 export const ORDNANCE_ICONS: Readonly<Record<Ordnance, string>> = { rockets: '/ui/icon_rocket.png', mines: '/ui/icon_mine.png' };

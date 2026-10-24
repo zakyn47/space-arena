@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  NEW_CAPTAIN, MAX_CAPTAIN_LEVEL, STARTER_BUILD, captainLevel, captainPoints,
+  NEW_CAPTAIN, NPC_EXPERIENCE, MAX_CAPTAIN_LEVEL, STARTER_BUILD, captainLevel, captainPoints,
   captainNeedsTraining, experienceForLevel, gainExperience, parseCaptain, statsFor, trainCaptain,
 } from '../src/index';
 
@@ -55,5 +55,11 @@ describe('captains', () => {
     expect(bare.weapons).toEqual([]);
     expect(bare.maxShield).toBe(0);
     expect(bare.miningRate).toBe(0);
+  });
+});
+
+describe('NPC_EXPERIENCE', () => {
+  it('rewards every npc kind, the leviathan most', () => {
+    expect(NPC_EXPERIENCE).toEqual({ raider: 50, marauder: 100, warlord: 250, leviathan: 500 });
   });
 });

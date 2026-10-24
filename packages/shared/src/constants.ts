@@ -7,6 +7,7 @@ export const SHIP_RADIUS = 24;
 export const BULLET_LIFETIME = 1.5;
 export const SHIELD_LOCKOUT = 1;
 export const REVERSE_THRUST_FACTOR = 0.5;
+export const LATERAL_GRIP = 3;
 export const DOCK_MAX_SPEED = 60;
 export const DOCK_COMBAT_COOLDOWN = 5;
 export const DISCONNECT_LINGER = 10;

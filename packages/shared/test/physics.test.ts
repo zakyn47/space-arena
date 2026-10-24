@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { IDLE_INPUT, stepMotion, type ShipMotion } from '../src/physics';
+import { LATERAL_GRIP } from '../src/constants';
 import { STARTER_BUILD, statsFor } from '../src/build';
 
 const stats = statsFor(STARTER_BUILD);
@@ -32,6 +33,17 @@ describe('stepMotion', () => {
     const next = stepMotion({ ...at(), vx: 50 }, IDLE_INPUT, stats, 0.1);
     expect(next.vx).toBe(50);
     expect(next.x).toBeCloseTo(1_005);
+  });
+
+  it('bleeds sideways velocity while thrusting so the ship follows its nose', () => {
+    const next = stepMotion({ ...at(), vx: 200 }, { ...IDLE_INPUT, thrust: true }, stats, 0.25);
+    expect(next.vx).toBeCloseTo(200 * Math.exp(-LATERAL_GRIP * 0.25));
+    expect(next.vy).toBeCloseTo(-42);
+  });
+
+  it('keeps sideways drift while coasting', () => {
+    const next = stepMotion({ ...at(), vx: 200 }, { ...IDLE_INPUT, right: true }, stats, 0.1);
+    expect(Math.hypot(next.vx, next.vy)).toBeCloseTo(200);
   });
 
   it('clamps speed to maxSpeed', () => {

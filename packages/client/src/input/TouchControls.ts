@@ -15,6 +15,7 @@ interface ActionView {
   readonly key: string;
   readonly button: HTMLButtonElement;
   readonly icon: HTMLImageElement;
+  readonly label: HTMLElement;
   readonly status: HTMLElement;
 }
 
@@ -99,6 +100,7 @@ export class TouchControls {
       view.button.disabled = ability.unavailable;
       view.button.classList.toggle('active', ability.active);
       view.status.textContent = ability.status;
+      view.label.textContent = ability.label;
       if (view.icon.getAttribute('src') !== ability.icon) view.icon.src = ability.icon;
     }
   }
@@ -117,8 +119,9 @@ export class TouchControls {
     const icon = node('img', 'touch-action-icon');
     icon.alt = '';
     const status = node('span', 'touch-action-status');
-    button.append(icon, node('span', 'touch-action-label', label), status);
-    const view = { key, button, icon, status };
+    const labelNode = node('span', 'touch-action-label', label);
+    button.append(icon, labelNode, status);
+    const view = { key, button, icon, label: labelNode, status };
     this.actions.push(view);
     return view;
   }

@@ -39,6 +39,7 @@ describe('ships', () => {
       bankedCredits: 0,
       build: STARTER_BUILD,
       captain: NEW_CAPTAIN,
+      ordnance: 'rockets',
       rockets: NEW_ACCOUNT_ROCKETS,
       salvage: [],
       x: SAFE_ZONES[0]?.x,
@@ -49,7 +50,7 @@ describe('ships', () => {
   it('round-trips builds and rockets', () => {
     const id = repo.createAccount('alice', 'hash', 1);
     const build = { ...STARTER_BUILD, slots: { ...STARTER_BUILD.slots, utility: [{ gearId: 'armor' as const, mk: 2 as const }] } };
-    const record = { captain: NEW_CAPTAIN, accountId: id, bankedCredits: 500, build, rockets: 3, salvage: [{ gearId: 'armor' as const, mk: 2 as const }], x: 10, y: 20 };
+    const record = { captain: NEW_CAPTAIN, accountId: id, bankedCredits: 500, build, ordnance: 'rockets' as const, rockets: 3, salvage: [{ gearId: 'armor' as const, mk: 2 as const }], x: 10, y: 20 };
     repo.saveShips([record], 5);
     expect(repo.loadShip(id)).toEqual(record);
   });
@@ -78,6 +79,7 @@ describe('migration from version 1', () => {
       bankedCredits: 100 + 200 + 400 + 250 + 150,
       build: STARTER_BUILD,
       captain: NEW_CAPTAIN,
+      ordnance: 'rockets',
       rockets: 10,
       salvage: [],
       x: 50,
@@ -101,7 +103,7 @@ describe('invalid stored builds', () => {
     const warnings: string[] = [];
     const first = PlayerRepository.open(path);
     const id = first.createAccount('alice', 'hash', 1);
-    first.saveShips([{ captain: NEW_CAPTAIN, accountId: id, bankedCredits: 0, build: STARTER_BUILD, rockets: 4, salvage: [], x: 1, y: 2 }], 1);
+    first.saveShips([{ captain: NEW_CAPTAIN, accountId: id, bankedCredits: 0, build: STARTER_BUILD, ordnance: 'rockets' as const, rockets: 4, salvage: [], x: 1, y: 2 }], 1);
     first.close();
     const db = new Database(path);
     db.prepare("UPDATE ships SET gear_json = '{\"weapon\":[{\"gearId\":\"laser9000\",\"mk\":1}]}'").run();
@@ -137,7 +139,7 @@ describe('migration to version 3', () => {
     const warnings: string[] = [];
     const first = PlayerRepository.open(path);
     const id = first.createAccount('alice', 'hash', 1);
-    first.saveShips([{ captain: NEW_CAPTAIN, accountId: id, bankedCredits: 0, build: STARTER_BUILD, rockets: 4, salvage: [], x: 1, y: 2 }], 1);
+    first.saveShips([{ captain: NEW_CAPTAIN, accountId: id, bankedCredits: 0, build: STARTER_BUILD, ordnance: 'rockets' as const, rockets: 4, salvage: [], x: 1, y: 2 }], 1);
     first.close();
     const db = new Database(path);
     db.prepare("UPDATE ships SET salvage_json = '[{\"gearId\":\"x\",\"mk\":9}]'").run();
@@ -165,7 +167,7 @@ describe('captain persistence', () => {
     first.saveShips([{ ...first.loadShip(id), bankedCredits: 700 }], 1);
     first.close();
     const db = new Database(path);
-    db.exec('ALTER TABLE ships DROP COLUMN captain_json; PRAGMA user_version = 3');
+    db.exec('ALTER TABLE ships DROP COLUMN captain_json; ALTER TABLE ships DROP COLUMN ordnance; PRAGMA user_version = 3');
     db.close();
     const migrated = PlayerRepository.open(path);
     expect(migrated.loadShip(id)).toMatchObject({ bankedCredits: 700, captain: NEW_CAPTAIN });
@@ -190,6 +192,45 @@ describe('captain persistence', () => {
     const second = PlayerRepository.open(path, (message) => warnings.push(message));
     expect(second.loadShip(id)).toMatchObject({ captain: NEW_CAPTAIN, bankedCredits: 500 });
     expect(warnings[0]).toContain(`captain for account ${id}`);
+    second.close();
+  });
+});
+
+describe('ordnance persistence', () => {
+  it('stores the ordnance type with the ammo count', () => {
+    const id = repo.createAccount('miner', 'hash', 1);
+    expect(repo.loadShip(id).ordnance).toBe('rockets');
+    repo.saveShips([{ ...repo.loadShip(id), ordnance: 'mines', rockets: 4 }], 5);
+    expect(repo.loadShip(id)).toMatchObject({ ordnance: 'mines', rockets: 4 });
+  });
+
+  it('migrates version 4 ships to rockets without changing ship data', async () => {
+    const path = join(await mkdtemp(join(tmpdir(), 'v4-')), 'arena.db');
+    const first = PlayerRepository.open(path);
+    const id = first.createAccount('pilot', 'hash', 1);
+    first.saveShips([{ ...first.loadShip(id), bankedCredits: 900, rockets: 3 }], 1);
+    first.close();
+    const db = new Database(path);
+    db.exec('ALTER TABLE ships DROP COLUMN ordnance; PRAGMA user_version = 4');
+    db.close();
+    const migrated = PlayerRepository.open(path);
+    expect(migrated.loadShip(id)).toMatchObject({ bankedCredits: 900, rockets: 3, ordnance: 'rockets' });
+    migrated.close();
+  });
+
+  it('warns and falls back to rockets for an unknown stored ordnance', async () => {
+    const path = join(await mkdtemp(join(tmpdir(), 'bad-ordnance-')), 'arena.db');
+    const first = PlayerRepository.open(path);
+    const id = first.createAccount('pilot', 'hash', 1);
+    first.saveShips([{ ...first.loadShip(id), ordnance: 'mines', rockets: 2 }], 1);
+    first.close();
+    const db = new Database(path);
+    db.prepare('UPDATE ships SET ordnance = ?').run('nukes');
+    db.close();
+    const warnings: string[] = [];
+    const second = PlayerRepository.open(path, (message) => warnings.push(message));
+    expect(second.loadShip(id)).toMatchObject({ ordnance: 'rockets', rockets: 0 });
+    expect(warnings[0]).toContain(`ordnance for account ${id}`);
     second.close();
   });
 });

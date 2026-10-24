@@ -23,6 +23,8 @@ export function toEntityState(entity: WorldEntity): EntityState {
       return { kind: 'bullet', id: entity.id, x: entity.x, y: entity.y, vx: entity.vx, vy: entity.vy, weaponId: entity.weaponId, mk: entity.mk };
     case 'rocket':
       return { kind: 'rocket', id: entity.id, x: entity.x, y: entity.y, vx: entity.vx, vy: entity.vy, angle: entity.angle };
+    case 'spaceMine':
+      return { kind: 'spaceMine', id: entity.id, x: entity.x, y: entity.y };
     case 'asteroid':
       return { kind: 'asteroid', id: entity.id, x: entity.x, y: entity.y, radius: entity.radius, variant: entity.variant };
     case 'ore':
@@ -51,6 +53,7 @@ export function toSelfState(ship: ShipEntity, time: number): SelfState {
     bankedCredits: ship.bankedCredits,
     build: ship.build,
     captain: ship.captain,
+    ordnance: ship.ordnance,
     rockets: ship.rockets,
     maxRockets: ship.stats.maxRockets,
     docked: ship.docked,

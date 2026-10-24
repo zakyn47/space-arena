@@ -10,6 +10,7 @@ import {
   type Mk,
   PIRATE_NAMES,
   type InstalledGear,
+  type Ordnance,
   type PirateTier,
   type ShipInput,
   type ShipStats,
@@ -44,6 +45,7 @@ export interface ShipEntity {
   ore: number;
   carriedCredits: number;
   bankedCredits: number;
+  ordnance: Ordnance;
   rockets: number;
   rocketCooldown: number;
   dockCooldownUntil: number;
@@ -96,6 +98,16 @@ export interface RocketEntity {
 
 export type Projectile = BulletEntity | RocketEntity;
 
+export interface SpaceMineEntity {
+  readonly kind: 'spaceMine';
+  readonly id: number;
+  readonly ownerId: number;
+  readonly x: number;
+  readonly y: number;
+  readonly armedAt: number;
+  readonly expiresAt: number;
+}
+
 export interface AsteroidEntity {
   readonly kind: 'asteroid';
   readonly id: number;
@@ -127,7 +139,7 @@ export interface CrateEntity {
   readonly expiresAt: number;
 }
 
-export type WorldEntity = ShipEntity | BulletEntity | RocketEntity | AsteroidEntity | OreEntity | CrateEntity;
+export type WorldEntity = ShipEntity | BulletEntity | RocketEntity | SpaceMineEntity | AsteroidEntity | OreEntity | CrateEntity;
 
 export function createShip(id: number, accountId: number, name: string, record: ShipRecord): ShipEntity {
   const stats = statsFor(record.build, record.captain);
@@ -153,6 +165,7 @@ export function createShip(id: number, accountId: number, name: string, record: 
     ore: 0,
     carriedCredits: 0,
     bankedCredits: record.bankedCredits,
+    ordnance: record.ordnance,
     rockets: record.rockets,
     rocketCooldown: 0,
     dockCooldownUntil: -Infinity,
@@ -176,6 +189,7 @@ export function createPirateShip(id: number, tier: PirateTier, x: number, y: num
     bankedCredits: 0,
     build: spec.build,
     captain: NEW_CAPTAIN,
+    ordnance: 'rockets',
     rockets: spec.rockets,
     salvage: [],
     x,
@@ -202,6 +216,7 @@ export function respawnShip(ship: ShipEntity, x: number, y: number): void {
     weaponCooldowns: stats.weapons.map(() => 0),
     ore: 0,
     carriedCredits: 0,
+    ordnance: 'rockets',
     rockets: RESPAWN_ROCKETS,
     rocketCooldown: 0,
     dockCooldownUntil: -Infinity,
@@ -220,6 +235,7 @@ export function toShipRecord(ship: ShipEntity): ShipRecord {
     bankedCredits: ship.bankedCredits,
     build: ship.build,
     captain: ship.captain,
+    ordnance: ship.ordnance,
     rockets: ship.rockets,
     salvage: ship.salvage,
     x: ship.x,

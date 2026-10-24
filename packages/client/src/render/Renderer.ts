@@ -2,11 +2,12 @@ import { PIRATE_NAMES, VIEW_RADIUS, type EntityState, type HitEvent, type SafeZo
 import { Application, Container, Graphics, Rectangle, Text, TilingSprite, type Texture } from 'pixi.js';
 import { Effects } from './Effects';
 import type { SpriteFactory } from './SpriteFactory';
-import { isShipSprite, spriteIdFor } from './spriteIds';
+import { spriteIdFor, vanishEffectFor } from './spriteIds';
 
 const STARFIELD_PARALLAX = 0.3;
 const EXPLOSION_VISIBLE_FRACTION = 0.8;
 const LABEL_OFFSET_Y = -44;
+const MINE_BLINK_SECONDS = 0.8;
 
 type LayerName = 'zones' | 'ground' | 'beams' | 'ships' | 'bullets' | 'effects' | 'labels';
 
@@ -14,6 +15,7 @@ const LAYER_FOR: Readonly<Record<EntityState['kind'], LayerName>> = {
   ship: 'ships',
   bullet: 'bullets',
   rocket: 'bullets',
+  spaceMine: 'ground',
   asteroid: 'ground',
   ore: 'ground',
   crate: 'ground',
@@ -182,7 +184,7 @@ export class Renderer {
       trail.position.set(0, 16);
       container.addChild(trail);
     }
-    const body = this.sprites.create(spriteId);
+    const body = entity.kind === 'spaceMine' ? this.sprites.animate(spriteId, MINE_BLINK_SECONDS, true) : this.sprites.create(spriteId);
     if (entity.kind === 'asteroid') body.scale.set((entity.radius * 2) / this.sprites.size(spriteId).width);
     container.addChild(body);
     const shield = entity.kind === 'ship' ? this.sprites.create('shield_bubble') : null;
@@ -216,7 +218,8 @@ export class Renderer {
   private removeMissing(seen: ReadonlySet<number>): void {
     for (const [id, view] of this.views) {
       if (seen.has(id)) continue;
-      if (isShipSprite(view.spriteId) && this.isWellInsideView(view)) this.effects.explode(view.x, view.y);
+      const effect = vanishEffectFor(view.spriteId);
+      if (effect && this.isWellInsideView(view)) this.effects.explode(view.x, view.y, effect);
       this.destroyView(view);
       this.views.delete(id);
     }

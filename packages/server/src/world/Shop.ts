@@ -4,7 +4,7 @@ import {
   trainCaptain,
   type CaptainSkill,
   HULLS,
-  ROCKET_PRICE,
+  ORDNANCE_PRICE,
   gearAt,
   gearCost,
   refitToHull,
@@ -16,6 +16,7 @@ import {
   type GearId,
   type HullId,
   type Mk,
+  type Ordnance,
   type ShopAction,
   type ShopFailure,
   type SlotRef,
@@ -81,10 +82,15 @@ function sellGear(ship: ShipEntity, slot: SlotRef): ShopOutcome {
   return OK;
 }
 
-function buyRockets(ship: ShipEntity, count: number): ShopOutcome {
-  if (ship.rockets + count > ship.stats.maxRockets) return fail('rocket_cap');
-  if (!charge(ship, count * ROCKET_PRICE, 0)) return fail('insufficient_credits');
-  ship.rockets += count;
+// Ships carry one ordnance type; buying the other one sells the leftover ammo back like gear.
+function buyOrdnance(ship: ShipEntity, ordnance: Ordnance, count: number): ShopOutcome {
+  const swapping = ordnance !== ship.ordnance;
+  const kept = swapping ? 0 : ship.rockets;
+  if (kept + count > ship.stats.maxRockets) return fail('ammo_cap');
+  const refund = swapping ? resaleValue(ship.rockets * ORDNANCE_PRICE[ship.ordnance]) : 0;
+  if (!charge(ship, count * ORDNANCE_PRICE[ordnance], refund)) return fail('insufficient_credits');
+  ship.ordnance = ordnance;
+  ship.rockets = kept + count;
   return OK;
 }
 
@@ -118,8 +124,8 @@ export function applyShopAction(ship: ShipEntity, action: ShopAction): ShopOutco
       return buyGear(ship, action.gearId, action.mk, action.slot);
     case 'sellGear':
       return sellGear(ship, action.slot);
-    case 'buyRockets':
-      return buyRockets(ship, action.count);
+    case 'buyOrdnance':
+      return buyOrdnance(ship, action.ordnance, action.count);
     case 'installSalvage':
       return installSalvage(ship, action.index, action.slot);
     case 'sellSalvage':

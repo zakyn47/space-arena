@@ -5,6 +5,7 @@ export * from './protocol';
 export * from './assets';
 export * from './catalog/hulls';
 export * from './catalog/gear';
+export * from './catalog/ordnance';
 export * from './build';
 export * from './catalog/pirates';
 export * from './captain';

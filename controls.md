@@ -11,7 +11,7 @@
 | `Space` (hold) | Fire forward |
 | `Shift` (hold, left or right) | Raise shield |
 | `E` | Dock / undock at a station |
-| `R` (hold) | Fire homing rockets |
+| `R` (hold) | Fire homing rockets, or drop space mines behind you when carrying mines |
 | `F` (hold) | Mining laser: drill the asteroid in front of you |
 
 Keys use physical positions, so they work the same on any keyboard layout.
@@ -19,7 +19,7 @@ Keys use physical positions, so they work the same on any keyboard layout.
 ## Mobile / touch
 
 - The **left flight stick** steers toward the direction you hold and always applies forward thrust outside its center dead zone. The ship turns at its hull/build turn rate. Release the stick to coast; the ship keeps its inertia.
-- Hold **Reverse** for backward thrust or to slow down while facing the direction of travel. Hold **Fire**, **Shield**, **Rockets** or **Mine** with your right thumb. Steering and actions support simultaneous touches. Release a button to stop the action.
+- Hold **Reverse** for backward thrust or to slow down while facing the direction of travel. Hold **Guns**, **Shield**, **Rockets** / **Mines** or **Mining** with your right thumb. Steering and actions support simultaneous touches. Release a button to stop the action.
 - Tap **Dock** when available near a station. While docked, use the normal build/captain menus; tap **Undock** to return to flight.
 - Portrait and landscape are supported. Landscape gives a wider view. Touch controls hide while docked and reset when you change orientation, switch apps or lose the connection.
 - The bottom strip shows hull, shield energy and rocket ammo. Greyed actions show why they are unavailable, such as a safe zone, empty rockets or missing equipment.
@@ -46,6 +46,7 @@ Keys use physical positions, so they work the same on any keyboard layout.
 - **Safe zones** (green circles with a station) disable firing and shields. Bullets vanish when they enter a zone.
 - **Docking:** fly within 200 px of a station, slow down (≤ 60 px/s), avoid damage for 5 s, press `E`. The ship snaps to the station and is frozen; ore is sold, carried credits are banked, hull is repaired and the build menu opens. Press `E` again to undock; docking is then unavailable for 30 s.
 - **Rockets:** lock the nearest enemy within 1 200 px in front of you and home in; 30 damage each. New pilots get 10, every respawn gives 5, death loses carried rockets. Buy more in the build menu (25 cr each).
+- **Space mines:** an alternative to rockets. You carry one ammunition type at a time; buying the other type in the build menu's Ammunition tab sells your current ammo back at 50%. Mines cost 40 cr and share the rocket capacity. Hold `R` to drop one behind you (every 0.5 s). A mine arms after 1.5 s, explodes when an enemy ship comes within 60 px and deals 60 damage to every ship within 100 px except you. A raised shield blocks the blast. Up to 5 of your mines stay active (the oldest disappears), each for 60 s. Respawning resets you to rockets.
 - **Builds:** buy hulls (Scout, Fighter, Freighter, Gunship) and install Mk1–Mk3 gear into weapon, shield, engine and utility slots. Replaced or sold gear refunds 50%. Death resets you to a Scout with starter gear.
 - **Mining laser:** hold `F` facing an asteroid within range; ore flows straight into cargo. Every new pilot has a Mining Laser Mk1; better lasers are in the build menu. You cannot mine while firing, shielded, docked or in a safe zone.
 - **Pirates:** red ships roam open space — Raiders near the stations, Marauders farther out, Warlords in the deep. They attack pilots who come within ~800 px. Destroyed pirates drop a crate with credits, ore and sometimes a gear item.

@@ -19,7 +19,8 @@ import {
   type ShopResultMessage,
   type SlotRef,
 } from '@arena/shared';
-import { captainRows, gearLabel, gearOptions, hullCards, rocketOffer, salvageRows, slotRows, statSummary } from './buildMenuModel';
+import { ORDNANCE_ICONS } from './Hud';
+import { captainRows, gearLabel, gearOptions, hullCards, ordnanceOffers, salvageRows, slotRows, statSummary } from './buildMenuModel';
 
 type Tab = 'ship' | 'hulls' | 'rockets' | 'captain';
 
@@ -41,7 +42,7 @@ const FAILURE_TEXT: Readonly<Record<ShopFailure, string>> = {
   not_docked: 'Dock first',
   insufficient_credits: 'Not enough banked credits',
   slot_mismatch: 'That item does not fit this slot',
-  rocket_cap: 'Rocket racks are full',
+  ammo_cap: 'Ammo racks are full',
   unknown_item: 'Not available',
   no_skill_points: 'No captain skill points available',
   skill_maxed: 'That captain skill is at maximum rank',
@@ -299,21 +300,23 @@ export class BuildMenu {
   }
 
   private rocketsTab(self: SelfState): HTMLElement {
-    const offer = rocketOffer(self);
     const body = element('div', '', 'list');
-    const line = element('div', '', 'row');
-    const icon = element('img');
-    icon.src = '/ui/icon_rocket.png';
-    icon.alt = '';
-    line.append(
-      icon,
-      element('span', `Rockets ${self.rockets} / ${self.maxRockets}`),
-      button('+1', offer.canBuyOne, () => this.send({ type: 'buyRockets', count: 1 })),
-      button(`Fill (${offer.fillPrice} cr)`, offer.canFill, () =>
-        this.send({ type: 'buyRockets', count: Math.min(offer.missing, MAX_ROCKETS_PER_PURCHASE) }),
-      ),
-    );
-    body.append(line);
+    for (const offer of ordnanceOffers(self)) {
+      const line = element('div', '', 'row');
+      const icon = element('img');
+      icon.src = ORDNANCE_ICONS[offer.ordnance];
+      icon.alt = '';
+      const status = offer.carried ? `${offer.held} / ${self.maxRockets}` : `Swap · sells current ammo for ${offer.refund} cr`;
+      const buy = (count: number) => () => this.send({ type: 'buyOrdnance', ordnance: offer.ordnance, count });
+      line.append(
+        icon,
+        element('span', `${offer.name} ${status}`),
+        button('+1', offer.canBuyOne, buy(1)),
+        button(`Fill (${offer.fillPrice} cr)`, offer.canFill, buy(Math.min(offer.missing, MAX_ROCKETS_PER_PURCHASE))),
+      );
+      body.append(line);
+    }
+    body.append(element('p', 'You carry one ammunition type at a time. Buying the other type sells your current ammo back at 50%. R fires rockets or drops a mine behind you.', 'muted'));
     return body;
   }
 }

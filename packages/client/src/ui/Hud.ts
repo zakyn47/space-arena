@@ -1,7 +1,10 @@
-import { DOCK_RANGE, SALVAGE_CAPACITY, captainLevel, captainPoints, captainNeedsTraining, statsFor, type RadarBlip, type SafeZone, type SelfState } from '@arena/shared';
+import { DOCK_RANGE, ORDNANCE_NAMES, SALVAGE_CAPACITY, captainLevel, captainPoints, captainNeedsTraining, statsFor, type Ordnance, type RadarBlip, type SafeZone, type SelfState } from '@arena/shared';
 
 const RADAR_COLORS: Readonly<Record<RadarBlip['kind'], string>> = { player: '#ffffff', pirate: '#ff4d4d' };
 const RADAR_DOT = 2;
+
+export const ORDNANCE_ICONS: Readonly<Record<Ordnance, string>> = { rockets: '/ui/icon_rocket.png', mines: '/ui/icon_mine.png' };
+const ORDNANCE_HINTS: Readonly<Record<Ordnance, string>> = { rockets: 'Hold to fire', mines: 'Hold to drop' };
 
 export interface MinimapDot {
   readonly x: number;
@@ -25,7 +28,7 @@ export function hudLines(self: SelfState, prompt: string | null): string[] {
   const lines = [
     `Hull ${Math.ceil(self.hull)} / ${Math.round(self.maxHull)}`,
     `Shield ${Math.floor(self.shieldEnergy)} / ${Math.round(self.maxShield)}${self.shieldUp ? ' (UP)' : ''}`,
-    `Rockets ${self.rockets} / ${self.maxRockets}`,
+    `${ORDNANCE_NAMES[self.ordnance]} ${self.rockets} / ${self.maxRockets}`,
     `Cargo ${self.ore} / ${self.cargoCapacity} ore`,
     `Salvage ${self.salvage.length} / ${SALVAGE_CAPACITY}`,
     `Carried ${self.carriedCredits} cr (at risk)`,
@@ -63,8 +66,8 @@ export function abilityStates(self: SelfState, inSafeZone: boolean): AbilityStat
       active: self.shieldUp && blocked === null, unavailable: noShield || blocked !== null || self.shieldEnergy <= 0,
     },
     {
-      label: 'Rockets', key: 'R', icon: '/ui/icon_rocket.png',
-      status: self.rockets === 0 ? 'Empty' : attackBlocked ?? 'Hold to fire',
+      label: ORDNANCE_NAMES[self.ordnance], key: 'R', icon: ORDNANCE_ICONS[self.ordnance],
+      status: self.rockets === 0 ? 'Empty' : attackBlocked ?? ORDNANCE_HINTS[self.ordnance],
       active: false, unavailable: self.rockets === 0 || attackBlocked !== null,
     },
     {
@@ -146,7 +149,7 @@ export class Hud {
       bar.setAttribute('aria-label', 'Ship status and abilities');
       const resources = textNode('div', 'hud-resources', '');
       const ammo = textNode('div', `hud-resource ammo${self.rockets === 0 ? ' low' : ''}`, '');
-      ammo.append(textNode('span', 'hud-label', 'Rocket ammo'), textNode('span', 'hud-value', `${self.rockets} / ${self.maxRockets}`));
+      ammo.append(textNode('span', 'hud-label', `${ORDNANCE_NAMES[self.ordnance]} ammo`), textNode('span', 'hud-value', `${self.rockets} / ${self.maxRockets}`));
       resources.append(resourceMeter('Hull integrity', self.hull, self.maxHull, 'hull'), resourceMeter('Shield energy', self.shieldEnergy, self.maxShield, 'shield'), ammo);
       const tiles = textNode('div', 'hud-abilities', '');
       tiles.append(...abilities.map(abilityTile));

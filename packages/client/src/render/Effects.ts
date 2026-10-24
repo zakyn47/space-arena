@@ -28,8 +28,8 @@ export class Effects {
     private readonly sprites: SpriteFactory,
   ) {}
 
-  explode(x: number, y: number): void {
-    const view = this.animation('explosion', EXPLOSION_SECONDS);
+  explode(x: number, y: number, spriteId: string): void {
+    const view = this.sprites.animate(spriteId, EXPLOSION_SECONDS, false);
     view.position.set(x, y);
     this.layer.addChild(view);
     this.active.push({ view, duration: EXPLOSION_SECONDS, remaining: EXPLOSION_SECONDS, delay: 0, attach: () => undefined });
@@ -38,7 +38,7 @@ export class Effects {
   // Hits ride on the ship's container so they stay on the hull while it flies; the delay lines
   // them up with the interpolated bullets, which are drawn slightly in the past.
   hit({ ship, angle, shield, delaySeconds }: HitEffect): void {
-    const view = this.animation(shield ? 'shield_impact' : 'hull_hit', HIT_SECONDS);
+    const view = this.sprites.animate(shield ? 'shield_impact' : 'hull_hit', HIT_SECONDS, false);
     const attach = (): void => {
       if (ship.destroyed) return;
       const local = angle - ship.rotation;
@@ -77,16 +77,5 @@ export class Effects {
     const progress = 1 - effect.remaining / effect.duration;
     effect.view.scale.set(0.5 + progress * 1.5);
     effect.view.alpha = 1 - progress;
-  }
-
-  private animation(id: string, seconds: number): Container {
-    const frames = this.sprites.frames(id);
-    if (!frames) return this.sprites.create(id);
-    const animation = new AnimatedSprite(frames);
-    animation.anchor.set(0.5);
-    animation.loop = false;
-    animation.animationSpeed = frames.length / (seconds * 60);
-    animation.play();
-    return animation;
   }
 }

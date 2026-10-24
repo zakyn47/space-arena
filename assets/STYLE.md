@@ -42,3 +42,9 @@
 
 - `shield_impact` (horizontal spritesheet, 4 frames of 96×96): shield ripple where a shot strikes the shield. Each frame is centered on the ship like `shield_bubble`; the impact sits on the TOP edge of the bubble rim (radius ~44 px). Draw a bright translucent cyan `#5EC8FF` arc (~70° wide) with a white-hot center point and a hint of the hex pattern. Frames: sharp bright flash → arc widens along the rim → hex ripple spreads and fades → faint glow almost gone. Everything else transparent.
 - `hull_hit` (horizontal spritesheet, 4 frames of 48×48): impact on bare armor, centered on the impact point, sparks spraying UP (outward from the hull). Frames: small white-hot flash → orange `#FF9A3C` sparks and molten fragments burst upward → sparks thin out with a puff of grey smoke → last embers fading. Must read clearly different from `shield_impact`: warm orange/white, no cyan.
+
+## Space mine update
+
+- `space_mine` (horizontal spritesheet, 2 frames of 32×32, seen from above): round dark steel mine body (~24 px across) with short radial spikes / contact prongs and subtle panel lines, same rim light as the ships. A small warning light in the center: frame 1 light dim red, frame 2 light bright red `#FF3B30` with a soft glow. The two frames alternate as a blink, so everything except the light must be identical between frames.
+- `mine_explosion` (horizontal spritesheet, 8 frames of 96×96): bigger and more violent than `explosion`: white-hot flash → expanding orange `#FF9A3C` / red fireball with a bright shockwave ring → metal shrapnel streaks flying outward → dark smoke dissipating to transparent. Centered, round, fills most of the frame at its peak.
+- `icon_mine` (48×48): UI glyph in the same flat style as the other icons (white with cyan accent): a spiked round mine.

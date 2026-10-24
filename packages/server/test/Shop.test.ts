@@ -1,4 +1,4 @@
-import { HULLS, ROCKET_PRICE, SAFE_ZONES, STARTER_BUILD, type ShopAction } from '@arena/shared';
+import { HULLS, MINE_PRICE, ROCKET_PRICE, SAFE_ZONES, STARTER_BUILD, type ShopAction } from '@arena/shared';
 import { describe, expect, it } from 'vitest';
 import { createShip } from '../src/world/entities';
 import { applyShopAction } from '../src/world/Shop';
@@ -18,7 +18,7 @@ describe('shop guards', () => {
   it('requires docking', () => {
     const ship = dockedShip(10_000);
     ship.docked = false;
-    expect(applyShopAction(ship, buy({ type: 'buyRockets', count: 1 }))).toEqual({ ok: false, reason: 'not_docked' });
+    expect(applyShopAction(ship, buy({ type: 'buyOrdnance', ordnance: 'rockets', count: 1 }))).toEqual({ ok: false, reason: 'not_docked' });
   });
 });
 
@@ -93,14 +93,32 @@ describe('buyHull', () => {
   });
 });
 
-describe('buyRockets', () => {
+describe('buyOrdnance', () => {
   it('buys up to the cap', () => {
     const ship = dockedShip(1_000);
     ship.rockets = 7;
-    expect(applyShopAction(ship, buy({ type: 'buyRockets', count: 3 }))).toEqual({ ok: true });
+    expect(applyShopAction(ship, buy({ type: 'buyOrdnance', ordnance: 'rockets', count: 3 }))).toEqual({ ok: true });
     expect(ship.rockets).toBe(10);
     expect(ship.bankedCredits).toBe(1_000 - 3 * ROCKET_PRICE);
-    expect(applyShopAction(ship, buy({ type: 'buyRockets', count: 1 }))).toEqual({ ok: false, reason: 'rocket_cap' });
+    expect(applyShopAction(ship, buy({ type: 'buyOrdnance', ordnance: 'rockets', count: 1 }))).toEqual({ ok: false, reason: 'ammo_cap' });
+  });
+
+  it('swaps ordnance type and refunds leftover ammo at 50%', () => {
+    const ship = dockedShip(1_000);
+    ship.rockets = 4;
+    expect(applyShopAction(ship, buy({ type: 'buyOrdnance', ordnance: 'mines', count: 2 }))).toEqual({ ok: true });
+    expect(ship.ordnance).toBe('mines');
+    expect(ship.rockets).toBe(2);
+    expect(ship.bankedCredits).toBe(1_000 + 4 * ROCKET_PRICE * 0.5 - 2 * MINE_PRICE);
+  });
+
+  it('keeps the current ordnance when a swap is unaffordable', () => {
+    const ship = dockedShip(0);
+    ship.rockets = 2;
+    expect(applyShopAction(ship, buy({ type: 'buyOrdnance', ordnance: 'mines', count: 2 }))).toEqual({ ok: false, reason: 'insufficient_credits' });
+    expect(ship.ordnance).toBe('rockets');
+    expect(ship.rockets).toBe(2);
+    expect(ship.bankedCredits).toBe(0);
   });
 
   it('clamps rockets when a rack is sold', () => {

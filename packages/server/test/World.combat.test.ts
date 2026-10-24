@@ -40,6 +40,7 @@ function firstHit(world: World, maxTicks = 60): HitEvent | undefined {
 describe('World combat', () => {
   it('kills a target, pays the bounty and respawns the victim', () => {
     const { world, alice, bob } = duel();
+    bob.ordnance = 'mines';
     world.setInput(alice.id, 1, { ...IDLE_INPUT, fire: true });
     const death = runUntilDeath(world);
     expect(death?.ship.id).toBe(bob.id);
@@ -49,6 +50,7 @@ describe('World combat', () => {
     expect([bob.x, bob.y]).toEqual([zone?.x, zone?.y]);
     expect(bob.hull).toBe(bob.stats.maxHull);
     expect(bob.rockets).toBe(RESPAWN_ROCKETS);
+    expect(bob.ordnance).toBe('rockets');
   });
 
   it('shield blocks damage', () => {

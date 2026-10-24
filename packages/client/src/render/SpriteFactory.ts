@@ -1,5 +1,5 @@
 import { ManifestSchema, type SpriteSpec } from '@arena/shared';
-import { Assets, Container, Graphics, Rectangle, Sprite, Texture } from 'pixi.js';
+import { AnimatedSprite, Assets, Container, Graphics, Rectangle, Sprite, Texture } from 'pixi.js';
 
 const DEFAULT_SIZE = { width: 32, height: 32 } as const;
 
@@ -70,6 +70,17 @@ export class SpriteFactory {
     const sprite = new Sprite(texture);
     sprite.anchor.set(spec.anchor[0], spec.anchor[1]);
     return sprite;
+  }
+
+  animate(id: string, seconds: number, loop: boolean): Container {
+    const frames = this.frames(id);
+    if (!frames) return this.create(id);
+    const animation = new AnimatedSprite(frames);
+    animation.anchor.set(0.5);
+    animation.loop = loop;
+    animation.animationSpeed = frames.length / (seconds * 60);
+    animation.play();
+    return animation;
   }
 
   frames(id: string): Texture[] | null {

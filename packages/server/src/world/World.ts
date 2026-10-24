@@ -7,6 +7,9 @@ import {
   CRATE_LIFETIME,
   DISCONNECT_LINGER,
   IDLE_INPUT,
+  MAX_ACTIVE_MINES,
+  MINE_DAMAGE,
+  MINE_BLAST_RADIUS,
   ORE_PICKUP_LIFETIME,
   PICKUP_RADIUS,
   SHIP_RADIUS,
@@ -33,6 +36,7 @@ import {
   type Projectile,
   type RocketEntity,
   type ShipEntity,
+  type SpaceMineEntity,
   type WorldEntity,
 } from './entities';
 import { distanceToSegment } from './geometry';
@@ -40,6 +44,7 @@ import { playerDeathCrates, takeCrate, type CrateDrop } from './Loot';
 import { applyShopAction, type ShopOutcome } from './Shop';
 import { canMine, findMiningTarget, mineStep } from './Mining';
 import { acquireTarget, launchRocket, steerRocket, tryLaunch } from './Rockets';
+import { blastVictims, dropMine, triggeredBy } from './SpaceMines';
 import { DEFAULT_PATROLS, PirateDirector, type PatrolSpec, type PirateHost } from './pirates/PirateDirector';
 import { SpatialGrid } from './SpatialGrid';
 
@@ -78,6 +83,7 @@ export class World {
   private readonly ships = new Map<number, ShipEntity>();
   private readonly bullets = new Map<number, BulletEntity>();
   private readonly rockets = new Map<number, RocketEntity>();
+  private readonly mines = new Map<number, SpaceMineEntity>();
   private readonly asteroids = new Map<number, AsteroidEntity>();
   private readonly orePickups = new Map<number, OreEntity>();
   private readonly crates = new Map<number, CrateEntity>();
@@ -198,6 +204,7 @@ export class World {
     this.rebuildGrid();
     this.resolveProjectileHits(this.bullets, events.hits);
     this.resolveProjectileHits(this.rockets, events.hits);
+    this.resolveMines(events.hits);
     this.collectPickups();
     this.resolveDeaths(events.died);
     this.expirePickups();
@@ -232,11 +239,39 @@ export class World {
       for (const bullet of fireWeapons(ship, dt, inSafeZone, this.elapsed, () => this.allocateId())) {
         this.bullets.set(bullet.id, bullet);
       }
-      if (tryLaunch(ship, dt, inSafeZone)) {
-        const rocket = launchRocket(ship, this.allocateId(), this.elapsed, acquireTarget(ship, this.ships.values()));
-        this.rockets.set(rocket.id, rocket);
-      }
+      if (tryLaunch(ship, dt, inSafeZone)) this.releaseOrdnance(ship);
       this.stepMining(ship, dt, inSafeZone);
+    }
+  }
+
+  private releaseOrdnance(ship: ShipEntity): void {
+    if (ship.ordnance === 'mines') {
+      this.layMine(ship);
+      return;
+    }
+    const rocket = launchRocket(ship, this.allocateId(), this.elapsed, acquireTarget(ship, this.ships.values()));
+    this.rockets.set(rocket.id, rocket);
+  }
+
+  private layMine(ship: ShipEntity): void {
+    const mine = dropMine(ship, this.allocateId(), this.elapsed);
+    if (zoneAt(mine.x, mine.y)) return;
+    this.mines.set(mine.id, mine);
+    const owned = [...this.mines.values()].filter((other) => other.ownerId === ship.id);
+    for (const oldest of owned.slice(0, Math.max(0, owned.length - MAX_ACTIVE_MINES))) this.mines.delete(oldest.id);
+  }
+
+  private resolveMines(hits: HitEvent[]): void {
+    for (const mine of this.mines.values()) {
+      const nearby = this.grid
+        .queryRadius(mine.x, mine.y, MINE_BLAST_RADIUS)
+        .filter((entity): entity is ShipEntity => entity.kind === 'ship');
+      if (!nearby.some((ship) => triggeredBy(mine, ship, this.elapsed))) continue;
+      this.mines.delete(mine.id);
+      for (const ship of blastVictims(mine, nearby)) {
+        const shield = applyDamage(ship, MINE_DAMAGE, mine.ownerId, this.elapsed);
+        hits.push({ shipId: ship.id, angle: Math.atan2(mine.x - ship.x, ship.y - mine.y), shield });
+      }
     }
   }
 
@@ -274,6 +309,9 @@ export class World {
         if (this.isExpired(projectile)) collection.delete(projectile.id);
       }
     }
+    for (const mine of this.mines.values()) {
+      if (mine.expiresAt <= this.elapsed) this.mines.delete(mine.id);
+    }
   }
 
   private isExpired(projectile: Projectile): boolean {
@@ -286,7 +324,7 @@ export class World {
 
   private rebuildGrid(): void {
     this.grid.clear();
-    for (const collection of [this.ships, this.bullets, this.rockets, this.asteroids, this.orePickups, this.crates]) {
+    for (const collection of [this.ships, this.bullets, this.rockets, this.mines, this.asteroids, this.orePickups, this.crates]) {
       for (const entity of collection.values()) this.grid.insert(entity);
     }
   }

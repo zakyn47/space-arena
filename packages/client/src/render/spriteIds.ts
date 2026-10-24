@@ -6,8 +6,9 @@ function bulletSprite(weaponId: GearId, mk: Mk): string {
   return weaponId === 'heavy_cannon' ? 'bullet_cannon' : PULSE_SPRITES[mk];
 }
 
-export function isShipSprite(spriteId: string): boolean {
-  return spriteId.startsWith('ship_') || spriteId.startsWith('pirate_');
+export function vanishEffectFor(spriteId: string): string | null {
+  if (spriteId === 'space_mine') return 'mine_explosion';
+  return spriteId.startsWith('ship_') || spriteId.startsWith('pirate_') ? 'explosion' : null;
 }
 
 export function spriteIdFor(entity: EntityState): string {
@@ -18,6 +19,8 @@ export function spriteIdFor(entity: EntityState): string {
       return bulletSprite(entity.weaponId, entity.mk);
     case 'rocket':
       return 'rocket';
+    case 'spaceMine':
+      return 'space_mine';
     case 'asteroid':
       return `asteroid_${entity.variant}`;
     case 'ore':

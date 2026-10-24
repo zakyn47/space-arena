@@ -55,6 +55,12 @@ describe('abilityStates', () => {
     expect(abilityStates(selfState({ miningTargetId: 42 }), false)[3]).toMatchObject({ status: 'Mining', active: true });
   });
 
+  it('names the carried ordnance', () => {
+    const self = selfState({ ordnance: 'mines', rockets: 3 });
+    expect(hudLines(self, null)).toContain('Mines 3 / 10');
+    expect(abilityStates(self, false)[2]).toMatchObject({ label: 'Mines', key: 'R', icon: '/ui/icon_mine.png', status: 'Hold to drop' });
+  });
+
   it('shows depleted ammo, missing modules and a full hold', () => {
     const unarmed = { ...STARTER_BUILD, slots: { weapon: [null], shield: [null], engine: [null], utility: [null] } };
     const states = abilityStates(selfState({ build: unarmed, maxShield: 0, rockets: 0 }), false);

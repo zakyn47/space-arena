@@ -12,7 +12,9 @@ import {
   HULLS,
   HULL_IDS,
   MK_LEVELS,
-  ROCKET_PRICE,
+  ORDNANCE_NAMES,
+  ORDNANCE_PRICE,
+  ORDNANCE_TYPES,
   SLOT_TYPES,
   gearAt,
   gearCost,
@@ -25,6 +27,7 @@ import {
   type HullId,
   type InstalledGear,
   type Mk,
+  type Ordnance,
   type SelfState,
   type ShipStats,
   type SlotRef,
@@ -174,22 +177,38 @@ export function hullCards(build: Build, banked: number): HullCard[] {
   });
 }
 
-export interface RocketOffer {
+export interface OrdnanceOffer {
+  readonly ordnance: Ordnance;
+  readonly name: string;
+  readonly carried: boolean;
+  readonly held: number;
   readonly missing: number;
   readonly fillPrice: number;
+  readonly refund: number;
   readonly canBuyOne: boolean;
   readonly canFill: boolean;
 }
 
-export function rocketOffer(self: SelfState): RocketOffer {
-  const missing = Math.max(0, self.maxRockets - self.rockets);
-  const fillPrice = missing * ROCKET_PRICE;
-  return {
-    missing,
-    fillPrice,
-    canBuyOne: missing > 0 && self.bankedCredits >= ROCKET_PRICE,
-    canFill: missing > 0 && self.bankedCredits >= fillPrice,
-  };
+export function ordnanceOffers(self: SelfState): OrdnanceOffer[] {
+  return ORDNANCE_TYPES.map((ordnance) => {
+    const carried = ordnance === self.ordnance;
+    const held = carried ? self.rockets : 0;
+    const refund = carried ? 0 : resaleValue(self.rockets * ORDNANCE_PRICE[self.ordnance]);
+    const budget = self.bankedCredits + refund;
+    const missing = Math.max(0, self.maxRockets - held);
+    const fillPrice = missing * ORDNANCE_PRICE[ordnance];
+    return {
+      ordnance,
+      name: ORDNANCE_NAMES[ordnance],
+      carried,
+      held,
+      missing,
+      fillPrice,
+      refund,
+      canBuyOne: missing > 0 && budget >= ORDNANCE_PRICE[ordnance],
+      canFill: missing > 0 && budget >= fillPrice,
+    };
+  });
 }
 
 

@@ -163,7 +163,7 @@ describe('server integration', () => {
     await settle();
     expect((await pump(alice, 'snapshot')).self.docked).toBe(false);
 
-    bob.send({ type: 'buyRockets', count: 1 });
+    bob.send({ type: 'buyOrdnance', ordnance: 'mines', count: 1 });
     expect(await pump(bob, 'shopResult')).toEqual({ type: 'shopResult', ok: false, reason: 'not_docked' });
   });
 

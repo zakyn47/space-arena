@@ -1,4 +1,5 @@
 import {
+  MINE_COOLDOWN,
   ROCKET_ACCELERATION,
   ROCKET_COOLDOWN,
   ROCKET_DAMAGE,
@@ -10,8 +11,11 @@ import {
   ROCKET_TURN_RATE,
   SHIP_RADIUS,
   forward,
+  type Ordnance,
 } from '@arena/shared';
 import type { RocketEntity, ShipEntity } from './entities';
+
+const COOLDOWN: Readonly<Record<Ordnance, number>> = { rockets: ROCKET_COOLDOWN, mines: MINE_COOLDOWN };
 
 function headingTo(fromX: number, fromY: number, toX: number, toY: number): number {
   return Math.atan2(toX - fromX, fromY - toY);
@@ -25,7 +29,7 @@ export function tryLaunch(ship: ShipEntity, dt: number, inSafeZone: boolean): bo
   ship.rocketCooldown = Math.max(0, ship.rocketCooldown - dt);
   if (!ship.input.rocket || ship.rockets <= 0 || ship.shieldUp || inSafeZone || ship.rocketCooldown > 0) return false;
   ship.rockets -= 1;
-  ship.rocketCooldown = ROCKET_COOLDOWN;
+  ship.rocketCooldown = COOLDOWN[ship.ordnance];
   return true;
 }
 

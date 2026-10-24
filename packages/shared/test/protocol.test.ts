@@ -27,7 +27,8 @@ describe('parseClientMessage', () => {
     expect(parse({ type: 'buyHull', hullId: 'fighter' })).not.toBeNull();
     expect(parse({ type: 'buyGear', gearId: 'armor', mk: 2, slot: { type: 'utility', index: 0 } })).not.toBeNull();
     expect(parse({ type: 'sellGear', slot: { type: 'weapon', index: 1 } })).not.toBeNull();
-    expect(parse({ type: 'buyRockets', count: 5 })).not.toBeNull();
+    expect(parse({ type: 'buyOrdnance', ordnance: 'rockets', count: 5 })).not.toBeNull();
+    expect(parse({ type: 'buyOrdnance', ordnance: 'mines', count: 1 })).not.toBeNull();
   });
 
   it('accepts salvage actions and the mine flag', () => {
@@ -41,8 +42,10 @@ describe('parseClientMessage', () => {
     expect(parse({ type: 'buyHull', hullId: 'battleship' })).toBeNull();
     expect(parse({ type: 'buyGear', gearId: 'armor', mk: 4, slot: { type: 'utility', index: 0 } })).toBeNull();
     expect(parse({ type: 'sellGear', slot: { type: 'cockpit', index: 0 } })).toBeNull();
-    expect(parse({ type: 'buyRockets', count: 0 })).toBeNull();
-    expect(parse({ type: 'buyRockets', count: 21 })).toBeNull();
+    expect(parse({ type: 'buyOrdnance', ordnance: 'rockets', count: 0 })).toBeNull();
+    expect(parse({ type: 'buyOrdnance', ordnance: 'rockets', count: 21 })).toBeNull();
+    expect(parse({ type: 'buyOrdnance', ordnance: 'nukes', count: 1 })).toBeNull();
+    expect(parse({ type: 'buyRockets', count: 1 })).toBeNull();
     expect(parse({ type: 'buy', line: 'weapon' })).toBeNull();
   });
 

@@ -1,4 +1,4 @@
-import { IDLE_INPUT, ROCKET_COOLDOWN, ROCKET_MAX_SPEED, ROCKET_TURN_RATE } from '@arena/shared';
+import { IDLE_INPUT, MINE_COOLDOWN, ROCKET_COOLDOWN, ROCKET_MAX_SPEED, ROCKET_TURN_RATE } from '@arena/shared';
 import { describe, expect, it } from 'vitest';
 import { createShip } from '../src/world/entities';
 import { acquireTarget, launchRocket, steerRocket, tryLaunch } from '../src/world/Rockets';
@@ -15,6 +15,14 @@ describe('tryLaunch', () => {
     expect(ship.rocketCooldown).toBe(ROCKET_COOLDOWN);
     expect(tryLaunch(ship, 0.5, false)).toBe(false);
     expect(tryLaunch(ship, 0.6, false)).toBe(true);
+  });
+
+  it('uses the shorter mine cooldown when carrying mines', () => {
+    const ship = at(1, 1_000, 1_000);
+    ship.input = { ...IDLE_INPUT, rocket: true };
+    ship.ordnance = 'mines';
+    expect(tryLaunch(ship, 0.1, false)).toBe(true);
+    expect(ship.rocketCooldown).toBe(MINE_COOLDOWN);
   });
 
   it('refuses without ammo, while shielded or in a safe zone', () => {

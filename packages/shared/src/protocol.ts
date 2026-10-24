@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { CAPTAIN_SKILLS, type Captain } from './captain';
 import { MkSchema, type Build, type InstalledGear } from './build';
 import { GEAR_IDS, type GearId, type Mk } from './catalog/gear';
+import { ORDNANCE_TYPES, type Ordnance } from './catalog/ordnance';
 import { HULL_IDS, SLOT_TYPES, type HullId } from './catalog/hulls';
 import type { PirateTier } from './catalog/pirates';
 import { MAX_ROCKETS_PER_PURCHASE, SALVAGE_CAPACITY } from './constants';
@@ -36,8 +37,12 @@ const BuyGearSchema = z
 
 const SellGearSchema = z.object({ type: z.literal('sellGear'), slot: SlotRefSchema }).strict();
 
-const BuyRocketsSchema = z
-  .object({ type: z.literal('buyRockets'), count: z.number().int().min(1).max(MAX_ROCKETS_PER_PURCHASE) })
+const BuyOrdnanceSchema = z
+  .object({
+    type: z.literal('buyOrdnance'),
+    ordnance: z.enum(ORDNANCE_TYPES),
+    count: z.number().int().min(1).max(MAX_ROCKETS_PER_PURCHASE),
+  })
   .strict();
 
 const SalvageIndexSchema = z.number().int().min(0).max(SALVAGE_CAPACITY - 1);
@@ -57,7 +62,7 @@ const ClientMessageSchema = z.discriminatedUnion('type', [
   BuyHullSchema,
   BuyGearSchema,
   SellGearSchema,
-  BuyRocketsSchema,
+  BuyOrdnanceSchema,
   TrainCaptainSchema,
   InstallSalvageSchema,
   SellSalvageSchema,
@@ -65,7 +70,7 @@ const ClientMessageSchema = z.discriminatedUnion('type', [
 
 export type ClientMessage = z.infer<typeof ClientMessageSchema>;
 export type InputMessage = z.infer<typeof InputSchema>;
-export type ShopAction = Extract<ClientMessage, { type: 'trainCaptain' | 'buyHull' | 'buyGear' | 'sellGear' | 'buyRockets' | 'installSalvage' | 'sellSalvage' }>;
+export type ShopAction = Extract<ClientMessage, { type: 'trainCaptain' | 'buyHull' | 'buyGear' | 'sellGear' | 'buyOrdnance' | 'installSalvage' | 'sellSalvage' }>;
 
 export function parseClientMessage(raw: string): ClientMessage | null {
   let json: unknown;
@@ -138,7 +143,14 @@ export interface CrateState {
   readonly hasGear: boolean;
 }
 
-export type EntityState = ShipState | BulletState | RocketState | AsteroidState | OreState | CrateState;
+export interface SpaceMineState {
+  readonly kind: 'spaceMine';
+  readonly id: number;
+  readonly x: number;
+  readonly y: number;
+}
+
+export type EntityState = ShipState | BulletState | RocketState | SpaceMineState | AsteroidState | OreState | CrateState;
 
 export interface SelfState {
   readonly id: number;
@@ -158,6 +170,7 @@ export interface SelfState {
   readonly bankedCredits: number;
   readonly build: Build;
   readonly captain: Captain;
+  readonly ordnance: Ordnance;
   readonly rockets: number;
   readonly maxRockets: number;
   readonly docked: boolean;
@@ -201,7 +214,7 @@ export interface DiedMessage {
   readonly killer: string | null;
 }
 
-export type ShopFailure = 'not_docked' | 'insufficient_credits' | 'slot_mismatch' | 'rocket_cap' | 'unknown_item' | 'no_skill_points' | 'skill_maxed';
+export type ShopFailure = 'not_docked' | 'insufficient_credits' | 'slot_mismatch' | 'ammo_cap' | 'unknown_item' | 'no_skill_points' | 'skill_maxed';
 
 export type ShopResultMessage =
   | { readonly type: 'shopResult'; readonly ok: true }

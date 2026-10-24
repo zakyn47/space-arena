@@ -1,6 +1,6 @@
 import { NEW_CAPTAIN, HULLS, HULL_IDS, STARTER_BUILD, refitToHull, statsFor } from '@arena/shared';
 import { describe, expect, it } from 'vitest';
-import { captainRows, describeDelta, gearOptions, hullCards, rocketOffer, salvageRows, slotRows, statSummary } from '../src/ui/buildMenuModel';
+import { captainRows, describeDelta, gearOptions, hullCards, ordnanceOffers, salvageRows, slotRows, statSummary } from '../src/ui/buildMenuModel';
 import { selfState } from './support/self';
 
 describe('statSummary', () => {
@@ -120,10 +120,16 @@ describe('hullCards', () => {
   });
 });
 
-describe('rocketOffer', () => {
-  it('prices the missing rockets', () => {
-    expect(rocketOffer(selfState({ rockets: 6, bankedCredits: 60 }))).toEqual({ missing: 4, fillPrice: 100, canBuyOne: true, canFill: false });
-    expect(rocketOffer(selfState({ rockets: 10, bankedCredits: 60 }))).toMatchObject({ missing: 0, canBuyOne: false });
+describe('ordnanceOffers', () => {
+  it('prices the missing ammo of the carried type', () => {
+    const [rockets] = ordnanceOffers(selfState({ rockets: 6, bankedCredits: 60 }));
+    expect(rockets).toMatchObject({ ordnance: 'rockets', carried: true, held: 6, missing: 4, fillPrice: 100, refund: 0, canBuyOne: true, canFill: false });
+    expect(ordnanceOffers(selfState({ rockets: 10, bankedCredits: 60 }))[0]).toMatchObject({ missing: 0, canBuyOne: false });
+  });
+
+  it('offers the other type as a swap that sells leftover ammo back at 50%', () => {
+    const [, mines] = ordnanceOffers(selfState({ rockets: 4, bankedCredits: 0 }));
+    expect(mines).toMatchObject({ ordnance: 'mines', carried: false, held: 0, missing: 10, fillPrice: 400, refund: 50, canBuyOne: true, canFill: false });
   });
 });
 

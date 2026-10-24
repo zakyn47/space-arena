@@ -25,10 +25,13 @@ import {
   type BulletEntity,
   type CrateEntity,
   type OreEntity,
+  type Projectile,
+  type RocketEntity,
   type ShipEntity,
   type WorldEntity,
 } from './entities';
 import { distanceToSegment } from './geometry';
+import { acquireTarget, launchRocket, steerRocket, tryLaunch } from './Rockets';
 import { SpatialGrid } from './SpatialGrid';
 
 export interface WorldOptions {
@@ -58,6 +61,7 @@ function outOfBounds(x: number, y: number): boolean {
 export class World {
   private readonly ships = new Map<number, ShipEntity>();
   private readonly bullets = new Map<number, BulletEntity>();
+  private readonly rockets = new Map<number, RocketEntity>();
   private readonly asteroids = new Map<number, AsteroidEntity>();
   private readonly orePickups = new Map<number, OreEntity>();
   private readonly crates = new Map<number, CrateEntity>();
@@ -151,9 +155,10 @@ export class World {
     this.ticks += 1;
     const events: TickEvents = { died: [], departed: [] };
     this.stepShips(dt);
-    this.stepBullets(dt);
+    this.stepProjectiles(dt);
     this.rebuildGrid();
-    this.resolveBulletHits();
+    this.resolveProjectileHits(this.bullets);
+    this.resolveProjectileHits(this.rockets);
     this.collectPickups();
     this.resolveDeaths(events.died);
     this.expirePickups();
@@ -187,58 +192,75 @@ export class World {
       for (const bullet of fireWeapons(ship, dt, inSafeZone, this.elapsed, () => this.allocateId())) {
         this.bullets.set(bullet.id, bullet);
       }
+      if (tryLaunch(ship, dt, inSafeZone)) {
+        const rocket = launchRocket(ship, this.allocateId(), this.elapsed, acquireTarget(ship, this.ships.values()));
+        this.rockets.set(rocket.id, rocket);
+      }
     }
   }
 
-  private stepBullets(dt: number): void {
+  private stepProjectiles(dt: number): void {
     for (const bullet of this.bullets.values()) {
       bullet.prevX = bullet.x;
       bullet.prevY = bullet.y;
       bullet.x += bullet.vx * dt;
       bullet.y += bullet.vy * dt;
-      const expired =
-        bullet.expiresAt <= this.elapsed || outOfBounds(bullet.x, bullet.y) || zoneAt(bullet.x, bullet.y) !== undefined;
-      if (expired) this.bullets.delete(bullet.id);
     }
+    for (const rocket of this.rockets.values()) {
+      steerRocket(rocket, rocket.targetId === null ? undefined : this.ships.get(rocket.targetId), dt);
+    }
+    for (const collection of [this.bullets, this.rockets]) {
+      for (const projectile of collection.values()) {
+        if (this.isExpired(projectile)) collection.delete(projectile.id);
+      }
+    }
+  }
+
+  private isExpired(projectile: Projectile): boolean {
+    return (
+      projectile.expiresAt <= this.elapsed ||
+      outOfBounds(projectile.x, projectile.y) ||
+      zoneAt(projectile.x, projectile.y) !== undefined
+    );
   }
 
   private rebuildGrid(): void {
     this.grid.clear();
-    for (const collection of [this.ships, this.bullets, this.asteroids, this.orePickups, this.crates]) {
+    for (const collection of [this.ships, this.bullets, this.rockets, this.asteroids, this.orePickups, this.crates]) {
       for (const entity of collection.values()) this.grid.insert(entity);
     }
   }
 
-  private resolveBulletHits(): void {
-    for (const bullet of this.bullets.values()) {
-      const travel = Math.hypot(bullet.x - bullet.prevX, bullet.y - bullet.prevY);
+  private resolveProjectileHits<T extends Projectile>(collection: Map<number, T>): void {
+    for (const projectile of collection.values()) {
+      const travel = Math.hypot(projectile.x - projectile.prevX, projectile.y - projectile.prevY);
       const target = this.grid
-        .queryRadius(bullet.x, bullet.y, HIT_QUERY_RADIUS + travel)
-        .find((entity) => this.isHit(bullet, entity));
+        .queryRadius(projectile.x, projectile.y, HIT_QUERY_RADIUS + travel)
+        .find((entity) => this.isHit(projectile, entity));
       if (!target) continue;
-      this.bullets.delete(bullet.id);
-      this.applyBulletTo(target, bullet);
+      collection.delete(projectile.id);
+      this.applyProjectileTo(target, projectile);
     }
   }
 
-  private isHit(bullet: BulletEntity, entity: WorldEntity): boolean {
+  private isHit(projectile: Projectile, entity: WorldEntity): boolean {
     switch (entity.kind) {
       case 'ship':
-        return entity.id !== bullet.ownerId && this.sweptDistance(bullet, entity) <= SHIP_RADIUS;
+        return entity.id !== projectile.ownerId && this.sweptDistance(projectile, entity) <= SHIP_RADIUS;
       case 'asteroid':
-        return this.asteroids.has(entity.id) && this.sweptDistance(bullet, entity) <= entity.radius;
+        return this.asteroids.has(entity.id) && this.sweptDistance(projectile, entity) <= entity.radius;
       default:
         return false;
     }
   }
 
-  private sweptDistance(bullet: BulletEntity, entity: WorldEntity): number {
-    return distanceToSegment(entity.x, entity.y, bullet.prevX, bullet.prevY, bullet.x, bullet.y);
+  private sweptDistance(projectile: Projectile, entity: WorldEntity): number {
+    return distanceToSegment(entity.x, entity.y, projectile.prevX, projectile.prevY, projectile.x, projectile.y);
   }
 
-  private applyBulletTo(entity: WorldEntity, bullet: BulletEntity): void {
-    if (entity.kind === 'ship') applyDamage(entity, bullet.damage, bullet.ownerId, this.elapsed);
-    if (entity.kind === 'asteroid') this.damageAsteroid(entity, bullet.damage);
+  private applyProjectileTo(entity: WorldEntity, projectile: Projectile): void {
+    if (entity.kind === 'ship') applyDamage(entity, projectile.damage, projectile.ownerId, this.elapsed);
+    if (entity.kind === 'asteroid') this.damageAsteroid(entity, projectile.damage);
   }
 
   private damageAsteroid(asteroid: AsteroidEntity, damage: number): void {

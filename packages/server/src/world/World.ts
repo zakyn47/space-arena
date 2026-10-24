@@ -13,10 +13,12 @@ import {
   stepMotion,
   zoneAt,
   type ShipInput,
+  type UpgradeLine,
 } from '@arena/shared';
 import type { ShipRecord } from '../db/PlayerRepository';
 import { randomAsteroid, scatterOre, type AsteroidFields } from './AsteroidField';
 import { applyHit, bountyFor, tryFire, updateShield } from './Combat';
+import { buyUpgrade, updateDocking, type BuyOutcome } from './Economy';
 import {
   createShip,
   respawnShip,
@@ -136,6 +138,12 @@ export class World {
     return asteroid;
   }
 
+  buy(shipId: number, line: UpgradeLine): BuyOutcome {
+    const ship = this.ships.get(shipId);
+    if (!ship) return { ok: false, reason: 'not_docked' };
+    return buyUpgrade(ship, line);
+  }
+
   entitiesNear(x: number, y: number, radius: number): WorldEntity[] {
     return this.grid.queryRadius(x, y, radius);
   }
@@ -150,6 +158,7 @@ export class World {
     this.resolveBulletHits();
     this.collectPickups();
     this.resolveDeaths(events.died);
+    this.updateDocking(events.docked);
     this.expirePickups();
     this.maintainAsteroids();
     this.expireLingering(events.departed);
@@ -258,6 +267,12 @@ export class World {
     ship.carriedCredits += crate.credits;
     ship.ore = Math.min(ship.stats.cargoCapacity, ship.ore + crate.ore);
     this.crates.delete(crate.id);
+  }
+
+  private updateDocking(docked: ShipEntity[]): void {
+    for (const ship of this.ships.values()) {
+      if (updateDocking(ship, this.elapsed)) docked.push(ship);
+    }
   }
 
   private expirePickups(): void {

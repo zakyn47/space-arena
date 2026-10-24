@@ -10,23 +10,28 @@ const KEY_MAP: Readonly<Record<string, InputKey>> = {
   Space: 'fire',
   ShiftLeft: 'shield',
   ShiftRight: 'shield',
+  KeyR: 'rocket',
 };
+
+const DOCK_KEY = 'KeyE';
 
 export class InputSampler {
   private readonly pressed = new Set<InputKey>();
   private target: Window | null = null;
 
   private readonly onKeyDown = (event: KeyboardEvent): void => {
-    if (this.setKey(event.code, true)) event.preventDefault();
+    if (this.handleKey(event.code, true, event.repeat)) event.preventDefault();
   };
 
   private readonly onKeyUp = (event: KeyboardEvent): void => {
-    if (this.setKey(event.code, false)) event.preventDefault();
+    if (this.handleKey(event.code, false, false)) event.preventDefault();
   };
 
   private readonly onBlur = (): void => {
     this.pressed.clear();
   };
+
+  constructor(private readonly onDock: () => void = () => {}) {}
 
   attach(target: Window): void {
     this.target = target;
@@ -43,7 +48,11 @@ export class InputSampler {
     this.pressed.clear();
   }
 
-  setKey(code: string, down: boolean): boolean {
+  handleKey(code: string, down: boolean, repeat: boolean): boolean {
+    if (code === DOCK_KEY) {
+      if (down && !repeat) this.onDock();
+      return true;
+    }
     const key = KEY_MAP[code];
     if (!key) return false;
     if (down) this.pressed.add(key);
@@ -60,6 +69,7 @@ export class InputSampler {
       right: this.pressed.has('right'),
       fire: this.pressed.has('fire'),
       shield: this.pressed.has('shield'),
+      rocket: this.pressed.has('rocket'),
     };
   }
 }

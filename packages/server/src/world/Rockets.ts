@@ -34,6 +34,7 @@ export function acquireTarget(shooter: ShipEntity, candidates: Iterable<ShipEnti
   let bestDistance = ROCKET_LOCK_RANGE;
   for (const ship of candidates) {
     if (ship.id === shooter.id || ship.docked) continue;
+    if (shooter.npc !== null && ship.npc !== null) continue;
     const distance = Math.hypot(ship.x - shooter.x, ship.y - shooter.y);
     if (distance > bestDistance) continue;
     const bearing = angleDelta(shooter.angle, headingTo(shooter.x, shooter.y, ship.x, ship.y));
@@ -64,6 +65,7 @@ export function launchRocket(ship: ShipEntity, id: number, time: number, target:
     angle: ship.angle,
     speed,
     damage: ROCKET_DAMAGE,
+    fromNpc: ship.npc !== null,
     expiresAt: time + ROCKET_LIFETIME,
   };
 }

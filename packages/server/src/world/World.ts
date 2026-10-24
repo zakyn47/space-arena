@@ -33,6 +33,7 @@ import {
 } from './entities';
 import { distanceToSegment } from './geometry';
 import { applyShopAction, type ShopOutcome } from './Shop';
+import { canMine, findMiningTarget, mineStep } from './Mining';
 import { acquireTarget, launchRocket, steerRocket, tryLaunch } from './Rockets';
 import { SpatialGrid } from './SpatialGrid';
 
@@ -105,8 +106,8 @@ export class World {
     return undefined;
   }
 
-  allShips(): ShipEntity[] {
-    return [...this.ships.values()];
+  playerShips(): ShipEntity[] {
+    return [...this.ships.values()].filter((ship) => ship.npc === null);
   }
 
   setInput(shipId: number, seq: number, input: ShipInput): void {
@@ -137,7 +138,7 @@ export class World {
   }
 
   addAsteroid(fields: AsteroidFields): AsteroidEntity {
-    const asteroid: AsteroidEntity = { kind: 'asteroid', id: this.allocateId(), ...fields };
+    const asteroid: AsteroidEntity = { kind: 'asteroid', id: this.allocateId(), ...fields, ore: fields.ore ?? fields.oreYield * 2 };
     this.asteroids.set(asteroid.id, asteroid);
     return asteroid;
   }
@@ -192,6 +193,7 @@ export class World {
         ship.vx = 0;
         ship.vy = 0;
         ship.shieldUp = false;
+        ship.miningTargetId = null;
         continue;
       }
       const inSafeZone = zoneAt(ship.x, ship.y) !== undefined;
@@ -204,7 +206,27 @@ export class World {
         const rocket = launchRocket(ship, this.allocateId(), this.elapsed, acquireTarget(ship, this.ships.values()));
         this.rockets.set(rocket.id, rocket);
       }
+      this.stepMining(ship, dt, inSafeZone);
     }
+  }
+
+  private stepMining(ship: ShipEntity, dt: number, inSafeZone: boolean): void {
+    if (!canMine(ship, inSafeZone)) {
+      ship.miningTargetId = null;
+      ship.miningProgress = 0;
+      return;
+    }
+    const nearby = this.grid
+      .queryRadius(ship.x, ship.y, ship.stats.miningRange + ASTEROID_MAX_RADIUS)
+      .filter((entity): entity is AsteroidEntity => entity.kind === 'asteroid' && this.asteroids.has(entity.id));
+    const target = findMiningTarget(ship, nearby);
+    if (!target) {
+      ship.miningTargetId = null;
+      ship.miningProgress = 0;
+      return;
+    }
+    mineStep(ship, target, dt);
+    if (target.ore <= 0) this.asteroids.delete(target.id);
   }
 
   private stepProjectiles(dt: number): void {
@@ -254,7 +276,7 @@ export class World {
   private isHit(projectile: Projectile, entity: WorldEntity): boolean {
     switch (entity.kind) {
       case 'ship':
-        return entity.id !== projectile.ownerId && this.sweptDistance(projectile, entity) <= SHIP_RADIUS;
+        return entity.id !== projectile.ownerId && !(projectile.fromNpc && entity.npc !== null) && this.sweptDistance(projectile, entity) <= SHIP_RADIUS;
       case 'asteroid':
         return this.asteroids.has(entity.id) && this.sweptDistance(projectile, entity) <= entity.radius;
       default:
@@ -283,6 +305,7 @@ export class World {
 
   private collectPickups(): void {
     for (const ship of this.ships.values()) {
+      if (ship.npc !== null) continue;
       for (const entity of this.grid.queryRadius(ship.x, ship.y, PICKUP_RADIUS)) {
         if (entity.kind === 'ore') this.collectOre(ship, entity);
         if (entity.kind === 'crate') this.collectCrate(ship, entity);
@@ -321,7 +344,7 @@ export class World {
     for (const ship of this.ships.values()) {
       if (ship.hull > 0) continue;
       const killer = ship.lastHitBy === null ? undefined : this.ships.get(ship.lastHitBy);
-      if (killer) killer.carriedCredits += bountyFor(ship.build);
+      if (killer && killer.npc === null && ship.npc === null) killer.carriedCredits += bountyFor(ship.build);
       this.dropCrate(ship);
       const zone = nearestZone(ship.x, ship.y);
       respawnShip(ship, zone.x, zone.y);

@@ -16,6 +16,8 @@ export function toEntityState(entity: WorldEntity): EntityState {
         angle: entity.angle,
         shieldUp: entity.shieldUp,
         hullId: entity.build.hullId,
+        npc: entity.npc,
+        miningTargetId: entity.miningTargetId,
       };
     case 'bullet':
       return { kind: 'bullet', id: entity.id, x: entity.x, y: entity.y, vx: entity.vx, vy: entity.vy, weaponId: entity.weaponId, mk: entity.mk };
@@ -26,7 +28,7 @@ export function toEntityState(entity: WorldEntity): EntityState {
     case 'ore':
       return { kind: 'ore', id: entity.id, x: entity.x, y: entity.y };
     case 'crate':
-      return { kind: 'crate', id: entity.id, x: entity.x, y: entity.y };
+      return { kind: 'crate', id: entity.id, x: entity.x, y: entity.y, hasGear: false };
   }
 }
 
@@ -53,6 +55,8 @@ export function toSelfState(ship: ShipEntity, time: number): SelfState {
     docked: ship.docked,
     canDock: canDock(ship, time),
     dockCooldown: dockCooldownRemaining(ship, time),
+    salvage: ship.salvage,
+    miningTargetId: ship.miningTargetId,
   };
 }
 

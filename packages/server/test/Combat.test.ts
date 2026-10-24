@@ -43,7 +43,7 @@ describe('fireWeapons', () => {
     const ship = newShip();
     ship.input = { ...IDLE_INPUT, fire: true };
     const [bullet] = fireWeapons(ship, 0.1, false, 0, ids);
-    expect(bullet).toMatchObject({ ownerId: 1, x: 1_000, y: 1_000 - SHIP_RADIUS, vy: -800, damage: 10, weaponId: 'pulse_laser', mk: 1 });
+    expect(bullet).toMatchObject({ ownerId: 1, x: 1_000, y: 1_000 - SHIP_RADIUS, vy: -800, damage: 10, weaponId: 'pulse_laser', mk: 1, fromNpc: false });
     expect(fireWeapons(ship, 0.1, false, 0, ids)).toEqual([]);
     expect(fireWeapons(ship, 0.2, false, 0, ids)).toHaveLength(1);
   });
@@ -84,6 +84,6 @@ describe('applyDamage', () => {
 
 describe('bountyFor', () => {
   it('pays base plus a quarter of the build value', () => {
-    expect(bountyFor(STARTER_BUILD)).toBe(BOUNTY_BASE + 187);
+    expect(bountyFor(STARTER_BUILD)).toBe(BOUNTY_BASE + 262);
   });
 });

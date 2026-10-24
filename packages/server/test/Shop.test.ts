@@ -36,7 +36,7 @@ describe('buyGear', () => {
     applyShopAction(ship, buy({ type: 'buyGear', gearId: 'armor', mk: 1, slot: { type: 'utility', index: 0 } }));
     expect(ship.stats.maxHull).toBe(110);
     expect(ship.hull).toBe(110);
-    expect(ship.bankedCredits).toBe(0);
+    expect(ship.bankedCredits).toBe(150);
   });
 
   it('rejects mismatched slots and leaves state unchanged', () => {

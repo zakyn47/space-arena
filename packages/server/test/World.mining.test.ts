@@ -65,3 +65,16 @@ describe('World mining', () => {
     expect(carol.carriedCredits).toBe(50);
   });
 });
+
+describe('World mining laser', () => {
+  it('drills ore into cargo and crumbles an empty asteroid', () => {
+    const world = new World({ asteroidTarget: 0 });
+    const ship = world.addShip(1, 'alice', shipRecord(OPEN_SPACE.x, OPEN_SPACE.y, 1));
+    world.addAsteroid({ x: OPEN_SPACE.x, y: OPEN_SPACE.y - 150, radius: 40, hp: 80, oreYield: 1, variant: 1 });
+    world.setInput(ship.id, 1, { ...IDLE_INPUT, mine: true });
+    ticks(world, Math.ceil(2.5 / TICK_DT));
+    expect(ship.ore).toBe(2);
+    expect(count(world, 'asteroid')).toBe(0);
+    expect(count(world, 'ore')).toBe(0);
+  });
+});

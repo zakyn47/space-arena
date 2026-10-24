@@ -87,5 +87,8 @@ export function applyShopAction(ship: ShipEntity, action: ShopAction): ShopOutco
       return sellGear(ship, action.slot);
     case 'buyRockets':
       return buyRockets(ship, action.count);
+    case 'installSalvage':
+    case 'sellSalvage':
+      return fail('unknown_item');
   }
 }

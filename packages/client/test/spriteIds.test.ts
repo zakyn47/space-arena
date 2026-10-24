@@ -13,6 +13,12 @@ describe('spriteIdFor', () => {
     expect(spriteIdFor({ kind: 'ship', id: 1, name: 'Raider', x: 0, y: 0, vx: 0, vy: 0, angle: 0, shieldUp: false, hullId: 'scout', npc: 'raider', miningTargetId: null })).toBe('pirate_raider');
   });
 
+  it('maps the leviathan, orbs and their death effect', () => {
+    expect(spriteIdFor({ kind: 'ship', id: 1, name: 'Void Leviathan', x: 0, y: 0, vx: 0, vy: 0, angle: 0, shieldUp: false, hullId: 'scout', npc: 'leviathan', miningTargetId: null, health: 1 })).toBe('leviathan');
+    expect(spriteIdFor({ kind: 'orb', id: 2, x: 0, y: 0, vx: 0, vy: 0 })).toBe('plasma_orb');
+    expect(vanishEffectFor('leviathan')).toBe('leviathan_death');
+  });
+
   it('maps bullets by weapon and mk', () => {
     expect(bullet('pulse_laser', 1)).toBe('bullet_t0');
     expect(bullet('pulse_laser', 2)).toBe('bullet_t2');

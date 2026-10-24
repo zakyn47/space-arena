@@ -7,7 +7,7 @@ import { spriteIdFor, vanishEffectFor } from './spriteIds';
 const STARFIELD_PARALLAX = 0.3;
 const EXPLOSION_VISIBLE_FRACTION = 0.8;
 const LABEL_OFFSET_Y = -44;
-const MINE_BLINK_SECONDS = 0.8;
+const ANIMATIONS: Readonly<Record<string, number>> = { space_mine: 0.8, leviathan: 1.6, plasma_orb: 0.3 };
 
 type LayerName = 'zones' | 'ground' | 'beams' | 'ships' | 'bullets' | 'effects' | 'labels';
 
@@ -27,6 +27,8 @@ interface EntityView {
   readonly container: Container;
   readonly shield: Container | null;
   readonly label: Text | null;
+  readonly health: Graphics | null;
+  readonly labelOffset: number;
   x: number;
   y: number;
 }
@@ -109,7 +111,7 @@ export class Renderer {
   showHits(hits: readonly HitEvent[], delaySeconds: number): void {
     for (const hit of hits) {
       const view = this.views.get(hit.shipId);
-      if (view) this.effects.hit({ ship: view.container, angle: hit.angle, shield: hit.shield, delaySeconds });
+      if (view) this.effects.hit({ ship: view.container, angle: hit.angle, shield: hit.shield, offset: view.spriteId === 'leviathan' ? 70 : 18, delaySeconds });
     }
   }
 
@@ -146,7 +148,8 @@ export class Renderer {
     view.container.position.set(entity.x, entity.y);
     if ('angle' in entity) view.container.rotation = entity.angle;
     if (view.shield && entity.kind === 'ship') view.shield.visible = entity.shieldUp;
-    view.label?.position.set(entity.x, entity.y + LABEL_OFFSET_Y);
+    view.label?.position.set(entity.x, entity.y + view.labelOffset);
+    if (view.health && entity.kind === 'ship') this.drawHealth(view.health, entity.x, entity.y + view.labelOffset + 12, entity.health ?? 1);
   }
 
   private syncBeams(entities: readonly EntityState[]): void {
@@ -185,10 +188,12 @@ export class Renderer {
       trail.position.set(0, 16);
       container.addChild(trail);
     }
-    const body = entity.kind === 'spaceMine' ? this.sprites.animate(spriteId, MINE_BLINK_SECONDS, true) : this.sprites.create(spriteId);
+    const loop = ANIMATIONS[spriteId];
+    const body = loop === undefined ? this.sprites.create(spriteId) : this.sprites.animate(spriteId, loop, true);
     if (entity.kind === 'asteroid') body.scale.set((entity.radius * 2) / this.sprites.size(spriteId).width);
     container.addChild(body);
-    const shield = entity.kind === 'ship' ? this.sprites.create('shield_bubble') : null;
+    const isLeviathan = entity.kind === 'ship' && entity.npc === 'leviathan';
+    const shield = entity.kind === 'ship' && !isLeviathan ? this.sprites.create('shield_bubble') : null;
     if (shield) container.addChild(shield);
     if (entity.kind === 'crate' && entity.hasGear) {
       const badge = this.sprites.create('icon_salvage');
@@ -198,14 +203,17 @@ export class Renderer {
     }
     const label = this.createLabel(entity);
     this.layers[LAYER_FOR[entity.kind]].addChild(container);
-    const view: EntityView = { spriteId, container, shield, label, x: entity.x, y: entity.y };
+    const health = isLeviathan ? new Graphics() : null;
+    if (health) this.layers.labels.addChild(health);
+    const labelOffset = isLeviathan ? -(this.sprites.size(spriteId).height / 2 + 14) : LABEL_OFFSET_Y;
+    const view: EntityView = { spriteId, container, shield, label, health, labelOffset, x: entity.x, y: entity.y };
     this.views.set(entity.id, view);
     return view;
   }
 
   private createLabel(entity: EntityState): Text | null {
     if (entity.kind !== 'ship' || !entity.npc) return null;
-    const label = new Text({ text: NPC_NAMES[entity.npc], style: { fill: 0xff5a4f, fontSize: 12, fontFamily: 'system-ui' } });
+    const label = new Text({ text: NPC_NAMES[entity.npc], style: { fill: entity.npc === 'leviathan' ? 0xc04bff : 0xff5a4f, fontSize: 12, fontFamily: 'system-ui' } });
     label.anchor.set(0.5);
     this.layers.labels.addChild(label);
     return label;
@@ -214,6 +222,12 @@ export class Renderer {
   private destroyView(view: EntityView | undefined): void {
     view?.container.destroy({ children: true });
     view?.label?.destroy();
+    view?.health?.destroy();
+  }
+
+  private drawHealth(bar: Graphics, x: number, y: number, health: number): void {
+    const width = 120;
+    bar.clear().rect(x - width / 2, y, width, 6).fill({ color: 0x1d1030, alpha: 0.85 }).rect(x - width / 2, y, width * health, 6).fill(0xc04bff);
   }
 
   private removeMissing(seen: ReadonlySet<number>): void {

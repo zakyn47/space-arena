@@ -37,12 +37,15 @@ describe('hudLines', () => {
 describe('minimapDots', () => {
   it('scales radar blips to the minimap and colors them by kind', () => {
     expect(minimapDots([{ x: 10_000, y: 5_000, kind: 'player' }, { x: 0, y: 20_000, kind: 'pirate' }], 160 / 20_000)).toEqual([
-      { x: 80, y: 40, color: '#ffffff' },
-      { x: 0, y: 160, color: '#ff4d4d' },
+      { x: 80, y: 40, color: '#ffffff', size: 2 },
+      { x: 0, y: 160, color: '#ff4d4d', size: 2 },
     ]);
   });
-});
 
+  it('draws the boss larger and purple', () => {
+    expect(minimapDots([{ x: 10_000, y: 10_000, kind: 'boss' }], 160 / 20_000)).toEqual([{ x: 80, y: 80, color: '#c04bff', size: 6 }]);
+  });
+});
 
 describe('abilityStates', () => {
   it('shows the existing key bindings and active shield and mining states', () => {

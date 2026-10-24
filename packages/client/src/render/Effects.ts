@@ -3,7 +3,6 @@ import type { SpriteFactory } from './SpriteFactory';
 
 const EXPLOSION_SECONDS = 0.6;
 const HIT_SECONDS = 0.3;
-const HULL_HIT_OFFSET = 18;
 
 interface ActiveEffect {
   readonly view: Container;
@@ -17,6 +16,7 @@ export interface HitEffect {
   readonly ship: Container;
   readonly angle: number;
   readonly shield: boolean;
+  readonly offset: number;
   readonly delaySeconds: number;
 }
 
@@ -37,12 +37,12 @@ export class Effects {
 
   // Hits ride on the ship's container so they stay on the hull while it flies; the delay lines
   // them up with the interpolated bullets, which are drawn slightly in the past.
-  hit({ ship, angle, shield, delaySeconds }: HitEffect): void {
+  hit({ ship, angle, shield, offset: hullOffset, delaySeconds }: HitEffect): void {
     const view = this.sprites.animate(shield ? 'shield_impact' : 'hull_hit', HIT_SECONDS, false);
     const attach = (): void => {
       if (ship.destroyed) return;
       const local = angle - ship.rotation;
-      const offset = shield ? 0 : HULL_HIT_OFFSET;
+      const offset = shield ? 0 : hullOffset;
       view.rotation = local;
       view.position.set(Math.sin(local) * offset, -Math.cos(local) * offset);
       ship.addChild(view);

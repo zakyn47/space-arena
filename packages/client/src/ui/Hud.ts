@@ -1,7 +1,7 @@
 import { DOCK_RANGE, ORDNANCE_NAMES, SALVAGE_CAPACITY, captainLevel, captainPoints, captainNeedsTraining, statsFor, type Ordnance, type RadarBlip, type SafeZone, type SelfState } from '@arena/shared';
 
 const RADAR_COLORS: Readonly<Record<RadarBlip['kind'], string>> = { player: '#ffffff', pirate: '#ff4d4d', boss: '#c04bff' };
-const RADAR_DOT = 2;
+const RADAR_DOT_SIZES: Readonly<Record<RadarBlip['kind'], number>> = { player: 2, pirate: 2, boss: 6 };
 
 export const ORDNANCE_ICONS: Readonly<Record<Ordnance, string>> = { rockets: '/ui/icon_rocket.png', mines: '/ui/icon_mine.png' };
 const ORDNANCE_HINTS: Readonly<Record<Ordnance, string>> = { rockets: 'Hold to fire', mines: 'Hold to drop' };
@@ -10,10 +10,11 @@ export interface MinimapDot {
   readonly x: number;
   readonly y: number;
   readonly color: string;
+  readonly size: number;
 }
 
 export function minimapDots(blips: readonly RadarBlip[], scale: number): MinimapDot[] {
-  return blips.map((blip) => ({ x: blip.x * scale, y: blip.y * scale, color: RADAR_COLORS[blip.kind] }));
+  return blips.map((blip) => ({ x: blip.x * scale, y: blip.y * scale, color: RADAR_COLORS[blip.kind], size: RADAR_DOT_SIZES[blip.kind] }));
 }
 
 export function dockPrompt(self: SelfState, inRange: boolean): string | null {
@@ -174,7 +175,7 @@ export class Hud {
     }
     for (const dot of minimapDots(this.radar, scale)) {
       context.fillStyle = dot.color;
-      context.fillRect(dot.x - RADAR_DOT / 2, dot.y - RADAR_DOT / 2, RADAR_DOT, RADAR_DOT);
+      context.fillRect(dot.x - dot.size / 2, dot.y - dot.size / 2, dot.size, dot.size);
     }
     context.fillStyle = '#5ec8ff';
     context.fillRect(self.x * scale - 2, self.y * scale - 2, 4, 4);

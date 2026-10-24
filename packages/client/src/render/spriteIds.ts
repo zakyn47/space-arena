@@ -7,6 +7,7 @@ function bulletSprite(weaponId: GearId, mk: Mk): string {
 }
 
 export function vanishEffectFor(spriteId: string): string | null {
+  if (spriteId === 'leviathan') return 'leviathan_death';
   if (spriteId === 'space_mine') return 'mine_explosion';
   return spriteId.startsWith('ship_') || spriteId.startsWith('pirate_') ? 'explosion' : null;
 }
@@ -14,6 +15,7 @@ export function vanishEffectFor(spriteId: string): string | null {
 export function spriteIdFor(entity: EntityState): string {
   switch (entity.kind) {
     case 'ship':
+      if (entity.npc === 'leviathan') return 'leviathan';
       return entity.npc ? `pirate_${entity.npc}` : `ship_${entity.hullId}`;
     case 'bullet':
       return bulletSprite(entity.weaponId, entity.mk);

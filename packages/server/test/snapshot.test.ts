@@ -1,7 +1,7 @@
 import { STARTER_BUILD } from '@arena/shared';
 import { describe, expect, it } from 'vitest';
 import { buildSnapshot, toEntityState } from '../src/net/snapshot';
-import { createShip, type WorldEntity } from '../src/world/entities';
+import { createPirateShip, createShip, type WorldEntity } from '../src/world/entities';
 import { shipRecord } from './support/fixtures';
 
 describe('snapshot', () => {
@@ -30,5 +30,16 @@ describe('snapshot', () => {
   it('does not leak private fields of other ships', () => {
     const other = createShip(2, 2, 'bob', shipRecord(30, 40, 2));
     expect(Object.keys(toEntityState(other))).not.toContain('rockets');
+  });
+
+  it('marks pirates, mining targets, salvage and crate gear', () => {
+    const self = createShip(1, 1, 'alice', { ...shipRecord(10, 20, 1), salvage: [{ gearId: 'armor', mk: 1 }] });
+    self.miningTargetId = 7;
+    const pirate = createPirateShip(5, 'marauder', 30, 40);
+    const crate: WorldEntity = { kind: 'crate', id: 6, x: 0, y: 0, ore: 0, credits: 0, gear: { gearId: 'armor', mk: 1 }, expiresAt: 9 };
+    const snapshot = buildSnapshot(self, [pirate, crate], 1, 0);
+    expect(snapshot.self).toMatchObject({ salvage: [{ gearId: 'armor', mk: 1 }], miningTargetId: 7 });
+    expect(snapshot.entities[0]).toMatchObject({ kind: 'ship', npc: 'marauder', name: 'Marauder', hullId: 'fighter' });
+    expect(snapshot.entities[1]).toEqual({ kind: 'crate', id: 6, x: 0, y: 0, hasGear: true });
   });
 });

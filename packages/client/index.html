@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Space Arena</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <form id="login">
+      <h1>Space Arena</h1>
+      <input name="username" autocomplete="username" placeholder="Pilot name" required />
+      <input name="password" type="password" autocomplete="current-password" placeholder="Password" required />
+      <div class="actions">
+        <button type="submit" value="login">Log in</button>
+        <button type="submit" value="register">Register</button>
+      </div>
+      <p id="login-error" role="alert"></p>
+    </form>
+    <div id="game" hidden>
+      <div id="hud"></div>
+      <canvas id="minimap" width="160" height="160"></canvas>
+      <div id="shop" hidden></div>
+      <div id="toast" role="status"></div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

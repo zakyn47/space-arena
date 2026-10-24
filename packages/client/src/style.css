@@ -1,0 +1,22 @@
+:root { color-scheme: dark; font-family: system-ui, sans-serif; }
+html, body { margin: 0; height: 100%; background: #05060d; color: #e6f1ff; overflow: hidden; }
+#login { position: absolute; inset: 0; margin: auto; width: 280px; height: fit-content; display: grid; gap: 12px; padding: 24px; background: #0d1224; border: 1px solid #1f2a4a; border-radius: 8px; }
+#login[hidden] { display: none; }
+#login h1 { margin: 0 0 8px; font-size: 22px; text-align: center; color: #5ec8ff; }
+#login input, #login button { padding: 8px 10px; border-radius: 4px; border: 1px solid #2a3a66; background: #070b18; color: inherit; font: inherit; }
+#login button { cursor: pointer; background: #12305a; }
+#login .actions { display: flex; gap: 8px; }
+#login .actions button { flex: 1; }
+#login-error { min-height: 1em; margin: 0; color: #ff7a7a; font-size: 13px; }
+#game { position: absolute; inset: 0; }
+#game canvas:first-child { display: block; }
+#hud { position: absolute; top: 12px; left: 12px; font-size: 14px; line-height: 1.5; text-shadow: 0 1px 2px #000; pointer-events: none; }
+#minimap { position: absolute; top: 12px; right: 12px; background: rgba(5, 6, 13, 0.7); border: 1px solid #1f2a4a; }
+#shop { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); display: grid; gap: 6px; padding: 12px 16px; background: rgba(13, 18, 36, 0.92); border: 1px solid #2a3a66; border-radius: 8px; min-width: 360px; }
+#shop[hidden] { display: none; }
+#shop .row { display: grid; grid-template-columns: 32px 1fr auto auto; gap: 10px; align-items: center; }
+#shop img { width: 32px; height: 32px; }
+#shop button { padding: 4px 10px; border-radius: 4px; border: 1px solid #2a3a66; background: #12305a; color: inherit; cursor: pointer; }
+#shop button:disabled { opacity: 0.4; cursor: default; }
+#shop .result { min-height: 1em; font-size: 13px; color: #ffc83c; }
+#toast { position: absolute; top: 40%; left: 50%; transform: translateX(-50%); font-size: 24px; color: #ff9a3c; text-shadow: 0 2px 4px #000; pointer-events: none; }

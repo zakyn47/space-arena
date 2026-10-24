@@ -1,0 +1,31 @@
+{
+  "sprites": [
+    {"id": "ship_t0", "file": "ships/ship_t0.png", "width": 64, "height": 64, "anchor": [0.5, 0.5], "frames": 1},
+    {"id": "ship_t1", "file": "ships/ship_t1.png", "width": 64, "height": 64, "anchor": [0.5, 0.5], "frames": 1},
+    {"id": "ship_t2", "file": "ships/ship_t2.png", "width": 64, "height": 64, "anchor": [0.5, 0.5], "frames": 1},
+    {"id": "ship_t3", "file": "ships/ship_t3.png", "width": 64, "height": 64, "anchor": [0.5, 0.5], "frames": 1},
+    {"id": "ship_t4", "file": "ships/ship_t4.png", "width": 64, "height": 64, "anchor": [0.5, 0.5], "frames": 1},
+    {"id": "ship_t5", "file": "ships/ship_t5.png", "width": 64, "height": 64, "anchor": [0.5, 0.5], "frames": 1},
+    {"id": "bullet_t0", "file": "bullets/bullet_t0.png", "width": 16, "height": 16, "anchor": [0.5, 0.5], "frames": 1},
+    {"id": "bullet_t1", "file": "bullets/bullet_t1.png", "width": 16, "height": 16, "anchor": [0.5, 0.5], "frames": 1},
+    {"id": "bullet_t2", "file": "bullets/bullet_t2.png", "width": 16, "height": 16, "anchor": [0.5, 0.5], "frames": 1},
+    {"id": "bullet_t3", "file": "bullets/bullet_t3.png", "width": 16, "height": 16, "anchor": [0.5, 0.5], "frames": 1},
+    {"id": "bullet_t4", "file": "bullets/bullet_t4.png", "width": 16, "height": 16, "anchor": [0.5, 0.5], "frames": 1},
+    {"id": "bullet_t5", "file": "bullets/bullet_t5.png", "width": 16, "height": 16, "anchor": [0.5, 0.5], "frames": 1},
+    {"id": "shield_bubble", "file": "fx/shield_bubble.png", "width": 96, "height": 96, "anchor": [0.5, 0.5], "frames": 1},
+    {"id": "explosion", "file": "fx/explosion.png", "width": 512, "height": 64, "anchor": [0.5, 0.5], "frames": 8},
+    {"id": "asteroid_1", "file": "world/asteroid_1.png", "width": 128, "height": 128, "anchor": [0.5, 0.5], "frames": 1},
+    {"id": "asteroid_2", "file": "world/asteroid_2.png", "width": 128, "height": 128, "anchor": [0.5, 0.5], "frames": 1},
+    {"id": "asteroid_3", "file": "world/asteroid_3.png", "width": 128, "height": 128, "anchor": [0.5, 0.5], "frames": 1},
+    {"id": "asteroid_4", "file": "world/asteroid_4.png", "width": 128, "height": 128, "anchor": [0.5, 0.5], "frames": 1},
+    {"id": "ore_pickup", "file": "world/ore_pickup.png", "width": 24, "height": 24, "anchor": [0.5, 0.5], "frames": 1},
+    {"id": "loot_crate", "file": "world/loot_crate.png", "width": 32, "height": 32, "anchor": [0.5, 0.5], "frames": 1},
+    {"id": "safe_zone_station", "file": "world/safe_zone_station.png", "width": 256, "height": 256, "anchor": [0.5, 0.5], "frames": 1},
+    {"id": "starfield_tile", "file": "world/starfield_tile.png", "width": 512, "height": 512, "anchor": [0, 0], "frames": 1},
+    {"id": "icon_hull", "file": "ui/icon_hull.png", "width": 48, "height": 48, "anchor": [0.5, 0.5], "frames": 1},
+    {"id": "icon_engine", "file": "ui/icon_engine.png", "width": 48, "height": 48, "anchor": [0.5, 0.5], "frames": 1},
+    {"id": "icon_weapon", "file": "ui/icon_weapon.png", "width": 48, "height": 48, "anchor": [0.5, 0.5], "frames": 1},
+    {"id": "icon_shield", "file": "ui/icon_shield.png", "width": 48, "height": 48, "anchor": [0.5, 0.5], "frames": 1},
+    {"id": "icon_cargo", "file": "ui/icon_cargo.png", "width": 48, "height": 48, "anchor": [0.5, 0.5], "frames": 1}
+  ]
+}

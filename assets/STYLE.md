@@ -1,0 +1,15 @@
+# Space Arena art style
+
+- Top-down 2D, orthographic. No perspective tilt.
+- Ships face UP (nose toward the top edge), centered in the canvas, with ~4 px transparent margin.
+- Transparent PNG background for everything except `starfield_tile`.
+- Look: clean sci-fi, crisp shapes, subtle panel lines, soft rim light from top-left. No text, no logos.
+- Palette: hulls cool steel greys; player accent cyan `#5EC8FF`; engines glow orange `#FF9A3C`; shields translucent cyan; ore teal-green `#3CFFB0`; loot crate gold `#FFC83C`.
+- Ship tiers t0–t5: same silhouette family, each tier larger in visual detail, more armor plates and weapon hardpoints. t0 = small scrappy fighter, t5 = heavy elite gunship. All fit 64×64.
+- Bullets t0–t5: glowing energy bolt, pointing up; color shifts cyan → violet → white-hot with tier.
+- Asteroids 1–4: four distinct rocky shapes, grey-brown, roughly round, filling ~90% of 128×128.
+- `explosion`: horizontal spritesheet, 8 frames of 64×64, flash → fireball → smoke dissipating.
+- `shield_bubble`: translucent hex-pattern sphere, ~40% alpha center, brighter rim.
+- `safe_zone_station`: circular space station seen from above, docking ring, green beacon lights.
+- `starfield_tile`: seamless tileable deep-space background, dark navy `#05060D` with sparse stars of varied brightness. Must tile without visible seams.
+- UI icons 48×48: flat glyph style, white with cyan accent: hull = armor plate, engine = thruster flame, weapon = crosshair, shield = shield emblem, cargo = crate.

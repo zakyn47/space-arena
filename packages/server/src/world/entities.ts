@@ -6,12 +6,14 @@ import {
   type Build,
   type GearId,
   type Mk,
+  PIRATE_NAMES,
   type InstalledGear,
   type PirateTier,
   type ShipInput,
   type ShipStats,
 } from '@arena/shared';
 import type { ShipRecord } from '../db/PlayerRepository';
+import { PIRATE_SPECS } from './pirates/tiers';
 
 export interface QueuedInput {
   readonly seq: number;
@@ -161,6 +163,21 @@ export function createShip(id: number, accountId: number, name: string, record: 
     miningProgress: 0,
     miningTargetId: null,
   };
+}
+
+export function createPirateShip(id: number, tier: PirateTier, x: number, y: number): ShipEntity {
+  const spec = PIRATE_SPECS[tier];
+  const ship = createShip(id, -id, PIRATE_NAMES[tier], {
+    accountId: -id,
+    bankedCredits: 0,
+    build: spec.build,
+    rockets: spec.rockets,
+    salvage: [],
+    x,
+    y,
+  });
+  ship.npc = tier;
+  return ship;
 }
 
 export function respawnShip(ship: ShipEntity, x: number, y: number): void {

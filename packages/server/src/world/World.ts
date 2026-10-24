@@ -19,6 +19,7 @@ import { randomAsteroid, scatterOre, type AsteroidFields } from './AsteroidField
 import { applyDamage, bountyFor, fireWeapons, updateShield } from './Combat';
 import { toggleDock, type DockOutcome } from './Docking';
 import {
+  createPirateShip,
   createShip,
   respawnShip,
   type AsteroidEntity,
@@ -35,11 +36,13 @@ import { playerDeathCrates, takeCrate, type CrateDrop } from './Loot';
 import { applyShopAction, type ShopOutcome } from './Shop';
 import { canMine, findMiningTarget, mineStep } from './Mining';
 import { acquireTarget, launchRocket, steerRocket, tryLaunch } from './Rockets';
+import { DEFAULT_PATROLS, PirateDirector, type PatrolSpec, type PirateHost } from './pirates/PirateDirector';
 import { SpatialGrid } from './SpatialGrid';
 
 export interface WorldOptions {
   readonly rng?: () => number;
   readonly asteroidTarget?: number;
+  readonly pirates?: boolean | readonly PatrolSpec[];
 }
 
 export interface DeathEvent {
@@ -57,6 +60,11 @@ const INPUT_QUEUE_LIMIT = 4;
 const ASTEROID_SPAWNS_PER_TICK = 20;
 const HIT_QUERY_RADIUS = SHIP_RADIUS + ASTEROID_MAX_RADIUS;
 
+function patrolSpecs(option: WorldOptions['pirates']): readonly PatrolSpec[] | null {
+  if (option === true) return DEFAULT_PATROLS;
+  return option === false || option === undefined ? null : option;
+}
+
 function outOfBounds(x: number, y: number): boolean {
   return x < 0 || y < 0 || x > WORLD_SIZE || y > WORLD_SIZE;
 }
@@ -71,6 +79,16 @@ export class World {
   private readonly grid = new SpatialGrid<WorldEntity>(GRID_CELL_SIZE);
   private readonly rng: () => number;
   private readonly asteroidTarget: number;
+  private readonly director: PirateDirector | null;
+  private readonly pirateHost: PirateHost = {
+    spawnPirate: (tier, x, y) => {
+      const ship = createPirateShip(this.allocateId(), tier, x, y);
+      this.ships.set(ship.id, ship);
+      return ship;
+    },
+    ship: (id) => this.ships.get(id),
+    players: () => this.playerShips(),
+  };
   private nextId = 1;
   private elapsed = 0;
   private ticks = 0;
@@ -78,6 +96,8 @@ export class World {
   constructor(options: WorldOptions = {}) {
     this.rng = options.rng ?? Math.random;
     this.asteroidTarget = options.asteroidTarget ?? ASTEROID_TARGET_COUNT;
+    const patrols = patrolSpecs(options.pirates);
+    this.director = patrols && new PirateDirector(this.rng, patrols);
     while (this.asteroids.size < this.asteroidTarget) this.addAsteroid(randomAsteroid(this.rng));
   }
 
@@ -108,6 +128,10 @@ export class World {
 
   playerShips(): ShipEntity[] {
     return [...this.ships.values()].filter((ship) => ship.npc === null);
+  }
+
+  npcShips(): ShipEntity[] {
+    return [...this.ships.values()].filter((ship) => ship.npc !== null);
   }
 
   setInput(shipId: number, seq: number, input: ShipInput): void {
@@ -163,6 +187,7 @@ export class World {
     this.elapsed += dt;
     this.ticks += 1;
     const events: TickEvents = { died: [], departed: [] };
+    this.director?.step(this.pirateHost, this.elapsed);
     this.stepShips(dt);
     this.stepProjectiles(dt);
     this.rebuildGrid();
@@ -343,6 +368,11 @@ export class World {
   private resolveDeaths(died: DeathEvent[]): void {
     for (const ship of this.ships.values()) {
       if (ship.hull > 0) continue;
+      if (ship.npc !== null) {
+        this.spawnCrate(ship.x, ship.y, this.director?.pirateLoot(ship.npc) ?? { credits: 0, ore: 0, gear: null });
+        this.ships.delete(ship.id);
+        continue;
+      }
       const killer = ship.lastHitBy === null ? undefined : this.ships.get(ship.lastHitBy);
       if (killer && killer.npc === null && ship.npc === null) killer.carriedCredits += bountyFor(ship.build);
       this.dropCrate(ship);

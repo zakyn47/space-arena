@@ -1,0 +1,16 @@
+{
+  "name": "@arena/server",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@arena/shared": "workspace:*",
+    "argon2": "^0.41.1",
+    "better-sqlite3": "^11.3.0",
+    "ws": "^8.18.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.11",
+    "@types/ws": "^8.5.12"
+  }
+}

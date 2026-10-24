@@ -1,0 +1,6 @@
+{
+  "name": "@arena/scripts",
+  "private": true,
+  "type": "module",
+  "dependencies": { "@arena/shared": "workspace:*", "zod": "^3.23.8" }
+}

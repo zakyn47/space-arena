@@ -1,0 +1,27 @@
+{
+  "name": "space-arena",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@9.12.0",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "dev:server": "tsx watch packages/server/src/main.ts",
+    "dev:client": "pnpm --filter @arena/client dev",
+    "build": "pnpm --filter @arena/client build",
+    "start": "tsx packages/server/src/main.ts",
+    "test": "vitest run",
+    "typecheck": "tsc -p packages/shared && tsc -p packages/server && tsc -p packages/client && tsc -p scripts",
+    "lint": "eslint .",
+    "assets:check": "tsx scripts/validate-assets.ts"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.12.0",
+    "@types/node": "^22.7.0",
+    "eslint": "^9.12.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "typescript-eslint": "^8.8.0",
+    "vitest": "^2.1.0"
+  },
+  "pnpm": { "onlyBuiltDependencies": ["argon2", "better-sqlite3", "esbuild"] }
+}

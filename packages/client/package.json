@@ -1,0 +1,12 @@
+{
+  "name": "@arena/client",
+  "private": true,
+  "type": "module",
+  "scripts": { "dev": "vite", "build": "vite build" },
+  "dependencies": {
+    "@arena/shared": "workspace:*",
+    "pixi.js": "^8.5.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": { "vite": "^5.4.0" }
+}

@@ -1,4 +1,5 @@
 import type { EntityState, SelfState, SnapshotMessage } from '@arena/shared';
+import { canDock, dockCooldownRemaining } from '../world/Docking';
 import type { ShipEntity, WorldEntity } from '../world/entities';
 
 export function toEntityState(entity: WorldEntity): EntityState {
@@ -29,7 +30,7 @@ export function toEntityState(entity: WorldEntity): EntityState {
   }
 }
 
-export function toSelfState(ship: ShipEntity): SelfState {
+export function toSelfState(ship: ShipEntity, time: number): SelfState {
   return {
     id: ship.id,
     x: ship.x,
@@ -50,17 +51,17 @@ export function toSelfState(ship: ShipEntity): SelfState {
     rockets: ship.rockets,
     maxRockets: ship.stats.maxRockets,
     docked: ship.docked,
-    canDock: false,
-    dockCooldown: 0,
+    canDock: canDock(ship, time),
+    dockCooldown: dockCooldownRemaining(ship, time),
   };
 }
 
-export function buildSnapshot(self: ShipEntity, nearby: readonly WorldEntity[], tick: number): SnapshotMessage {
+export function buildSnapshot(self: ShipEntity, nearby: readonly WorldEntity[], tick: number, time: number): SnapshotMessage {
   return {
     type: 'snapshot',
     tick,
     lastSeq: self.lastSeq,
-    self: toSelfState(self),
+    self: toSelfState(self, time),
     entities: nearby.filter((entity) => entity.id !== self.id).map(toEntityState),
   };
 }

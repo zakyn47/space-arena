@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { spriteIdFor } from '../src/render/spriteIds';
+import { isShipSprite, spriteIdFor } from '../src/render/spriteIds';
 
 const bullet = (weaponId: 'pulse_laser' | 'heavy_cannon', mk: 1 | 2 | 3) =>
   spriteIdFor({ kind: 'bullet', id: 1, x: 0, y: 0, vx: 0, vy: 0, weaponId, mk });
@@ -25,5 +25,14 @@ describe('spriteIdFor', () => {
     expect(spriteIdFor({ kind: 'asteroid', id: 1, x: 0, y: 0, radius: 40, variant: 4 })).toBe('asteroid_4');
     expect(spriteIdFor({ kind: 'ore', id: 1, x: 0, y: 0 })).toBe('ore_pickup');
     expect(spriteIdFor({ kind: 'crate', id: 1, x: 0, y: 0, hasGear: false })).toBe('loot_crate');
+  });
+});
+
+describe('isShipSprite', () => {
+  it('is true for ship and pirate sprites only', () => {
+    expect(isShipSprite('ship_scout')).toBe(true);
+    expect(isShipSprite('pirate_raider')).toBe(true);
+    expect(isShipSprite('rocket')).toBe(false);
+    expect(isShipSprite('asteroid_1')).toBe(false);
   });
 });

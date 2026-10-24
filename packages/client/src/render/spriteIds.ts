@@ -6,6 +6,10 @@ function bulletSprite(weaponId: GearId, mk: Mk): string {
   return weaponId === 'heavy_cannon' ? 'bullet_cannon' : PULSE_SPRITES[mk];
 }
 
+export function isShipSprite(spriteId: string): boolean {
+  return spriteId.startsWith('ship_') || spriteId.startsWith('pirate_');
+}
+
 export function spriteIdFor(entity: EntityState): string {
   switch (entity.kind) {
     case 'ship':

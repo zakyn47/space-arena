@@ -2,7 +2,7 @@ import { PIRATE_NAMES, VIEW_RADIUS, type EntityState, type SafeZone } from '@are
 import { Application, Container, Graphics, Rectangle, Text, TilingSprite, type Texture } from 'pixi.js';
 import { Effects } from './Effects';
 import type { SpriteFactory } from './SpriteFactory';
-import { spriteIdFor } from './spriteIds';
+import { isShipSprite, spriteIdFor } from './spriteIds';
 
 const STARFIELD_PARALLAX = 0.3;
 const EXPLOSION_VISIBLE_FRACTION = 0.8;
@@ -202,7 +202,7 @@ export class Renderer {
   private removeMissing(seen: ReadonlySet<number>): void {
     for (const [id, view] of this.views) {
       if (seen.has(id)) continue;
-      if (view.spriteId.startsWith('ship_') && this.isWellInsideView(view)) this.effects.explode(view.x, view.y);
+      if (isShipSprite(view.spriteId) && this.isWellInsideView(view)) this.effects.explode(view.x, view.y);
       this.destroyView(view);
       this.views.delete(id);
     }

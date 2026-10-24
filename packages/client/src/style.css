@@ -11,7 +11,33 @@ h3 { font-size: 20px; font-weight: 600; }
 .eyebrow { color: var(--cyan); font-size: 10px; font-weight: 700; letter-spacing: .19em; line-height: 1.7; }
 .muted { color: var(--muted); font-size: 13px; line-height: 1.6; }
 #login { position: absolute; inset: 0; z-index: 2; display: grid; grid-template-columns: 1.15fr 1fr; align-items: center; gap: clamp(32px, 7vw, 120px); padding: clamp(24px, 7vw, 110px); overflow-y: auto; background: radial-gradient(ellipse at 25% 55%, #10375470, transparent 55%), linear-gradient(90deg, #05060d35, #05060dc9), url('/world/starfield_tile.png') repeat; }
-#login[hidden], #shop[hidden], #game[hidden] { display: none; }
+#login[hidden], #shop[hidden], #game[hidden], #loader[hidden], .info-panel[hidden] { display: none; }
+#loader { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; background: radial-gradient(ellipse at 50% 45%, #10375470, transparent 60%), linear-gradient(#05060dd0, #05060dd0), url('/world/starfield_tile.png') repeat; }
+.loader-card { display: grid; justify-items: center; gap: 18px; width: min(360px, calc(100% - 48px)); text-align: center; }
+.loader-ship { width: 96px; height: 96px; image-rendering: pixelated; filter: drop-shadow(0 0 22px #5ec8ff55); animation: loader-orbit 2.4s ease-in-out infinite; }
+.loader-title { font-size: 30px; font-weight: 800; letter-spacing: .12em; }
+.loader-title span { color: var(--cyan); }
+#loader progress { width: 100%; height: 6px; appearance: none; border: 0; border-radius: 3px; overflow: hidden; background: #1d3346; }
+#loader progress::-webkit-progress-bar { background: #1d3346; }
+#loader progress::-webkit-progress-value { background: var(--cyan); transition: width .2s; }
+#loader progress::-moz-progress-bar { background: var(--cyan); }
+#loader progress:indeterminate { background: linear-gradient(90deg, #1d3346 0%, var(--cyan) 50%, #1d3346 100%) 0 0 / 200% 100%; animation: loader-sweep 1.2s linear infinite; }
+#loader progress:indeterminate::-moz-progress-bar { background: transparent; }
+#loader-status { color: var(--muted); font-size: 13px; letter-spacing: .04em; }
+@keyframes loader-orbit { 0%, 100% { transform: translateY(0) rotate(-8deg); } 50% { transform: translateY(-12px) rotate(8deg); } }
+@keyframes loader-sweep { to { background-position: -200% 0; } }
+.info-tabs { display: flex; gap: 22px; margin-bottom: 22px; border-bottom: 1px solid var(--line); }
+#login .info-tabs button { background: none; border: 0; border-radius: 0; border-bottom: 2px solid transparent; padding: 10px 0; color: var(--muted); font-size: 13px; }
+#login .info-tabs button[aria-selected='true'] { border-color: var(--cyan); color: var(--cyan); }
+.info-panel[data-panel='controls'], .info-panel[data-panel='rules'] { max-height: min(calc(100dvh - 360px), 520px); min-height: 240px; overflow-y: auto; padding-right: 6px; scrollbar-color: #34536c transparent; }
+.info-panel h3 { margin: 22px 0 8px; font-size: 15px; }
+.controls-table { width: 100%; margin-top: 16px; border-collapse: collapse; font-size: 13px; }
+.controls-table th { width: 96px; padding: 7px 10px 7px 0; text-align: left; white-space: nowrap; font-weight: 400; }
+.controls-table td { padding: 7px 0; color: #c1d5e4; border-bottom: 1px solid #1a2b3b; }
+.controls-table kbd, .info-list kbd { display: inline-block; min-width: 22px; padding: 2px 6px; border: 1px solid #34536c; border-bottom-width: 2px; border-radius: 4px; background: #0f2131; text-align: center; font-size: 11px; }
+.info-list { display: grid; gap: 10px; margin: 16px 0; padding-left: 18px; color: #c1d5e4; font-size: 13px; line-height: 1.55; }
+.info-list b { color: #e6f1ff; }
+.info-list li::marker { color: var(--cyan); }
 .login-intro { max-width: 680px; }
 #login h1 { margin: 24px 0; font-size: clamp(52px, 6.8vw, 108px); font-weight: 800; letter-spacing: .07em; line-height: .92; }
 #login h1 span { color: var(--cyan); }
@@ -184,7 +210,7 @@ kbd { color: #c0d8e9; font-family: inherit; }
   #shop .hull-card > img { width: 96px; height: 96px; }
   .hull-card .muted { min-height: 80px; }
 }
-@media (prefers-reduced-motion: reduce) { button { transition: none; } }
+@media (prefers-reduced-motion: reduce) { button { transition: none; } .loader-ship, #loader progress:indeterminate { animation: none; } }
 
 
 .touch-controls, .touch-help { display: none; }

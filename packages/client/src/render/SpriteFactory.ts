@@ -45,9 +45,18 @@ export class SpriteFactory {
     private readonly textures: ReadonlyMap<string, Texture>,
   ) {}
 
-  static async load(): Promise<SpriteFactory> {
+  static async load(onProgress: (done: number, total: number) => void = () => undefined): Promise<SpriteFactory> {
     const specs = await loadManifest();
-    const loaded = await Promise.all(specs.map(loadTexture));
+    let done = 0;
+    onProgress(done, specs.length);
+    const loaded = await Promise.all(
+      specs.map(async (spec) => {
+        const entry = await loadTexture(spec);
+        done += 1;
+        onProgress(done, specs.length);
+        return entry;
+      }),
+    );
     return new SpriteFactory(
       new Map(specs.map((spec) => [spec.id, spec])),
       new Map(loaded.filter((entry): entry is readonly [string, Texture] => entry !== null)),

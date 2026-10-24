@@ -4,11 +4,16 @@ export class LoginScreen {
   constructor(
     private readonly form: HTMLFormElement,
     private readonly errorText: HTMLElement,
-  ) {}
+  ) {
+    for (const tab of form.querySelectorAll<HTMLButtonElement>('[role="tab"]')) {
+      tab.addEventListener('click', () => this.showTab(tab.dataset.tab ?? 'play'));
+    }
+  }
 
   waitForToken(message = ''): Promise<string> {
     this.form.hidden = false;
     this.errorText.textContent = message;
+    if (message) this.showTab('play');
     return new Promise((resolve) => {
       const onSubmit = (event: SubmitEvent): void => {
         event.preventDefault();
@@ -21,6 +26,15 @@ export class LoginScreen {
       };
       this.form.addEventListener('submit', onSubmit);
     });
+  }
+
+  private showTab(name: string): void {
+    for (const tab of this.form.querySelectorAll<HTMLButtonElement>('[role="tab"]')) {
+      tab.setAttribute('aria-selected', String(tab.dataset.tab === name));
+    }
+    for (const panel of this.form.querySelectorAll<HTMLElement>('[role="tabpanel"]')) {
+      panel.hidden = panel.dataset.panel !== name;
+    }
   }
 
   private modeOf(event: SubmitEvent): AuthMode {

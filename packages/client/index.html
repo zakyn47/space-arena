@@ -7,11 +7,19 @@
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
+    <div id="loader" role="status" aria-live="polite">
+      <div class="loader-card">
+        <img class="loader-ship" src="/ships/ship_fighter.png" alt="" />
+        <div class="loader-title">SPACE <span>ARENA</span></div>
+        <progress id="loader-progress" max="1"></progress>
+        <p id="loader-status">Starting engines…</p>
+      </div>
+    </div>
     <form id="login" hidden>
       <section class="login-intro" aria-labelledby="arena-title">
         <div class="eyebrow">ONE WORLD · EVERY PILOT FOR THEMSELVES</div>
-        <h1 id="arena-title">SPACE<br /><span>ARENA</span></h1>
-        <p class="login-tagline">Your ship. Your build.<br />Your corner of the void.</p>
+        <h1 id="arena-title">SPACE<br /> <span>ARENA</span></h1>
+        <p class="login-tagline">Your ship. Your build.<br /> Your corner of the void.</p>
         <div class="login-fleet" aria-hidden="true">
           <img src="/ships/ship_fighter.png" alt="" />
           <img src="/ships/ship_gunship.png" alt="" />
@@ -19,21 +27,68 @@
         </div>
         <p class="login-caption">FLY · MINE · UPGRADE · SURVIVE</p>
       </section>
-      <section class="login-panel" aria-labelledby="login-title">
-        <div class="eyebrow">PILOT ACCESS / 01</div>
-        <h2 id="login-title">Ready for launch?</h2>
-        <p class="muted">Sign in to your ship or start a new flight.</p>
-        <label for="pilot-name">Pilot name</label>
-        <input id="pilot-name" name="username" autocomplete="username" placeholder="Enter your callsign" required />
-        <label for="pilot-password">Password</label>
-        <input id="pilot-password" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" required />
-        <div class="actions">
-          <button type="submit" value="login" class="primary">Launch →</button>
-          <button type="submit" value="register">Create pilot</button>
+      <section class="login-panel" aria-label="Pilot access, controls and rules">
+        <div class="info-tabs" role="tablist" aria-label="Main menu">
+          <button type="button" role="tab" data-tab="play" aria-selected="true">Play</button>
+          <button type="button" role="tab" data-tab="controls" aria-selected="false">Controls</button>
+          <button type="button" role="tab" data-tab="rules" aria-selected="false">Rules</button>
         </div>
-        <p id="login-error" role="alert"></p>
-        <div class="login-help keyboard-help"><span><kbd>W A S D</kbd> Fly</span><span><kbd>E</kbd> Dock & refit</span><span><kbd>F</kbd> Mine</span></div>
-        <p class="login-help touch-help">Drag the left stick to steer and thrust. Right thumb: weapons, shield and reverse. Rotate your phone for a wider view.</p>
+        <div class="info-panel" role="tabpanel" data-panel="play">
+          <div class="eyebrow">PILOT ACCESS / 01</div>
+          <h2 id="login-title">Ready for launch?</h2>
+          <p class="muted">Sign in to your ship or start a new flight. Pick any pilot name that is not taken yet.</p>
+          <label for="pilot-name">Pilot name</label>
+          <input id="pilot-name" name="username" autocomplete="username" placeholder="Enter your callsign" required />
+          <label for="pilot-password">Password</label>
+          <input id="pilot-password" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" required />
+          <div class="actions">
+            <button type="submit" value="login" class="primary">Launch →</button>
+            <button type="submit" value="register">Create pilot</button>
+          </div>
+          <p id="login-error" role="alert"></p>
+          <div class="login-help keyboard-help"><span><kbd>W A S D</kbd> Fly</span><span><kbd>E</kbd> Dock & refit</span><span><kbd>F</kbd> Mine</span></div>
+          <p class="login-help touch-help">Drag the left stick to steer and thrust. Right thumb: weapons, shield and reverse. Rotate your phone for a wider view.</p>
+        </div>
+        <div class="info-panel" role="tabpanel" data-panel="controls" hidden>
+          <div class="eyebrow">FLIGHT MANUAL / 02</div>
+          <h2>Controls</h2>
+          <table class="controls-table">
+            <tbody>
+              <tr><th><kbd>W</kbd></th><td>Thrust forward</td></tr>
+              <tr><th><kbd>S</kbd></th><td>Reverse thrust and brake</td></tr>
+              <tr><th><kbd>A</kbd> <kbd>D</kbd></th><td>Rotate left / right</td></tr>
+              <tr><th><kbd>Space</kbd></th><td>Fire guns (hold)</td></tr>
+              <tr><th><kbd>Shift</kbd></th><td>Raise shield (hold)</td></tr>
+              <tr><th><kbd>R</kbd></th><td>Fire homing rockets or drop space mines (hold)</td></tr>
+              <tr><th><kbd>F</kbd></th><td>Mining laser on the asteroid in front of you (hold)</td></tr>
+              <tr><th><kbd>E</kbd></th><td>Dock at a station / undock</td></tr>
+            </tbody>
+          </table>
+          <h3>Touch</h3>
+          <ul class="info-list">
+            <li>Drag the left stick in the direction you want to fly; it always thrusts outside the center. Release to coast.</li>
+            <li>Hold <b>Guns</b>, <b>Shield</b>, <b>Rockets / Mines</b>, <b>Mining</b> or <b>Reverse</b> with your right thumb.</li>
+            <li>Tap <b>Dock</b> near a station. Tap <b>Landscape</b> for fullscreen and a wider view.</li>
+          </ul>
+          <p class="muted">Flight is inertial: your ship keeps drifting until you brake. While thrusting, it grips and follows its nose.</p>
+        </div>
+        <div class="info-panel" role="tabpanel" data-panel="rules" hidden>
+          <div class="eyebrow">PILOT BRIEFING / 03</div>
+          <h2>Rules of the arena</h2>
+          <ul class="info-list">
+            <li><b>One shared world.</b> Every pilot flies in the same persistent space. Fly, mine, fight and upgrade; there is no round end.</li>
+            <li><b>Credits.</b> Bounties and ore give carried credits. Dock at a station to sell ore and bank them. Banked credits are safe.</li>
+            <li><b>Death.</b> You lose installed upgrades, carried ore, unbanked credits and all rockets or mines, then respawn at a station in a starter Scout. Banked credits and your captain stay.</li>
+            <li><b>Safe zones.</b> The green circles around stations disable weapons and shields. Bullets vanish inside them.</li>
+            <li><b>Docking.</b> Fly within 200 px of a station, slow down and avoid damage for 5 s, then press <kbd>E</kbd>. Docking repairs your hull and opens the hangar.</li>
+            <li><b>Shields</b> block all damage while held, but you cannot shoot. They drain energy and lock for 1 s when empty.</li>
+            <li><b>Ammunition.</b> Carry either homing rockets (30 damage) or space mines (60 damage to every enemy within 100 px). Buying the other type sells your current ammo back at 50%.</li>
+            <li><b>Pirates</b> patrol open space and get tougher the farther you fly from the stations. Destroyed pirates drop crates with credits, ore and sometimes gear.</li>
+            <li><b>Mining.</b> Drill asteroids with the mining laser or shoot them and collect the ore, up to your cargo capacity.</li>
+            <li><b>Hangar.</b> Buy hulls and Mk1–Mk3 gear. Replaced or sold gear refunds 50%.</li>
+            <li><b>Captain.</b> Earn XP from banked ore and kills. Each level gives a skill point for gunnery, engineering, piloting or mining. Skills are permanent.</li>
+          </ul>
+        </div>
       </section>
     </form>
     <div id="game" hidden>

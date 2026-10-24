@@ -124,7 +124,7 @@ class ActiveGame {
   }
 }
 
-export function runSession(token: string, sprites: SpriteFactory, dom: GameDom): Promise<string> {
+export function runSession(token: string, sprites: SpriteFactory, dom: GameDom, onReady: () => void): Promise<string> {
   return new Promise((resolve) => {
     let reason = 'connection lost';
     let game: ActiveGame | null = null;
@@ -139,6 +139,7 @@ export function runSession(token: string, sprites: SpriteFactory, dom: GameDom):
           void ActiveGame.start(message, connection, sprites, dom).then((started) => {
             if (closed) started.stop();
             else game = started;
+            onReady();
           });
           return;
         }

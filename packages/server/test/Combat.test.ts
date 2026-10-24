@@ -71,13 +71,13 @@ describe('fireWeapons', () => {
 });
 
 describe('applyDamage', () => {
-  it('damages hull unless shielded', () => {
+  it('damages hull unless shielded and reports a shield block', () => {
     const ship = newShip();
-    applyDamage(ship, 30, 7, 3);
+    expect(applyDamage(ship, 30, 7, 3)).toBe(false);
     expect(ship.hull).toBe(50);
     expect(ship.lastHitBy).toBe(7);
     ship.shieldUp = true;
-    applyDamage(ship, 30, 7, 4);
+    expect(applyDamage(ship, 30, 7, 4)).toBe(true);
     expect(ship.hull).toBe(50);
   });
 });

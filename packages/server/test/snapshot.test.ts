@@ -27,6 +27,21 @@ describe('snapshot', () => {
     expect(state).toMatchObject({ build: STARTER_BUILD, rockets: 10, maxRockets: 10, canDock: false, dockCooldown: 12, docked: false });
   });
 
+  it('sends hits only for ships in view with rounded angles', () => {
+    const self = createShip(1, 1, 'alice', shipRecord(10, 20, 1));
+    const other = createShip(2, 2, 'bob', shipRecord(30, 40, 2));
+    const hits = [
+      { shipId: 1, angle: 1.23456, shield: false },
+      { shipId: 2, angle: -3.14159, shield: true },
+      { shipId: 9, angle: 0, shield: false },
+    ];
+    expect(buildSnapshot(self, [self, other], 1, 100, undefined, hits).hits).toEqual([
+      { shipId: 1, angle: 1.23, shield: false },
+      { shipId: 2, angle: -3.14, shield: true },
+    ]);
+    expect(buildSnapshot(self, [self, other], 1, 100).hits).toBeUndefined();
+  });
+
   it('does not leak private fields of other ships', () => {
     const other = createShip(2, 2, 'bob', shipRecord(30, 40, 2));
     expect(Object.keys(toEntityState(other))).not.toContain('rockets');

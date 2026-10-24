@@ -37,3 +37,8 @@
 - `mining_beam` (16×64): vertical teal `#3CFFB0` energy beam with a bright white core, seamlessly tileable top-to-bottom, transparent edges.
 - `gear_mining_laser` (48×48): UI glyph, drill emitter with a small beam.
 - `icon_salvage` (48×48): UI glyph, gear cog over a crate.
+
+## Hit feedback update
+
+- `shield_impact` (horizontal spritesheet, 4 frames of 96×96): shield ripple where a shot strikes the shield. Each frame is centered on the ship like `shield_bubble`; the impact sits on the TOP edge of the bubble rim (radius ~44 px). Draw a bright translucent cyan `#5EC8FF` arc (~70° wide) with a white-hot center point and a hint of the hex pattern. Frames: sharp bright flash → arc widens along the rim → hex ripple spreads and fades → faint glow almost gone. Everything else transparent.
+- `hull_hit` (horizontal spritesheet, 4 frames of 48×48): impact on bare armor, centered on the impact point, sparks spraying UP (outward from the hull). Frames: small white-hot flash → orange `#FF9A3C` sparks and molten fragments burst upward → sparks thin out with a puff of grey smoke → last embers fading. Must read clearly different from `shield_impact`: warm orange/white, no cyan.

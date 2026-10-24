@@ -66,11 +66,12 @@ export function fireWeapons(
   return bullets;
 }
 
-export function applyDamage(ship: ShipEntity, damage: number, attackerId: number, time: number): void {
-  if (ship.shieldUp) return;
+export function applyDamage(ship: ShipEntity, damage: number, attackerId: number, time: number): boolean {
+  if (ship.shieldUp) return true;
   ship.hull -= damage;
   ship.lastDamagedAt = time;
   ship.lastHitBy = attackerId;
+  return false;
 }
 
 export function bountyFor(build: Build): number {

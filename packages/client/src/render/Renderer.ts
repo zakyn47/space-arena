@@ -1,4 +1,4 @@
-import { PIRATE_NAMES, VIEW_RADIUS, type EntityState, type SafeZone } from '@arena/shared';
+import { PIRATE_NAMES, VIEW_RADIUS, type EntityState, type HitEvent, type SafeZone } from '@arena/shared';
 import { Application, Container, Graphics, Rectangle, Text, TilingSprite, type Texture } from 'pixi.js';
 import { Effects } from './Effects';
 import type { SpriteFactory } from './SpriteFactory';
@@ -102,6 +102,13 @@ export class Renderer {
     }
     this.syncBeams(view.entities);
     this.removeMissing(seen);
+  }
+
+  showHits(hits: readonly HitEvent[], delaySeconds: number): void {
+    for (const hit of hits) {
+      const view = this.views.get(hit.shipId);
+      if (view) this.effects.hit({ ship: view.container, angle: hit.angle, shield: hit.shield, delaySeconds });
+    }
   }
 
   destroy(): void {

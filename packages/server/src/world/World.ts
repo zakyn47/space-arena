@@ -14,6 +14,7 @@ import {
   nearestZone,
   stepMotion,
   zoneAt,
+  type HitEvent,
   type ShipInput,
   type ShopAction,
 } from '@arena/shared';
@@ -56,6 +57,7 @@ export interface DeathEvent {
 export interface TickEvents {
   readonly died: DeathEvent[];
   readonly departed: ShipEntity[];
+  readonly hits: HitEvent[];
 }
 
 const GRID_CELL_SIZE = 512;
@@ -189,13 +191,13 @@ export class World {
   tick(dt: number): TickEvents {
     this.elapsed += dt;
     this.ticks += 1;
-    const events: TickEvents = { died: [], departed: [] };
+    const events: TickEvents = { died: [], departed: [], hits: [] };
     this.director?.step(this.pirateHost, this.elapsed);
     this.stepShips(dt);
     this.stepProjectiles(dt);
     this.rebuildGrid();
-    this.resolveProjectileHits(this.bullets);
-    this.resolveProjectileHits(this.rockets);
+    this.resolveProjectileHits(this.bullets, events.hits);
+    this.resolveProjectileHits(this.rockets, events.hits);
     this.collectPickups();
     this.resolveDeaths(events.died);
     this.expirePickups();
@@ -289,7 +291,7 @@ export class World {
     }
   }
 
-  private resolveProjectileHits<T extends Projectile>(collection: Map<number, T>): void {
+  private resolveProjectileHits<T extends Projectile>(collection: Map<number, T>, hits: HitEvent[]): void {
     for (const projectile of collection.values()) {
       const travel = Math.hypot(projectile.x - projectile.prevX, projectile.y - projectile.prevY);
       const target = this.grid
@@ -297,7 +299,8 @@ export class World {
         .find((entity) => this.isHit(projectile, entity));
       if (!target) continue;
       collection.delete(projectile.id);
-      this.applyProjectileTo(target, projectile);
+      if (target.kind === 'ship') hits.push(this.hitShip(target, projectile));
+      if (target.kind === 'asteroid') this.damageAsteroid(target, projectile.damage);
     }
   }
 
@@ -316,9 +319,10 @@ export class World {
     return distanceToSegment(entity.x, entity.y, projectile.prevX, projectile.prevY, projectile.x, projectile.y);
   }
 
-  private applyProjectileTo(entity: WorldEntity, projectile: Projectile): void {
-    if (entity.kind === 'ship') applyDamage(entity, projectile.damage, projectile.ownerId, this.elapsed);
-    if (entity.kind === 'asteroid') this.damageAsteroid(entity, projectile.damage);
+  private hitShip(ship: ShipEntity, projectile: Projectile): HitEvent {
+    const shield = applyDamage(ship, projectile.damage, projectile.ownerId, this.elapsed);
+    const angle = Math.atan2(projectile.prevX - ship.x, ship.y - projectile.prevY);
+    return { shipId: ship.id, angle, shield };
   }
 
   private damageAsteroid(asteroid: AsteroidEntity, damage: number): void {

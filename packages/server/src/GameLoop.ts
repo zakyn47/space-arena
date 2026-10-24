@@ -1,10 +1,10 @@
-import { SNAPSHOT_RATE, TICK_DT, TICK_RATE } from '@arena/shared';
+import { SNAPSHOT_RATE, TICK_DT, TICK_RATE, type HitEvent } from '@arena/shared';
 import type { ShipRecord } from './db/PlayerRepository';
 import { toShipRecord } from './world/entities';
 import type { DeathEvent, World } from './world/World';
 
 export interface LoopOutput {
-  broadcastSnapshots(): void;
+  broadcastSnapshots(hits: readonly HitEvent[]): void;
   notifyDeaths(events: readonly DeathEvent[]): void;
 }
 
@@ -14,6 +14,7 @@ export interface ShipStore {
 
 export class GameLoop {
   private snapshotCredit = 0;
+  private pendingHits: HitEvent[] = [];
 
   constructor(
     private readonly world: World,
@@ -27,10 +28,12 @@ export class GameLoop {
     const changed = [...events.died.map((event) => event.ship), ...events.departed];
     if (changed.length > 0) this.store.saveShips(changed.map(toShipRecord), this.now());
     this.output.notifyDeaths(events.died);
+    this.pendingHits.push(...events.hits);
     this.snapshotCredit += SNAPSHOT_RATE;
     if (this.snapshotCredit < TICK_RATE) return;
     this.snapshotCredit -= TICK_RATE;
-    this.output.broadcastSnapshots();
+    this.output.broadcastSnapshots(this.pendingHits);
+    this.pendingHits = [];
   }
 
   start(): ReturnType<typeof setInterval> {

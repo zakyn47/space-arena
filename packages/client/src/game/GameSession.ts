@@ -95,6 +95,7 @@ class ActiveGame {
     this.interpolator.push(snapshot.entities, performance.now());
     this.predictor.reconcile(snapshot.self, snapshot.lastSeq);
     if (snapshot.radar) this.hud.setRadar(snapshot.radar);
+    if (snapshot.hits) this.renderer.showHits(snapshot.hits, INTERPOLATION_DELAY_MS / 1_000);
     this.hud.update(snapshot.self);
     this.menu.update(snapshot.self);
     this.touch.update(snapshot.self);

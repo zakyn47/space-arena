@@ -180,6 +180,12 @@ export interface RadarBlip {
   readonly kind: 'player' | 'pirate';
 }
 
+export interface HitEvent {
+  readonly shipId: number;
+  readonly angle: number;
+  readonly shield: boolean;
+}
+
 export interface SnapshotMessage {
   readonly type: 'snapshot';
   readonly tick: number;
@@ -187,6 +193,7 @@ export interface SnapshotMessage {
   readonly self: SelfState;
   readonly entities: readonly EntityState[];
   readonly radar?: readonly RadarBlip[];
+  readonly hits?: readonly HitEvent[];
 }
 
 export interface DiedMessage {

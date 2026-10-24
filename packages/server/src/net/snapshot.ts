@@ -1,4 +1,4 @@
-import type { EntityState, RadarBlip, SelfState, SnapshotMessage } from '@arena/shared';
+import type { EntityState, HitEvent, RadarBlip, SelfState, SnapshotMessage } from '@arena/shared';
 import { canDock, dockCooldownRemaining } from '../world/Docking';
 import type { ShipEntity, WorldEntity } from '../world/entities';
 
@@ -67,7 +67,9 @@ export function buildSnapshot(
   tick: number,
   time: number,
   radar?: readonly RadarBlip[],
+  hits: readonly HitEvent[] = [],
 ): SnapshotMessage {
+  const visible = hitsInView(nearby, hits);
   return {
     type: 'snapshot',
     tick,
@@ -75,5 +77,13 @@ export function buildSnapshot(
     self: toSelfState(self, time),
     entities: nearby.filter((entity) => entity.id !== self.id).map(toEntityState),
     ...(radar ? { radar } : {}),
+    ...(visible.length > 0 ? { hits: visible } : {}),
   };
+}
+
+function hitsInView(nearby: readonly WorldEntity[], hits: readonly HitEvent[]): HitEvent[] {
+  const ids = new Set(nearby.map((entity) => entity.id));
+  return hits
+    .filter((hit) => ids.has(hit.shipId))
+    .map((hit) => ({ ...hit, angle: Math.round(hit.angle * 100) / 100 }));
 }

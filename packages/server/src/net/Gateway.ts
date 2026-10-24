@@ -5,6 +5,7 @@ import {
   VIEW_RADIUS,
   WORLD_SIZE,
   parseClientMessage,
+  type HitEvent,
   type InputMessage,
   type ServerMessage,
   type ShopAction,
@@ -58,7 +59,7 @@ export class Gateway implements LoopOutput {
     wss.on('connection', (socket) => this.awaitHello(socket));
   }
 
-  broadcastSnapshots(): void {
+  broadcastSnapshots(hits: readonly HitEvent[]): void {
     const { world } = this.deps;
     const radarShips = this.broadcasts % RADAR_EVERY_SNAPSHOTS === 0 ? [...world.playerShips(), ...world.npcShips()] : null;
     this.broadcasts += 1;
@@ -67,7 +68,7 @@ export class Gateway implements LoopOutput {
       if (!ship) continue;
       const nearby = world.entitiesNear(ship.x, ship.y, VIEW_RADIUS);
       const radar = radarShips ? buildRadar(ship, radarShips) : undefined;
-      send(session.socket, buildSnapshot(ship, nearby, world.tickCount, world.time, radar));
+      send(session.socket, buildSnapshot(ship, nearby, world.tickCount, world.time, radar, hits));
     }
   }
 

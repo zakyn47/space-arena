@@ -8,6 +8,7 @@ import {
   STARTER_BUILD,
   TICK_DT,
   buildValue,
+  type HitEvent,
 } from '@arena/shared';
 import { describe, expect, it } from 'vitest';
 import { World, type DeathEvent } from '../src/world/World';
@@ -24,6 +25,14 @@ function runUntilDeath(world: World, maxTicks = 200): DeathEvent | undefined {
   for (let i = 0; i < maxTicks; i += 1) {
     const death = world.tick(TICK_DT).died[0];
     if (death) return death;
+  }
+  return undefined;
+}
+
+function firstHit(world: World, maxTicks = 60): HitEvent | undefined {
+  for (let i = 0; i < maxTicks; i += 1) {
+    const hit = world.tick(TICK_DT).hits[0];
+    if (hit) return hit;
   }
   return undefined;
 }
@@ -49,6 +58,21 @@ describe('World combat', () => {
     for (let i = 0; i < 30; i += 1) world.tick(TICK_DT);
     expect(bob.hull).toBe(bob.stats.maxHull);
     expect(bob.shieldEnergy).toBeLessThan(bob.stats.maxShield);
+  });
+
+  it('reports hull hits facing the shooter', () => {
+    const { world, alice, bob } = duel();
+    world.setInput(alice.id, 1, { ...IDLE_INPUT, fire: true });
+    const hit = firstHit(world);
+    expect(hit).toMatchObject({ shipId: bob.id, shield: false });
+    expect(Math.abs(hit?.angle ?? 0)).toBeCloseTo(Math.PI);
+  });
+
+  it('reports shield hits', () => {
+    const { world, alice, bob } = duel();
+    world.setInput(alice.id, 1, { ...IDLE_INPUT, fire: true });
+    world.setInput(bob.id, 1, { ...IDLE_INPUT, shield: true });
+    expect(firstHit(world)).toMatchObject({ shipId: bob.id, shield: true });
   });
 
   it('drops a crate with carried ore and half the carried credits', () => {

@@ -13,12 +13,12 @@ import {
   stepMotion,
   zoneAt,
   type ShipInput,
-  type UpgradeLine,
+  type ShopAction,
 } from '@arena/shared';
 import type { ShipRecord } from '../db/PlayerRepository';
 import { randomAsteroid, scatterOre, type AsteroidFields } from './AsteroidField';
-import { applyHit, bountyFor, tryFire, updateShield } from './Combat';
-import { buyUpgrade, updateDocking, type BuyOutcome } from './Economy';
+import { applyDamage, bountyFor, fireWeapons, updateShield } from './Combat';
+import { toggleDock, type DockOutcome } from './Docking';
 import {
   createShip,
   respawnShip,
@@ -26,10 +26,14 @@ import {
   type BulletEntity,
   type CrateEntity,
   type OreEntity,
+  type Projectile,
+  type RocketEntity,
   type ShipEntity,
   type WorldEntity,
 } from './entities';
 import { distanceToSegment } from './geometry';
+import { applyShopAction, type ShopOutcome } from './Shop';
+import { acquireTarget, launchRocket, steerRocket, tryLaunch } from './Rockets';
 import { SpatialGrid } from './SpatialGrid';
 
 export interface WorldOptions {
@@ -44,7 +48,6 @@ export interface DeathEvent {
 
 export interface TickEvents {
   readonly died: DeathEvent[];
-  readonly docked: ShipEntity[];
   readonly departed: ShipEntity[];
 }
 
@@ -60,6 +63,7 @@ function outOfBounds(x: number, y: number): boolean {
 export class World {
   private readonly ships = new Map<number, ShipEntity>();
   private readonly bullets = new Map<number, BulletEntity>();
+  private readonly rockets = new Map<number, RocketEntity>();
   private readonly asteroids = new Map<number, AsteroidEntity>();
   private readonly orePickups = new Map<number, OreEntity>();
   private readonly crates = new Map<number, CrateEntity>();
@@ -138,10 +142,16 @@ export class World {
     return asteroid;
   }
 
-  buy(shipId: number, line: UpgradeLine): BuyOutcome {
+  dock(shipId: number): DockOutcome {
+    const ship = this.ships.get(shipId);
+    if (!ship) return { ok: false, reason: 'out_of_range' };
+    return toggleDock(ship, this.elapsed);
+  }
+
+  shop(shipId: number, action: ShopAction): ShopOutcome {
     const ship = this.ships.get(shipId);
     if (!ship) return { ok: false, reason: 'not_docked' };
-    return buyUpgrade(ship, line);
+    return applyShopAction(ship, action);
   }
 
   entitiesNear(x: number, y: number, radius: number): WorldEntity[] {
@@ -151,14 +161,14 @@ export class World {
   tick(dt: number): TickEvents {
     this.elapsed += dt;
     this.ticks += 1;
-    const events: TickEvents = { died: [], docked: [], departed: [] };
+    const events: TickEvents = { died: [], departed: [] };
     this.stepShips(dt);
-    this.stepBullets(dt);
+    this.stepProjectiles(dt);
     this.rebuildGrid();
-    this.resolveBulletHits();
+    this.resolveProjectileHits(this.bullets);
+    this.resolveProjectileHits(this.rockets);
     this.collectPickups();
     this.resolveDeaths(events.died);
-    this.updateDocking(events.docked);
     this.expirePickups();
     this.maintainAsteroids();
     this.expireLingering(events.departed);
@@ -178,63 +188,87 @@ export class World {
         ship.input = next.input;
         ship.lastSeq = next.seq;
       }
+      if (ship.docked) {
+        ship.vx = 0;
+        ship.vy = 0;
+        ship.shieldUp = false;
+        continue;
+      }
       const inSafeZone = zoneAt(ship.x, ship.y) !== undefined;
       updateShield(ship, dt, inSafeZone);
       Object.assign(ship, stepMotion(ship, ship.input, ship.stats, dt));
-      const bullet = tryFire(ship, dt, inSafeZone, this.elapsed, () => this.allocateId());
-      if (bullet) this.bullets.set(bullet.id, bullet);
+      for (const bullet of fireWeapons(ship, dt, inSafeZone, this.elapsed, () => this.allocateId())) {
+        this.bullets.set(bullet.id, bullet);
+      }
+      if (tryLaunch(ship, dt, inSafeZone)) {
+        const rocket = launchRocket(ship, this.allocateId(), this.elapsed, acquireTarget(ship, this.ships.values()));
+        this.rockets.set(rocket.id, rocket);
+      }
     }
   }
 
-  private stepBullets(dt: number): void {
+  private stepProjectiles(dt: number): void {
     for (const bullet of this.bullets.values()) {
       bullet.prevX = bullet.x;
       bullet.prevY = bullet.y;
       bullet.x += bullet.vx * dt;
       bullet.y += bullet.vy * dt;
-      const expired =
-        bullet.expiresAt <= this.elapsed || outOfBounds(bullet.x, bullet.y) || zoneAt(bullet.x, bullet.y) !== undefined;
-      if (expired) this.bullets.delete(bullet.id);
     }
+    for (const rocket of this.rockets.values()) {
+      steerRocket(rocket, rocket.targetId === null ? undefined : this.ships.get(rocket.targetId), dt);
+    }
+    for (const collection of [this.bullets, this.rockets]) {
+      for (const projectile of collection.values()) {
+        if (this.isExpired(projectile)) collection.delete(projectile.id);
+      }
+    }
+  }
+
+  private isExpired(projectile: Projectile): boolean {
+    return (
+      projectile.expiresAt <= this.elapsed ||
+      outOfBounds(projectile.x, projectile.y) ||
+      zoneAt(projectile.x, projectile.y) !== undefined
+    );
   }
 
   private rebuildGrid(): void {
     this.grid.clear();
-    for (const collection of [this.ships, this.bullets, this.asteroids, this.orePickups, this.crates]) {
+    for (const collection of [this.ships, this.bullets, this.rockets, this.asteroids, this.orePickups, this.crates]) {
       for (const entity of collection.values()) this.grid.insert(entity);
     }
   }
 
-  private resolveBulletHits(): void {
-    for (const bullet of this.bullets.values()) {
-      const travel = Math.hypot(bullet.x - bullet.prevX, bullet.y - bullet.prevY);
+  private resolveProjectileHits<T extends Projectile>(collection: Map<number, T>): void {
+    for (const projectile of collection.values()) {
+      const travel = Math.hypot(projectile.x - projectile.prevX, projectile.y - projectile.prevY);
       const target = this.grid
-        .queryRadius(bullet.x, bullet.y, HIT_QUERY_RADIUS + travel)
-        .find((entity) => this.isHit(bullet, entity));
+        .queryRadius(projectile.x, projectile.y, HIT_QUERY_RADIUS + travel)
+        .find((entity) => this.isHit(projectile, entity));
       if (!target) continue;
-      this.bullets.delete(bullet.id);
-      this.applyBulletTo(target, bullet);
+      collection.delete(projectile.id);
+      this.applyProjectileTo(target, projectile);
     }
   }
 
-  private isHit(bullet: BulletEntity, entity: WorldEntity): boolean {
+  private isHit(projectile: Projectile, entity: WorldEntity): boolean {
     switch (entity.kind) {
       case 'ship':
-        return entity.id !== bullet.ownerId && this.sweptDistance(bullet, entity) <= SHIP_RADIUS;
+        return entity.id !== projectile.ownerId && this.sweptDistance(projectile, entity) <= SHIP_RADIUS;
       case 'asteroid':
-        return this.asteroids.has(entity.id) && this.sweptDistance(bullet, entity) <= entity.radius;
+        return this.asteroids.has(entity.id) && this.sweptDistance(projectile, entity) <= entity.radius;
       default:
         return false;
     }
   }
 
-  private sweptDistance(bullet: BulletEntity, entity: WorldEntity): number {
-    return distanceToSegment(entity.x, entity.y, bullet.prevX, bullet.prevY, bullet.x, bullet.y);
+  private sweptDistance(projectile: Projectile, entity: WorldEntity): number {
+    return distanceToSegment(entity.x, entity.y, projectile.prevX, projectile.prevY, projectile.x, projectile.y);
   }
 
-  private applyBulletTo(entity: WorldEntity, bullet: BulletEntity): void {
-    if (entity.kind === 'ship') applyHit(entity, bullet, this.elapsed);
-    if (entity.kind === 'asteroid') this.damageAsteroid(entity, bullet.damage);
+  private applyProjectileTo(entity: WorldEntity, projectile: Projectile): void {
+    if (entity.kind === 'ship') applyDamage(entity, projectile.damage, projectile.ownerId, this.elapsed);
+    if (entity.kind === 'asteroid') this.damageAsteroid(entity, projectile.damage);
   }
 
   private damageAsteroid(asteroid: AsteroidEntity, damage: number): void {
@@ -269,12 +303,6 @@ export class World {
     this.crates.delete(crate.id);
   }
 
-  private updateDocking(docked: ShipEntity[]): void {
-    for (const ship of this.ships.values()) {
-      if (updateDocking(ship, this.elapsed)) docked.push(ship);
-    }
-  }
-
   private expirePickups(): void {
     for (const collection of [this.orePickups, this.crates]) {
       for (const pickup of collection.values()) {
@@ -293,7 +321,7 @@ export class World {
     for (const ship of this.ships.values()) {
       if (ship.hull > 0) continue;
       const killer = ship.lastHitBy === null ? undefined : this.ships.get(ship.lastHitBy);
-      if (killer) killer.carriedCredits += bountyFor(ship.loadout);
+      if (killer) killer.carriedCredits += bountyFor(ship.build);
       this.dropCrate(ship);
       const zone = nearestZone(ship.x, ship.y);
       respawnShip(ship, zone.x, zone.y);

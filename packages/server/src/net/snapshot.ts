@@ -1,4 +1,5 @@
 import type { EntityState, SelfState, SnapshotMessage } from '@arena/shared';
+import { canDock, dockCooldownRemaining } from '../world/Docking';
 import type { ShipEntity, WorldEntity } from '../world/entities';
 
 export function toEntityState(entity: WorldEntity): EntityState {
@@ -14,10 +15,12 @@ export function toEntityState(entity: WorldEntity): EntityState {
         vy: entity.vy,
         angle: entity.angle,
         shieldUp: entity.shieldUp,
-        hullTier: entity.loadout.hull,
+        hullId: entity.build.hullId,
       };
     case 'bullet':
-      return { kind: 'bullet', id: entity.id, x: entity.x, y: entity.y, vx: entity.vx, vy: entity.vy, tier: entity.tier };
+      return { kind: 'bullet', id: entity.id, x: entity.x, y: entity.y, vx: entity.vx, vy: entity.vy, weaponId: entity.weaponId, mk: entity.mk };
+    case 'rocket':
+      return { kind: 'rocket', id: entity.id, x: entity.x, y: entity.y, vx: entity.vx, vy: entity.vy, angle: entity.angle };
     case 'asteroid':
       return { kind: 'asteroid', id: entity.id, x: entity.x, y: entity.y, radius: entity.radius, variant: entity.variant };
     case 'ore':
@@ -27,7 +30,7 @@ export function toEntityState(entity: WorldEntity): EntityState {
   }
 }
 
-export function toSelfState(ship: ShipEntity): SelfState {
+export function toSelfState(ship: ShipEntity, time: number): SelfState {
   return {
     id: ship.id,
     x: ship.x,
@@ -44,17 +47,21 @@ export function toSelfState(ship: ShipEntity): SelfState {
     cargoCapacity: ship.stats.cargoCapacity,
     carriedCredits: ship.carriedCredits,
     bankedCredits: ship.bankedCredits,
-    loadout: ship.loadout,
+    build: ship.build,
+    rockets: ship.rockets,
+    maxRockets: ship.stats.maxRockets,
     docked: ship.docked,
+    canDock: canDock(ship, time),
+    dockCooldown: dockCooldownRemaining(ship, time),
   };
 }
 
-export function buildSnapshot(self: ShipEntity, nearby: readonly WorldEntity[], tick: number): SnapshotMessage {
+export function buildSnapshot(self: ShipEntity, nearby: readonly WorldEntity[], tick: number, time: number): SnapshotMessage {
   return {
     type: 'snapshot',
     tick,
     lastSeq: self.lastSeq,
-    self: toSelfState(self),
+    self: toSelfState(self, time),
     entities: nearby.filter((entity) => entity.id !== self.id).map(toEntityState),
   };
 }

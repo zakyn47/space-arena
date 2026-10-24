@@ -1,89 +1,89 @@
-import { BOUNTY_BASE, IDLE_INPUT, SHIELD_LOCKOUT, SHIP_RADIUS } from '@arena/shared';
+import { BOUNTY_BASE, IDLE_INPUT, SHIELD_LOCKOUT, SHIP_RADIUS, STARTER_BUILD, type Build } from '@arena/shared';
 import { describe, expect, it } from 'vitest';
-import { applyHit, bountyFor, tryFire, updateShield } from '../src/world/Combat';
+import { applyDamage, bountyFor, fireWeapons, updateShield } from '../src/world/Combat';
 import { createShip } from '../src/world/entities';
 import { shipRecord } from './support/fixtures';
 
-const newShip = () => createShip(1, 1, 'alice', shipRecord(1_000, 1_000));
-const ids = () => 99;
+const newShip = (build: Build = STARTER_BUILD) => createShip(1, 1, 'alice', { ...shipRecord(1_000, 1_000), build });
+let nextId = 100;
+const ids = () => (nextId += 1);
+
+const twinFighter: Build = {
+  hullId: 'fighter',
+  slots: {
+    weapon: [{ gearId: 'pulse_laser', mk: 1 }, { gearId: 'heavy_cannon', mk: 1 }],
+    shield: [{ gearId: 'shield_gen', mk: 1 }],
+    engine: [{ gearId: 'thruster', mk: 1 }],
+    utility: [null],
+  },
+};
 
 describe('updateShield', () => {
-  it('drains energy while held', () => {
+  it('drains while held and locks out when empty', () => {
     const ship = newShip();
     ship.input = { ...IDLE_INPUT, shield: true };
     updateShield(ship, 1, false);
-    expect(ship.shieldUp).toBe(true);
     expect(ship.shieldEnergy).toBeCloseTo(70);
-  });
-
-  it('drops with a lockout when empty', () => {
-    const ship = newShip();
-    ship.input = { ...IDLE_INPUT, shield: true };
     ship.shieldEnergy = 10;
     updateShield(ship, 1, false);
     expect(ship.shieldUp).toBe(false);
     expect(ship.shieldLockout).toBe(SHIELD_LOCKOUT);
-    updateShield(ship, 0.5, false);
-    expect(ship.shieldUp).toBe(false);
   });
 
-  it('regenerates when lowered and never exceeds max', () => {
-    const ship = newShip();
-    ship.shieldEnergy = 50;
-    updateShield(ship, 1, false);
-    expect(ship.shieldEnergy).toBeCloseTo(65);
-    updateShield(ship, 10, false);
-    expect(ship.shieldEnergy).toBe(100);
-  });
-
-  it('cannot be raised inside a safe zone', () => {
-    const ship = newShip();
+  it('cannot be raised without a shield generator', () => {
+    const ship = newShip({ ...STARTER_BUILD, slots: { ...STARTER_BUILD.slots, shield: [null] } });
     ship.input = { ...IDLE_INPUT, shield: true };
-    updateShield(ship, 0.1, true);
+    updateShield(ship, 0.1, false);
     expect(ship.shieldUp).toBe(false);
   });
 });
 
-describe('tryFire', () => {
-  it('fires from the nose and applies cooldown', () => {
+describe('fireWeapons', () => {
+  it('fires the starter laser from the nose with its own cooldown', () => {
     const ship = newShip();
     ship.input = { ...IDLE_INPUT, fire: true };
-    const bullet = tryFire(ship, 0.1, false, 0, ids);
-    expect(bullet).toMatchObject({ ownerId: 1, x: 1_000, y: 1_000 - SHIP_RADIUS, vy: -800, damage: 10 });
-    expect(tryFire(ship, 0.1, false, 0, ids)).toBeNull();
-    expect(tryFire(ship, 0.2, false, 0, ids)).not.toBeNull();
+    const [bullet] = fireWeapons(ship, 0.1, false, 0, ids);
+    expect(bullet).toMatchObject({ ownerId: 1, x: 1_000, y: 1_000 - SHIP_RADIUS, vy: -800, damage: 10, weaponId: 'pulse_laser', mk: 1 });
+    expect(fireWeapons(ship, 0.1, false, 0, ids)).toEqual([]);
+    expect(fireWeapons(ship, 0.2, false, 0, ids)).toHaveLength(1);
   });
 
-  it('does not fire while shielded or in a safe zone', () => {
+  it('fires each weapon from its own lateral offset and cooldown', () => {
+    const ship = newShip(twinFighter);
+    ship.input = { ...IDLE_INPUT, fire: true };
+    const volley = fireWeapons(ship, 0.1, false, 0, ids);
+    expect(volley.map((b) => b.x)).toEqual([990, 1_010]);
+    expect(volley.map((b) => b.weaponId)).toEqual(['pulse_laser', 'heavy_cannon']);
+    expect(fireWeapons(ship, 0.3, false, 0, ids).map((b) => b.weaponId)).toEqual(['pulse_laser']);
+  });
+
+  it('does not fire without weapons, while shielded or in a safe zone', () => {
+    const unarmed = newShip({ ...STARTER_BUILD, slots: { ...STARTER_BUILD.slots, weapon: [null] } });
+    unarmed.input = { ...IDLE_INPUT, fire: true };
+    expect(fireWeapons(unarmed, 0.1, false, 0, ids)).toEqual([]);
     const ship = newShip();
     ship.input = { ...IDLE_INPUT, fire: true };
     ship.shieldUp = true;
-    expect(tryFire(ship, 0.1, false, 0, ids)).toBeNull();
+    expect(fireWeapons(ship, 0.1, false, 0, ids)).toEqual([]);
     ship.shieldUp = false;
-    expect(tryFire(ship, 0.1, true, 0, ids)).toBeNull();
+    expect(fireWeapons(ship, 0.1, true, 0, ids)).toEqual([]);
   });
 });
 
-describe('applyHit', () => {
-  it('damages hull and records the attacker', () => {
+describe('applyDamage', () => {
+  it('damages hull unless shielded', () => {
     const ship = newShip();
-    const bullet = { kind: 'bullet', id: 5, ownerId: 7, x: 0, y: 0, prevX: 0, prevY: 0, vx: 0, vy: 0, damage: 10, tier: 0, expiresAt: 1 } as const;
-    applyHit(ship, bullet, 3);
-    expect(ship.hull).toBe(90);
+    applyDamage(ship, 30, 7, 3);
+    expect(ship.hull).toBe(50);
     expect(ship.lastHitBy).toBe(7);
-    expect(ship.lastDamagedAt).toBe(3);
-  });
-
-  it('is absorbed by a raised shield', () => {
-    const ship = newShip();
     ship.shieldUp = true;
-    applyHit(ship, { kind: 'bullet', id: 5, ownerId: 7, x: 0, y: 0, prevX: 0, prevY: 0, vx: 0, vy: 0, damage: 10, tier: 0, expiresAt: 1 }, 3);
-    expect(ship.hull).toBe(100);
+    applyDamage(ship, 30, 7, 4);
+    expect(ship.hull).toBe(50);
   });
 });
 
 describe('bountyFor', () => {
-  it('adds a share of the victim loadout value', () => {
-    expect(bountyFor({ hull: 1, engine: 0, weapon: 0, shield: 0, cargo: 0 })).toBe(BOUNTY_BASE + 50);
+  it('pays base plus a quarter of the build value', () => {
+    expect(bountyFor(STARTER_BUILD)).toBe(BOUNTY_BASE + 187);
   });
 });

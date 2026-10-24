@@ -1,5 +1,13 @@
 import type { ClientMessage, ServerMessage, ShipInput } from '@arena/shared';
-import { BOUNTY_BASE, IDLE_INPUT, SAFE_ZONES } from '@arena/shared';
+import {
+  BOUNTY_BASE,
+  BOUNTY_SHARE,
+  IDLE_INPUT,
+  RESPAWN_ROCKETS,
+  SAFE_ZONES,
+  STARTER_BUILD,
+  buildValue,
+} from '@arena/shared';
 import { mkdtemp } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -35,6 +43,10 @@ class TestClient {
 
   input(seq: number, input: ShipInput): void {
     this.send({ type: 'input', seq, ...input });
+  }
+
+  clear(): void {
+    this.messages.length = 0;
   }
 
   close(): void {
@@ -100,24 +112,47 @@ describe('server integration', () => {
     expect((await pump(client, 'kicked')).reason).toBe('unauthorized');
   });
 
-  it('plays a full duel, dock and purchase loop', async () => {
+  it('kills with rockets, docks with E, shops and enforces the dock cooldown', async () => {
     const alice = await TestClient.connect(port, await register('alice'));
     const bob = await TestClient.connect(port, await register('bob'));
     const aliceShip = app.world.shipById((await pump(alice, 'welcome')).shipId);
     const bobShip = app.world.shipById((await pump(bob, 'welcome')).shipId);
     if (!aliceShip || !bobShip) throw new Error('ships missing');
     Object.assign(aliceShip, { x: OPEN_SPACE.x, y: OPEN_SPACE.y });
-    Object.assign(bobShip, { x: OPEN_SPACE.x, y: OPEN_SPACE.y - 200 });
+    Object.assign(bobShip, { x: OPEN_SPACE.x, y: OPEN_SPACE.y - 400 });
 
-    alice.input(1, { ...IDLE_INPUT, fire: true });
+    alice.input(1, { ...IDLE_INPUT, rocket: true });
     expect((await pump(bob, 'died')).killer).toBe('alice');
-    await pump(alice, 'snapshot', (s) => s.self.carriedCredits === BOUNTY_BASE);
-    await pump(bob, 'snapshot', (s) => s.self.docked);
+    bob.clear();
+    const respawned = await pump(bob, 'snapshot');
+    expect(respawned.self.build).toEqual(STARTER_BUILD);
+    expect(respawned.self.rockets).toBe(RESPAWN_ROCKETS);
+    expect(respawned.self.docked).toBe(false);
 
-    alice.send({ type: 'buy', line: 'weapon' });
-    expect(await pump(alice, 'buyResult')).toMatchObject({ ok: false, reason: 'not_docked' });
-    bob.send({ type: 'buy', line: 'weapon' });
-    expect(await pump(bob, 'buyResult')).toMatchObject({ ok: false, reason: 'insufficient_credits' });
+    alice.input(2, IDLE_INPUT);
+    const zone = SAFE_ZONES[0] ?? { x: 0, y: 0 };
+    Object.assign(aliceShip, { x: zone.x + 50, y: zone.y, vx: 0, vy: 0 });
+    alice.clear();
+    alice.send({ type: 'dock' });
+    const docked = await pump(alice, 'snapshot', (s) => s.self.docked);
+    expect(docked.self.bankedCredits).toBe(BOUNTY_BASE + Math.floor(buildValue(STARTER_BUILD) * BOUNTY_SHARE));
+
+    alice.send({ type: 'buyGear', gearId: 'rocket_rack', mk: 1, slot: { type: 'utility', index: 0 } });
+    expect(await pump(alice, 'shopResult')).toEqual({ type: 'shopResult', ok: true });
+    await pump(alice, 'snapshot', (s) => s.self.maxRockets === 15);
+
+    alice.clear();
+    alice.send({ type: 'dock' });
+    const undocked = await pump(alice, 'snapshot', (s) => !s.self.docked);
+    expect(undocked.self.dockCooldown).toBeGreaterThan(29);
+    alice.clear();
+    alice.send({ type: 'dock' });
+    for (let step = 0; step < 10; step += 1) app.loop.step();
+    await settle();
+    expect((await pump(alice, 'snapshot')).self.docked).toBe(false);
+
+    bob.send({ type: 'buyRockets', count: 1 });
+    expect(await pump(bob, 'shopResult')).toEqual({ type: 'shopResult', ok: false, reason: 'not_docked' });
   });
 
   it('kicks the older connection on a second login', async () => {

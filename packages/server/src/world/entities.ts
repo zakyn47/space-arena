@@ -1,4 +1,14 @@
-import { BASE_LOADOUT, IDLE_INPUT, statsFor, type Loadout, type ShipInput, type ShipStats } from '@arena/shared';
+import {
+  IDLE_INPUT,
+  RESPAWN_ROCKETS,
+  STARTER_BUILD,
+  statsFor,
+  type Build,
+  type GearId,
+  type Mk,
+  type ShipInput,
+  type ShipStats,
+} from '@arena/shared';
 import type { ShipRecord } from '../db/PlayerRepository';
 
 export interface QueuedInput {
@@ -16,16 +26,19 @@ export interface ShipEntity {
   vx: number;
   vy: number;
   angle: number;
-  loadout: Loadout;
+  build: Build;
   stats: ShipStats;
   hull: number;
   shieldEnergy: number;
   shieldUp: boolean;
   shieldLockout: number;
-  fireCooldown: number;
+  weaponCooldowns: number[];
   ore: number;
   carriedCredits: number;
   bankedCredits: number;
+  rockets: number;
+  rocketCooldown: number;
+  dockCooldownUntil: number;
   lastDamagedAt: number;
   lastHitBy: number | null;
   input: ShipInput;
@@ -46,9 +59,29 @@ export interface BulletEntity {
   readonly vx: number;
   readonly vy: number;
   readonly damage: number;
-  readonly tier: number;
+  readonly weaponId: GearId;
+  readonly mk: Mk;
   readonly expiresAt: number;
 }
+
+export interface RocketEntity {
+  readonly kind: 'rocket';
+  readonly id: number;
+  readonly ownerId: number;
+  readonly targetId: number | null;
+  x: number;
+  y: number;
+  prevX: number;
+  prevY: number;
+  vx: number;
+  vy: number;
+  angle: number;
+  speed: number;
+  readonly damage: number;
+  readonly expiresAt: number;
+}
+
+export type Projectile = BulletEntity | RocketEntity;
 
 export interface AsteroidEntity {
   readonly kind: 'asteroid';
@@ -79,10 +112,10 @@ export interface CrateEntity {
   readonly expiresAt: number;
 }
 
-export type WorldEntity = ShipEntity | BulletEntity | AsteroidEntity | OreEntity | CrateEntity;
+export type WorldEntity = ShipEntity | BulletEntity | RocketEntity | AsteroidEntity | OreEntity | CrateEntity;
 
 export function createShip(id: number, accountId: number, name: string, record: ShipRecord): ShipEntity {
-  const stats = statsFor(record.loadout);
+  const stats = statsFor(record.build);
   return {
     kind: 'ship',
     id,
@@ -93,16 +126,19 @@ export function createShip(id: number, accountId: number, name: string, record: 
     vx: 0,
     vy: 0,
     angle: 0,
-    loadout: record.loadout,
+    build: record.build,
     stats,
     hull: stats.maxHull,
     shieldEnergy: stats.maxShield,
     shieldUp: false,
     shieldLockout: 0,
-    fireCooldown: 0,
+    weaponCooldowns: stats.weapons.map(() => 0),
     ore: 0,
     carriedCredits: 0,
     bankedCredits: record.bankedCredits,
+    rockets: record.rockets,
+    rocketCooldown: 0,
+    dockCooldownUntil: -Infinity,
     lastDamagedAt: -Infinity,
     lastHitBy: null,
     input: IDLE_INPUT,
@@ -114,22 +150,25 @@ export function createShip(id: number, accountId: number, name: string, record: 
 }
 
 export function respawnShip(ship: ShipEntity, x: number, y: number): void {
-  const stats = statsFor(BASE_LOADOUT);
+  const stats = statsFor(STARTER_BUILD);
   Object.assign(ship, {
     x,
     y,
     vx: 0,
     vy: 0,
     angle: 0,
-    loadout: BASE_LOADOUT,
+    build: STARTER_BUILD,
     stats,
     hull: stats.maxHull,
     shieldEnergy: stats.maxShield,
     shieldUp: false,
     shieldLockout: 0,
-    fireCooldown: 0,
+    weaponCooldowns: stats.weapons.map(() => 0),
     ore: 0,
     carriedCredits: 0,
+    rockets: RESPAWN_ROCKETS,
+    rocketCooldown: 0,
+    dockCooldownUntil: -Infinity,
     lastDamagedAt: -Infinity,
     lastHitBy: null,
     docked: false,
@@ -137,5 +176,12 @@ export function respawnShip(ship: ShipEntity, x: number, y: number): void {
 }
 
 export function toShipRecord(ship: ShipEntity): ShipRecord {
-  return { accountId: ship.accountId, bankedCredits: ship.bankedCredits, loadout: ship.loadout, x: ship.x, y: ship.y };
+  return {
+    accountId: ship.accountId,
+    bankedCredits: ship.bankedCredits,
+    build: ship.build,
+    rockets: ship.rockets,
+    x: ship.x,
+    y: ship.y,
+  };
 }

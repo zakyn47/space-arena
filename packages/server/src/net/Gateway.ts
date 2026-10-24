@@ -6,7 +6,7 @@ import {
   parseClientMessage,
   type InputMessage,
   type ServerMessage,
-  type UpgradeLine,
+  type ShopAction,
 } from '@arena/shared';
 import type { RawData, WebSocket, WebSocketServer } from 'ws';
 import type { AuthService } from '../auth/AuthService';
@@ -59,7 +59,7 @@ export class Gateway implements LoopOutput {
     for (const session of this.sessions.values()) {
       const ship = world.shipById(session.shipId);
       if (!ship) continue;
-      send(session.socket, buildSnapshot(ship, world.entitiesNear(ship.x, ship.y, VIEW_RADIUS), world.tickCount));
+      send(session.socket, buildSnapshot(ship, world.entitiesNear(ship.x, ship.y, VIEW_RADIUS), world.tickCount, world.time));
     }
   }
 
@@ -119,7 +119,29 @@ export class Gateway implements LoopOutput {
       this.onInput(session, message);
       return;
     }
-    this.onBuy(session, message.line);
+    if (message.type === 'dock') {
+      this.onDock(session);
+      return;
+    }
+    this.onShop(session, message);
+  }
+
+  private onDock(session: Session): void {
+    if (this.deps.world.dock(session.shipId).ok) this.saveShip(session);
+  }
+
+  private onShop(session: Session, action: ShopAction): void {
+    const outcome = this.deps.world.shop(session.shipId, action);
+    if (outcome.ok) this.saveShip(session);
+    send(
+      session.socket,
+      outcome.ok ? { type: 'shopResult', ok: true } : { type: 'shopResult', ok: false, reason: outcome.reason },
+    );
+  }
+
+  private saveShip(session: Session): void {
+    const ship = this.deps.world.shipById(session.shipId);
+    if (ship) this.deps.repo.saveShips([toShipRecord(ship)], this.deps.now());
   }
 
   private onInput(session: Session, message: InputMessage): void {
@@ -130,19 +152,8 @@ export class Gateway implements LoopOutput {
     }
     session.inputsInWindow += 1;
     if (session.inputsInWindow > MAX_INPUTS_PER_SECOND) return;
-    const { seq, thrust, reverse, left, right, fire, shield } = message;
-    this.deps.world.setInput(session.shipId, seq, { thrust, reverse, left, right, fire, shield });
-  }
-
-  private onBuy(session: Session, line: UpgradeLine): void {
-    const { world, repo } = this.deps;
-    const outcome = world.buy(session.shipId, line);
-    const ship = world.shipById(session.shipId);
-    if (outcome.ok && ship) repo.saveShips([toShipRecord(ship)], this.deps.now());
-    send(
-      session.socket,
-      outcome.ok ? { type: 'buyResult', line, ok: true } : { type: 'buyResult', line, ok: false, reason: outcome.reason },
-    );
+    const { seq, thrust, reverse, left, right, fire, shield, rocket } = message;
+    this.deps.world.setInput(session.shipId, seq, { thrust, reverse, left, right, fire, shield, rocket });
   }
 
   private onClose(session: Session): void {

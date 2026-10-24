@@ -24,7 +24,7 @@ export class GameLoop {
 
   step(): void {
     const events = this.world.tick(TICK_DT);
-    const changed = [...events.died.map((event) => event.ship), ...events.docked, ...events.departed];
+    const changed = [...events.died.map((event) => event.ship), ...events.departed];
     if (changed.length > 0) this.store.saveShips(changed.map(toShipRecord), this.now());
     this.output.notifyDeaths(events.died);
     this.snapshotCredit += SNAPSHOT_RATE;

@@ -118,6 +118,7 @@ export interface CrateEntity {
   readonly y: number;
   readonly ore: number;
   readonly credits: number;
+  readonly gear: InstalledGear | null;
   readonly expiresAt: number;
 }
 

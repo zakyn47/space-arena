@@ -28,7 +28,7 @@ export function toEntityState(entity: WorldEntity): EntityState {
     case 'ore':
       return { kind: 'ore', id: entity.id, x: entity.x, y: entity.y };
     case 'crate':
-      return { kind: 'crate', id: entity.id, x: entity.x, y: entity.y, hasGear: false };
+      return { kind: 'crate', id: entity.id, x: entity.x, y: entity.y, hasGear: entity.gear !== null };
   }
 }
 

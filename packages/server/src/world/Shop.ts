@@ -76,6 +76,25 @@ function buyRockets(ship: ShipEntity, count: number): ShopOutcome {
   return OK;
 }
 
+function installSalvage(ship: ShipEntity, index: number, slot: SlotRef): ShopOutcome {
+  const item = ship.salvage[index];
+  if (!item) return fail('unknown_item');
+  if (!slotExists(ship.build, slot) || GEAR[item.gearId].slot !== slot.type) return fail('slot_mismatch');
+  const current = gearAt(ship.build, slot);
+  if (current) ship.bankedCredits += resaleValue(gearCost(current));
+  ship.salvage.splice(index, 1);
+  equip(ship, withGear(ship.build, slot, item));
+  return OK;
+}
+
+function sellSalvage(ship: ShipEntity, index: number): ShopOutcome {
+  const item = ship.salvage[index];
+  if (!item) return fail('unknown_item');
+  ship.salvage.splice(index, 1);
+  ship.bankedCredits += resaleValue(gearCost(item));
+  return OK;
+}
+
 export function applyShopAction(ship: ShipEntity, action: ShopAction): ShopOutcome {
   if (!ship.docked) return fail('not_docked');
   switch (action.type) {
@@ -88,7 +107,8 @@ export function applyShopAction(ship: ShipEntity, action: ShopAction): ShopOutco
     case 'buyRockets':
       return buyRockets(ship, action.count);
     case 'installSalvage':
+      return installSalvage(ship, action.index, action.slot);
     case 'sellSalvage':
-      return fail('unknown_item');
+      return sellSalvage(ship, action.index);
   }
 }

@@ -4,7 +4,6 @@ import {
   CRATE_LIFETIME,
   DISCONNECT_LINGER,
   IDLE_INPUT,
-  LOOT_CREDIT_SHARE,
   ORE_PICKUP_LIFETIME,
   PICKUP_RADIUS,
   SHIP_RADIUS,
@@ -32,6 +31,7 @@ import {
   type WorldEntity,
 } from './entities';
 import { distanceToSegment } from './geometry';
+import { playerDeathCrates, takeCrate, type CrateDrop } from './Loot';
 import { applyShopAction, type ShopOutcome } from './Shop';
 import { canMine, findMiningTarget, mineStep } from './Mining';
 import { acquireTarget, launchRocket, steerRocket, tryLaunch } from './Rockets';
@@ -321,9 +321,9 @@ export class World {
 
   private collectCrate(ship: ShipEntity, crate: CrateEntity): void {
     if (!this.crates.has(crate.id)) return;
-    ship.carriedCredits += crate.credits;
-    ship.ore = Math.min(ship.stats.cargoCapacity, ship.ore + crate.ore);
-    this.crates.delete(crate.id);
+    const leftover = takeCrate(ship, crate);
+    if (leftover === null) this.crates.delete(crate.id);
+    else this.crates.set(crate.id, { ...crate, ...leftover });
   }
 
   private expirePickups(): void {
@@ -353,17 +353,11 @@ export class World {
   }
 
   private dropCrate(ship: ShipEntity): void {
-    const credits = Math.floor(ship.carriedCredits * LOOT_CREDIT_SHARE);
-    if (ship.ore === 0 && credits === 0) return;
-    const crate: CrateEntity = {
-      kind: 'crate',
-      id: this.allocateId(),
-      x: ship.x,
-      y: ship.y,
-      ore: ship.ore,
-      credits,
-      expiresAt: this.elapsed + CRATE_LIFETIME,
-    };
+    playerDeathCrates(ship).forEach((drop, index) => this.spawnCrate(ship.x + index * 12, ship.y, drop));
+  }
+
+  private spawnCrate(x: number, y: number, drop: CrateDrop): void {
+    const crate: CrateEntity = { kind: 'crate', id: this.allocateId(), x, y, ...drop, expiresAt: this.elapsed + CRATE_LIFETIME };
     this.crates.set(crate.id, crate);
   }
 

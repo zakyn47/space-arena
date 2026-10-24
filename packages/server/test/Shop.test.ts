@@ -111,3 +111,30 @@ describe('buyRockets', () => {
     expect(ship.rockets).toBe(10);
   });
 });
+
+describe('salvage', () => {
+  it('installs salvage for free and refunds the replaced gear', () => {
+    const ship = dockedShip(0);
+    ship.salvage = [{ gearId: 'pulse_laser', mk: 3 }];
+    expect(applyShopAction(ship, buy({ type: 'installSalvage', index: 0, slot: { type: 'weapon', index: 0 } }))).toEqual({ ok: true });
+    expect(ship.salvage).toEqual([]);
+    expect(ship.stats.weapons[0]?.damage).toBe(19);
+    expect(ship.bankedCredits).toBe(125);
+  });
+
+  it('rejects wrong slots and bad indexes without changes', () => {
+    const ship = dockedShip(0);
+    ship.salvage = [{ gearId: 'armor', mk: 1 }];
+    expect(applyShopAction(ship, buy({ type: 'installSalvage', index: 0, slot: { type: 'weapon', index: 0 } }))).toEqual({ ok: false, reason: 'slot_mismatch' });
+    expect(applyShopAction(ship, buy({ type: 'sellSalvage', index: 2 }))).toEqual({ ok: false, reason: 'unknown_item' });
+    expect(ship.salvage).toHaveLength(1);
+  });
+
+  it('sells salvage for half its value', () => {
+    const ship = dockedShip(0);
+    ship.salvage = [{ gearId: 'armor', mk: 2 }];
+    expect(applyShopAction(ship, buy({ type: 'sellSalvage', index: 0 }))).toEqual({ ok: true });
+    expect(ship.bankedCredits).toBe(300);
+    expect(ship.salvage).toEqual([]);
+  });
+});

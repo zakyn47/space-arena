@@ -33,6 +33,7 @@ const SLOT_LETTERS: Readonly<Record<SlotType, string>> = { weapon: 'W', shield: 
 
 interface StatMetric {
   readonly label: string;
+  readonly unit?: string;
   readonly value: (stats: ShipStats) => number;
 }
 
@@ -43,6 +44,7 @@ const METRICS: readonly StatMetric[] = [
   { label: 'Shield', value: (s) => s.maxShield },
   { label: 'Cargo', value: (s) => s.cargoCapacity },
   { label: 'Rockets max', value: (s) => s.maxRockets },
+  { label: 'Mining', unit: '/s', value: (s) => s.miningRate },
 ];
 
 export function gearLabel(gear: InstalledGear): string {
@@ -50,13 +52,13 @@ export function gearLabel(gear: InstalledGear): string {
 }
 
 export function statSummary(stats: ShipStats): string[] {
-  return METRICS.map((metric) => `${metric.label} ${Math.round(metric.value(stats))}`);
+  return METRICS.map((metric) => `${metric.label} ${Math.round(metric.value(stats))}${metric.unit ?? ''}`);
 }
 
 export function describeDelta(before: ShipStats, after: ShipStats): string {
   const changes = METRICS.flatMap((metric) => {
     const delta = Math.round(metric.value(after) - metric.value(before));
-    return delta === 0 ? [] : [`${metric.label} ${delta > 0 ? '+' : ''}${delta}`];
+    return delta === 0 ? [] : [`${metric.label} ${delta > 0 ? '+' : ''}${delta}${metric.unit ?? ''}`];
   });
   return changes.length > 0 ? changes.join(', ') : 'no change';
 }
@@ -75,6 +77,28 @@ export function slotRows(build: Build): SlotRow[] {
       gear,
     })),
   );
+}
+
+export interface SalvageRow {
+  readonly index: number;
+  readonly label: string;
+  readonly salePrice: number;
+  readonly slots: readonly { readonly slot: SlotRef; readonly label: string }[];
+}
+
+export function salvageRows(build: Build, salvage: readonly InstalledGear[]): SalvageRow[] {
+  return salvage.map((gear, index) => {
+    const type = GEAR[gear.gearId].slot;
+    return {
+      index,
+      label: gearLabel(gear),
+      salePrice: resaleValue(gearCost(gear)),
+      slots: build.slots[type].map((_, slotIndex) => ({
+        slot: { type, index: slotIndex },
+        label: `${SLOT_LABELS[type]} ${slotIndex + 1}`,
+      })),
+    };
+  });
 }
 
 export interface GearOption {

@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { Interpolator } from '../src/sim/Interpolator';
 
 const ship = (x: number, angle = 0): EntityState => ({
-  kind: 'ship', id: 1, name: 'bob', x, y: 0, vx: 0, vy: 0, angle, shieldUp: false, hullId: 'scout',
+  kind: 'ship', id: 1, name: 'bob', x, y: 0, vx: 0, vy: 0, angle, shieldUp: false, hullId: 'scout', npc: null, miningTargetId: null,
 });
 
 describe('Interpolator', () => {

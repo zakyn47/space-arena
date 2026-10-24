@@ -108,6 +108,8 @@ class ActiveGame {
       angle: motion.angle,
       shieldUp: self.shieldUp,
       hullId: self.build.hullId,
+      npc: null,
+      miningTargetId: self.miningTargetId,
     };
     const others = this.interpolator.sample(performance.now() - INTERPOLATION_DELAY_MS);
     this.renderer.render({ camera: motion, entities: [ownShip, ...others] });

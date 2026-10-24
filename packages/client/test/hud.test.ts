@@ -20,6 +20,7 @@ describe('hudLines', () => {
       'Shield 33 / 100 (UP)',
       'Rockets 7 / 10',
       'Cargo 4 / 15 ore',
+      'Salvage 0 / 3',
       'Carried 150 cr (at risk)',
       'Banked 900 cr',
       'Press E to dock',
@@ -27,6 +28,6 @@ describe('hudLines', () => {
   });
 
   it('omits an empty prompt', () => {
-    expect(hudLines(selfState(), null)).toHaveLength(6);
+    expect(hudLines(selfState(), null)).toHaveLength(7);
   });
 });

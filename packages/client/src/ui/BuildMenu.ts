@@ -7,7 +7,7 @@ import {
   type ShopResultMessage,
   type SlotRef,
 } from '@arena/shared';
-import { gearOptions, hullCards, rocketOffer, slotRows, statSummary } from './buildMenuModel';
+import { gearOptions, hullCards, rocketOffer, salvageRows, slotRows, statSummary } from './buildMenuModel';
 
 type Tab = 'ship' | 'hulls' | 'rockets';
 
@@ -70,7 +70,7 @@ export class BuildMenu {
   private render(force = false): void {
     const self = this.self;
     if (!self) return;
-    const key = JSON.stringify([self.build, self.bankedCredits, self.rockets, this.tab, this.selectedSlot, this.resultText]);
+    const key = JSON.stringify([self.build, self.salvage, self.bankedCredits, self.rockets, this.tab, this.selectedSlot, this.resultText]);
     if (!force && key === this.renderedKey) return;
     this.renderedKey = key;
     this.root.replaceChildren(
@@ -121,7 +121,29 @@ export class BuildMenu {
       body.append(line);
     }
     if (this.selectedSlot) body.append(this.gearList(self, this.selectedSlot));
+    if (self.salvage.length > 0) body.append(element('div', 'Salvage', 'summary'), ...this.salvageLines(self));
     return body;
+  }
+
+  private salvageLines(self: SelfState): HTMLElement[] {
+    return salvageRows(self.build, self.salvage).map((row) => {
+      const line = element('div', '', 'row');
+      const icon = element('img');
+      icon.alt = '';
+      const gear = self.salvage[row.index];
+      if (gear) icon.src = `/ui/gear_${gear.gearId}.png`;
+      line.append(
+        icon,
+        element('span', row.label),
+        ...row.slots.map((target) =>
+          button(`Install → ${target.label}`, true, () =>
+            this.send({ type: 'installSalvage', index: row.index, slot: target.slot }),
+          ),
+        ),
+        button(`Sell (${row.salePrice} cr)`, true, () => this.send({ type: 'sellSalvage', index: row.index })),
+      );
+      return line;
+    });
   }
 
   private gearList(self: SelfState, slot: SlotRef): HTMLElement {

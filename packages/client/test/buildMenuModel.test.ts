@@ -1,6 +1,6 @@
 import { STARTER_BUILD, statsFor } from '@arena/shared';
 import { describe, expect, it } from 'vitest';
-import { describeDelta, gearOptions, hullCards, rocketOffer, slotRows, statSummary } from '../src/ui/buildMenuModel';
+import { describeDelta, gearOptions, hullCards, rocketOffer, salvageRows, slotRows, statSummary } from '../src/ui/buildMenuModel';
 import { selfState } from './support/self';
 
 describe('statSummary', () => {
@@ -12,6 +12,7 @@ describe('statSummary', () => {
       'Shield 100',
       'Cargo 15',
       'Rockets max 10',
+      'Mining 1/s',
     ]);
   });
 });
@@ -22,7 +23,7 @@ describe('slotRows', () => {
       'Weapon 1: Pulse Laser Mk1',
       'Shield 1: Shield Generator Mk1',
       'Engine 1: Thruster Mk1',
-      'Utility 1: Empty',
+      'Utility 1: Mining Laser Mk1',
     ]);
   });
 });
@@ -34,8 +35,9 @@ describe('gearOptions', () => {
       'Armor Plating Mk1', 'Armor Plating Mk2', 'Armor Plating Mk3',
       'Cargo Pod Mk1', 'Cargo Pod Mk2', 'Cargo Pod Mk3',
       'Rocket Rack Mk1', 'Rocket Rack Mk2', 'Rocket Rack Mk3',
+      'Mining Laser Mk1', 'Mining Laser Mk2', 'Mining Laser Mk3',
     ]);
-    expect(options[0]).toMatchObject({ gearId: 'armor', mk: 1, price: 200, affordable: true, delta: 'Hull +30' });
+    expect(options[0]).toMatchObject({ gearId: 'armor', mk: 1, price: 200, affordable: true, delta: 'Hull +30, Mining -1/s' });
     expect(options[1]?.affordable).toBe(false);
   });
 
@@ -43,6 +45,15 @@ describe('gearOptions', () => {
     const [mk1, mk2] = gearOptions(STARTER_BUILD, { type: 'weapon', index: 0 }, 600);
     expect(mk1?.delta).toBe('no change');
     expect(mk2).toMatchObject({ price: 700, affordable: true, delta: 'Damage/s +23' });
+  });
+});
+
+describe('salvageRows', () => {
+  it('offers install slots and sale price per item', () => {
+    const rows = salvageRows(STARTER_BUILD, [{ gearId: 'armor', mk: 2 }]);
+    expect(rows).toEqual([
+      { index: 0, label: 'Armor Plating Mk2', salePrice: 300, slots: [{ slot: { type: 'utility', index: 0 }, label: 'Utility 1' }] },
+    ]);
   });
 });
 

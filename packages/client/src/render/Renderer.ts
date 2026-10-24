@@ -42,8 +42,7 @@ function generatedStars(app: Application): Texture {
 }
 
 export function cameraScale(width: number, height: number, touch: boolean): number {
-  if (!touch) return 1;
-  return Math.max(0.4, Math.hypot(width, height) / (2 * VIEW_RADIUS * 0.9));
+  return Math.max(touch ? 0.4 : 0.75, Math.hypot(width, height) / (2 * VIEW_RADIUS));
 }
 
 export class Renderer {

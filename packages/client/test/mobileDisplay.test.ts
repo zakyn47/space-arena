@@ -27,12 +27,13 @@ describe('mobile display', () => {
   it('zooms out mobile world rendering in both orientations without changing desktop scale', () => {
     expect(cameraScale(393, 873, true)).toBe(0.4);
     expect(cameraScale(873, 393, true)).toBe(0.4);
-    expect(cameraScale(1920, 1080, false)).toBe(1);
+    expect(cameraScale(1920, 1080, false)).toBe(0.75);
   });
 
-  it('keeps the visible mobile world inside the server snapshot radius on large displays', () => {
+  it('keeps the visible world inside the server snapshot radius on large displays', () => {
     const width = 2400;
     const height = 1600;
     expect(Math.hypot(width, height) / (2 * cameraScale(width, height, true))).toBeLessThanOrEqual(VIEW_RADIUS);
+    expect(Math.hypot(width, height) / (2 * cameraScale(width, height, false))).toBeLessThanOrEqual(VIEW_RADIUS);
   });
 });

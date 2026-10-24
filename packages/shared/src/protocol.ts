@@ -96,6 +96,7 @@ export interface ShipState {
   readonly hullId: HullId;
   readonly npc: NpcKind | null;
   readonly miningTargetId: number | null;
+  readonly health?: number;
 }
 
 export interface BulletState {

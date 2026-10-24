@@ -12,6 +12,7 @@ type LayerName = 'zones' | 'ground' | 'ships' | 'bullets' | 'effects';
 const LAYER_FOR: Readonly<Record<EntityState['kind'], LayerName>> = {
   ship: 'ships',
   bullet: 'bullets',
+  rocket: 'bullets',
   asteroid: 'ground',
   ore: 'ground',
   crate: 'ground',
@@ -120,17 +121,23 @@ export class Renderer {
     view.x = entity.x;
     view.y = entity.y;
     view.container.position.set(entity.x, entity.y);
-    if (entity.kind !== 'ship') return;
-    view.container.rotation = entity.angle;
-    if (view.shield) view.shield.visible = entity.shieldUp;
+    if ('angle' in entity) view.container.rotation = entity.angle;
+    if (view.shield && entity.kind === 'ship') view.shield.visible = entity.shieldUp;
   }
 
   private replaceView(entity: EntityState, spriteId: string): EntityView {
-    this.views.get(entity.id)?.container.destroy();
-    const container = this.sprites.create(spriteId);
+    this.views.get(entity.id)?.container.destroy({ children: true });
+    const container = new Container();
+    if (entity.kind === 'rocket') {
+      const trail = this.sprites.create('rocket_trail');
+      trail.position.set(0, 16);
+      container.addChild(trail);
+    }
+    const body = this.sprites.create(spriteId);
+    if (entity.kind === 'asteroid') body.scale.set((entity.radius * 2) / this.sprites.size(spriteId).width);
+    container.addChild(body);
     const shield = entity.kind === 'ship' ? this.sprites.create('shield_bubble') : null;
     if (shield) container.addChild(shield);
-    if (entity.kind === 'asteroid') container.scale.set((entity.radius * 2) / this.sprites.size(spriteId).width);
     this.layers[LAYER_FOR[entity.kind]].addChild(container);
     const view: EntityView = { spriteId, container, shield, x: entity.x, y: entity.y };
     this.views.set(entity.id, view);
@@ -141,7 +148,7 @@ export class Renderer {
     for (const [id, view] of this.views) {
       if (seen.has(id)) continue;
       if (view.spriteId.startsWith('ship_') && this.isWellInsideView(view)) this.effects.explode(view.x, view.y);
-      view.container.destroy();
+      view.container.destroy({ children: true });
       this.views.delete(id);
     }
   }

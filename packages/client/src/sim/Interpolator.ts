@@ -21,7 +21,7 @@ function lerpAngle(from: number, to: number, t: number): number {
 function blend(from: EntityState | undefined, to: EntityState, t: number): EntityState {
   if (!from || from.kind !== to.kind) return to;
   const moved = { ...to, x: lerp(from.x, to.x, t), y: lerp(from.y, to.y, t) };
-  if (moved.kind === 'ship' && from.kind === 'ship') return { ...moved, angle: lerpAngle(from.angle, moved.angle, t) };
+  if ('angle' in moved && 'angle' in from) return { ...moved, angle: lerpAngle(from.angle, moved.angle, t) };
   return moved;
 }
 

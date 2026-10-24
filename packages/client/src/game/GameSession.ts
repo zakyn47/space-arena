@@ -5,8 +5,8 @@ import { Renderer } from '../render/Renderer';
 import type { SpriteFactory } from '../render/SpriteFactory';
 import { INTERPOLATION_DELAY_MS, Interpolator } from '../sim/Interpolator';
 import { Predictor } from '../sim/Predictor';
+import { BuildMenu } from '../ui/BuildMenu';
 import { Hud } from '../ui/Hud';
-import { ShopPanel } from '../ui/ShopPanel';
 import { Toast } from '../ui/Toast';
 
 export interface GameDom {
@@ -20,7 +20,7 @@ export interface GameDom {
 class ActiveGame {
   private readonly predictor = new Predictor();
   private readonly interpolator = new Interpolator();
-  private readonly input = new InputSampler();
+  private readonly input: InputSampler;
   private latest: SnapshotMessage | null = null;
   private inputTimer: ReturnType<typeof setInterval> | undefined;
 
@@ -28,10 +28,12 @@ class ActiveGame {
     private readonly connection: Connection,
     private readonly renderer: Renderer,
     private readonly hud: Hud,
-    private readonly shop: ShopPanel,
+    private readonly menu: BuildMenu,
     private readonly toast: Toast,
     private readonly dom: GameDom,
-  ) {}
+  ) {
+    this.input = new InputSampler(() => this.connection.send({ type: 'dock' }));
+  }
 
   static async start(welcome: WelcomeMessage, connection: Connection, sprites: SpriteFactory, dom: GameDom): Promise<ActiveGame> {
     dom.gameRoot.hidden = false;
@@ -40,7 +42,7 @@ class ActiveGame {
       connection,
       renderer,
       new Hud(dom.hud, dom.minimap, welcome.safeZones, welcome.worldSize),
-      new ShopPanel(dom.shop, (line) => connection.send({ type: 'buy', line })),
+      new BuildMenu(dom.shop, (message) => connection.send(message)),
       new Toast(dom.toast),
       dom,
     );
@@ -56,8 +58,8 @@ class ActiveGame {
       case 'died':
         this.toast.show(message.killer ? `Destroyed by ${message.killer}` : 'Ship destroyed');
         return;
-      case 'buyResult':
-        this.shop.showResult(message);
+      case 'shopResult':
+        this.menu.showResult(message);
         return;
       default:
         return;
@@ -88,7 +90,7 @@ class ActiveGame {
     this.interpolator.push(snapshot.entities, performance.now());
     this.predictor.reconcile(snapshot.self, snapshot.lastSeq);
     this.hud.update(snapshot.self);
-    this.shop.update(snapshot.self);
+    this.menu.update(snapshot.self);
   }
 
   private draw(): void {
@@ -105,7 +107,7 @@ class ActiveGame {
       vy: motion.vy,
       angle: motion.angle,
       shieldUp: self.shieldUp,
-      hullTier: self.loadout.hull,
+      hullId: self.build.hullId,
     };
     const others = this.interpolator.sample(performance.now() - INTERPOLATION_DELAY_MS);
     this.renderer.render({ camera: motion, entities: [ownShip, ...others] });

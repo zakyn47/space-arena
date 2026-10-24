@@ -25,8 +25,8 @@ describe('mobile display', () => {
   });
 
   it('zooms out mobile world rendering in both orientations without changing desktop scale', () => {
-    expect(cameraScale(393, 873, true)).toBe(0.6);
-    expect(cameraScale(873, 393, true)).toBe(0.6);
+    expect(cameraScale(393, 873, true)).toBe(0.4);
+    expect(cameraScale(873, 393, true)).toBe(0.4);
     expect(cameraScale(1920, 1080, false)).toBe(1);
   });
 

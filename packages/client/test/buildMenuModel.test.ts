@@ -7,7 +7,7 @@ describe('statSummary', () => {
   it('summarises the starter build', () => {
     expect(statSummary(statsFor(STARTER_BUILD))).toEqual([
       'Hull 80',
-      'Speed 460',
+      'Speed 322',
       'Damage/s 40',
       'Shield 100',
       'Cargo 15',
@@ -76,7 +76,7 @@ describe('describeDelta', () => {
   it('lists several changes', () => {
     const before = statsFor(STARTER_BUILD);
     const after = statsFor({ ...STARTER_BUILD, hullId: 'fighter', slots: { ...STARTER_BUILD.slots, weapon: [{ gearId: 'pulse_laser', mk: 1 }, null] } });
-    expect(describeDelta(before, after)).toBe('Hull +40, Speed -40, Cargo +5');
+    expect(describeDelta(before, after)).toBe('Hull +40, Speed -28, Cargo +5');
   });
 });
 
@@ -134,7 +134,7 @@ describe('captainRows', () => {
     expect(rows.map((row) => row.skill)).toEqual(['gunnery', 'engineering', 'piloting', 'mining']);
     expect(rows.every((row) => row.canTrain)).toBe(true);
     expect(rows[1]?.delta).toBe('Hull +4, Shield +5');
-    expect(rows[2]?.delta).toBe('Speed +14');
+    expect(rows[2]?.delta).toBe('Speed +10');
     expect(rows[3]?.delta).toBe('Mining +0.1/s');
     expect(captainRows(selfState()).every((row) => !row.canTrain)).toBe(true);
     const captain = { ...NEW_CAPTAIN, skills: { ...NEW_CAPTAIN.skills, piloting: 3 } };

@@ -46,8 +46,8 @@ describe('captains', () => {
     expect(stats.maxHull).toBe(84);
     expect(stats.maxShield).toBe(105);
     expect(stats.weapons[0]?.damage).toBeCloseTo(10.5);
-    expect(stats.maxSpeed).toBeCloseTo(460 * 1.03);
-    expect(stats.thrust).toBeCloseTo(240 * 1.03);
+    expect(stats.maxSpeed).toBeCloseTo(322 * 1.03);
+    expect(stats.thrust).toBeCloseTo(168 * 1.03);
     expect(stats.miningRate).toBeCloseTo(1.1);
     expect(stats.cargoCapacity).toBe(15);
     const empty = { ...STARTER_BUILD, slots: { weapon: [null], shield: [null], engine: [null], utility: [null] } };

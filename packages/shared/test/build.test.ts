@@ -27,8 +27,8 @@ describe('statsFor', () => {
     const stats = statsFor(STARTER_BUILD);
     expect(stats).toMatchObject({
       maxHull: 80,
-      thrust: 240,
-      maxSpeed: 460,
+      thrust: 168,
+      maxSpeed: 322,
       turnRate: 3.6,
       maxShield: 100,
       shieldRegen: 15,
@@ -41,7 +41,7 @@ describe('statsFor', () => {
 
   it('slows a ship with an empty engine slot', () => {
     const stats = statsFor(withGear(STARTER_BUILD, { type: 'engine', index: 0 }, null));
-    expect(stats.thrust).toBeCloseTo(144);
+    expect(stats.thrust).toBeCloseTo(100.8);
     expect(stats.turnRate).toBeCloseTo(2.16);
   });
 
@@ -51,7 +51,7 @@ describe('statsFor', () => {
     expect(stats.maxShield).toBe(320);
     expect(stats.shieldRegen).toBe(43);
     expect(stats.maxRockets).toBe(20);
-    expect(stats.thrust).toBeCloseTo(170 * 1.15);
+    expect(stats.thrust).toBeCloseTo(119 * 1.15);
   });
 
   it('has no weapons and no shield when slots are empty', () => {

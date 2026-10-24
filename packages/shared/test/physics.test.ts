@@ -9,13 +9,13 @@ describe('stepMotion', () => {
   it('thrusts toward the nose, which points up at angle 0', () => {
     const next = stepMotion(at(), { ...IDLE_INPUT, thrust: true }, stats, 0.1);
     expect(next.vx).toBeCloseTo(0);
-    expect(next.vy).toBeCloseTo(-24);
-    expect(next.y).toBeCloseTo(997.6);
+    expect(next.vy).toBeCloseTo(-16.8);
+    expect(next.y).toBeCloseTo(998.32);
   });
 
   it('reverse thrust pushes backward at half strength', () => {
     const next = stepMotion(at(), { ...IDLE_INPUT, reverse: true }, stats, 0.1);
-    expect(next.vy).toBeCloseTo(12);
+    expect(next.vy).toBeCloseTo(8.4);
   });
 
   it('rotates clockwise with D', () => {
@@ -36,7 +36,7 @@ describe('stepMotion', () => {
 
   it('clamps speed to maxSpeed', () => {
     const next = stepMotion({ ...at(), vy: -460 }, { ...IDLE_INPUT, thrust: true }, stats, 1);
-    expect(Math.hypot(next.vx, next.vy)).toBeCloseTo(460);
+    expect(Math.hypot(next.vx, next.vy)).toBeCloseTo(322);
   });
 
   it('stops at world walls', () => {

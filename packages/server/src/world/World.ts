@@ -13,12 +13,10 @@ import {
   stepMotion,
   zoneAt,
   type ShipInput,
-  type UpgradeLine,
 } from '@arena/shared';
 import type { ShipRecord } from '../db/PlayerRepository';
 import { randomAsteroid, scatterOre, type AsteroidFields } from './AsteroidField';
-import { applyHit, bountyFor, tryFire, updateShield } from './Combat';
-import { buyUpgrade, updateDocking, type BuyOutcome } from './Economy';
+import { applyDamage, bountyFor, fireWeapons, updateShield } from './Combat';
 import {
   createShip,
   respawnShip,
@@ -44,7 +42,6 @@ export interface DeathEvent {
 
 export interface TickEvents {
   readonly died: DeathEvent[];
-  readonly docked: ShipEntity[];
   readonly departed: ShipEntity[];
 }
 
@@ -138,12 +135,6 @@ export class World {
     return asteroid;
   }
 
-  buy(shipId: number, line: UpgradeLine): BuyOutcome {
-    const ship = this.ships.get(shipId);
-    if (!ship) return { ok: false, reason: 'not_docked' };
-    return buyUpgrade(ship, line);
-  }
-
   entitiesNear(x: number, y: number, radius: number): WorldEntity[] {
     return this.grid.queryRadius(x, y, radius);
   }
@@ -151,14 +142,13 @@ export class World {
   tick(dt: number): TickEvents {
     this.elapsed += dt;
     this.ticks += 1;
-    const events: TickEvents = { died: [], docked: [], departed: [] };
+    const events: TickEvents = { died: [], departed: [] };
     this.stepShips(dt);
     this.stepBullets(dt);
     this.rebuildGrid();
     this.resolveBulletHits();
     this.collectPickups();
     this.resolveDeaths(events.died);
-    this.updateDocking(events.docked);
     this.expirePickups();
     this.maintainAsteroids();
     this.expireLingering(events.departed);
@@ -181,8 +171,9 @@ export class World {
       const inSafeZone = zoneAt(ship.x, ship.y) !== undefined;
       updateShield(ship, dt, inSafeZone);
       Object.assign(ship, stepMotion(ship, ship.input, ship.stats, dt));
-      const bullet = tryFire(ship, dt, inSafeZone, this.elapsed, () => this.allocateId());
-      if (bullet) this.bullets.set(bullet.id, bullet);
+      for (const bullet of fireWeapons(ship, dt, inSafeZone, this.elapsed, () => this.allocateId())) {
+        this.bullets.set(bullet.id, bullet);
+      }
     }
   }
 
@@ -233,7 +224,7 @@ export class World {
   }
 
   private applyBulletTo(entity: WorldEntity, bullet: BulletEntity): void {
-    if (entity.kind === 'ship') applyHit(entity, bullet, this.elapsed);
+    if (entity.kind === 'ship') applyDamage(entity, bullet.damage, bullet.ownerId, this.elapsed);
     if (entity.kind === 'asteroid') this.damageAsteroid(entity, bullet.damage);
   }
 
@@ -269,12 +260,6 @@ export class World {
     this.crates.delete(crate.id);
   }
 
-  private updateDocking(docked: ShipEntity[]): void {
-    for (const ship of this.ships.values()) {
-      if (updateDocking(ship, this.elapsed)) docked.push(ship);
-    }
-  }
-
   private expirePickups(): void {
     for (const collection of [this.orePickups, this.crates]) {
       for (const pickup of collection.values()) {
@@ -293,7 +278,7 @@ export class World {
     for (const ship of this.ships.values()) {
       if (ship.hull > 0) continue;
       const killer = ship.lastHitBy === null ? undefined : this.ships.get(ship.lastHitBy);
-      if (killer) killer.carriedCredits += bountyFor(ship.loadout);
+      if (killer) killer.carriedCredits += bountyFor(ship.build);
       this.dropCrate(ship);
       const zone = nearestZone(ship.x, ship.y);
       respawnShip(ship, zone.x, zone.y);

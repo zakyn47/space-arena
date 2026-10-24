@@ -1,4 +1,4 @@
-import { IDLE_INPUT, SAFE_ZONES } from '@arena/shared';
+import { IDLE_INPUT } from '@arena/shared';
 import { describe, expect, it } from 'vitest';
 import type { ShipRecord } from '../src/db/PlayerRepository';
 import { GameLoop } from '../src/GameLoop';
@@ -26,15 +26,13 @@ describe('GameLoop', () => {
     expect(broadcasts).toHaveLength(20);
   });
 
-  it('saves docked ships and reports deaths', () => {
+  it('saves dead ships and reports deaths', () => {
     const { world, loop, deaths, saved } = harness();
-    const zone = SAFE_ZONES[0] ?? { x: 0, y: 0 };
-    world.addShip(9, 'carl', shipRecord(zone.x, zone.y, 9));
     const alice = world.addShip(1, 'alice', shipRecord(OPEN_SPACE.x, OPEN_SPACE.y, 1));
     world.addShip(2, 'bob', shipRecord(OPEN_SPACE.x, OPEN_SPACE.y - 200, 2));
     world.setInput(alice.id, 1, { ...IDLE_INPUT, fire: true });
     for (let i = 0; i < 200 && deaths.length === 0; i += 1) loop.step();
     expect(deaths[0]?.killerName).toBe('alice');
-    expect(saved.map((record) => record.accountId)).toEqual(expect.arrayContaining([9, 2]));
+    expect(saved.map((record) => record.accountId)).toEqual([2]);
   });
 });

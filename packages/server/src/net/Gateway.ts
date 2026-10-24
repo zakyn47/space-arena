@@ -6,7 +6,6 @@ import {
   parseClientMessage,
   type InputMessage,
   type ServerMessage,
-  type UpgradeLine,
 } from '@arena/shared';
 import type { RawData, WebSocket, WebSocketServer } from 'ws';
 import type { AuthService } from '../auth/AuthService';
@@ -115,11 +114,7 @@ export class Gateway implements LoopOutput {
       session.socket.close(POLICY_VIOLATION, 'invalid message');
       return;
     }
-    if (message.type === 'input') {
-      this.onInput(session, message);
-      return;
-    }
-    this.onBuy(session, message.line);
+    if (message.type === 'input') this.onInput(session, message);
   }
 
   private onInput(session: Session, message: InputMessage): void {
@@ -130,19 +125,8 @@ export class Gateway implements LoopOutput {
     }
     session.inputsInWindow += 1;
     if (session.inputsInWindow > MAX_INPUTS_PER_SECOND) return;
-    const { seq, thrust, reverse, left, right, fire, shield } = message;
-    this.deps.world.setInput(session.shipId, seq, { thrust, reverse, left, right, fire, shield });
-  }
-
-  private onBuy(session: Session, line: UpgradeLine): void {
-    const { world, repo } = this.deps;
-    const outcome = world.buy(session.shipId, line);
-    const ship = world.shipById(session.shipId);
-    if (outcome.ok && ship) repo.saveShips([toShipRecord(ship)], this.deps.now());
-    send(
-      session.socket,
-      outcome.ok ? { type: 'buyResult', line, ok: true } : { type: 'buyResult', line, ok: false, reason: outcome.reason },
-    );
+    const { seq, thrust, reverse, left, right, fire, shield, rocket } = message;
+    this.deps.world.setInput(session.shipId, seq, { thrust, reverse, left, right, fire, shield, rocket });
   }
 
   private onClose(session: Session): void {

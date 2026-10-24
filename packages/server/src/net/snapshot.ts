@@ -14,10 +14,12 @@ export function toEntityState(entity: WorldEntity): EntityState {
         vy: entity.vy,
         angle: entity.angle,
         shieldUp: entity.shieldUp,
-        hullTier: entity.loadout.hull,
+        hullId: entity.build.hullId,
       };
     case 'bullet':
-      return { kind: 'bullet', id: entity.id, x: entity.x, y: entity.y, vx: entity.vx, vy: entity.vy, tier: entity.tier };
+      return { kind: 'bullet', id: entity.id, x: entity.x, y: entity.y, vx: entity.vx, vy: entity.vy, weaponId: entity.weaponId, mk: entity.mk };
+    case 'rocket':
+      return { kind: 'rocket', id: entity.id, x: entity.x, y: entity.y, vx: entity.vx, vy: entity.vy, angle: entity.angle };
     case 'asteroid':
       return { kind: 'asteroid', id: entity.id, x: entity.x, y: entity.y, radius: entity.radius, variant: entity.variant };
     case 'ore':
@@ -44,8 +46,12 @@ export function toSelfState(ship: ShipEntity): SelfState {
     cargoCapacity: ship.stats.cargoCapacity,
     carriedCredits: ship.carriedCredits,
     bankedCredits: ship.bankedCredits,
-    loadout: ship.loadout,
+    build: ship.build,
+    rockets: ship.rockets,
+    maxRockets: ship.stats.maxRockets,
     docked: ship.docked,
+    canDock: false,
+    dockCooldown: 0,
   };
 }
 

@@ -1,4 +1,14 @@
-import { BOUNTY_BASE, DISCONNECT_LINGER, IDLE_INPUT, SAFE_ZONES, TICK_DT } from '@arena/shared';
+import {
+  BOUNTY_BASE,
+  BOUNTY_SHARE,
+  DISCONNECT_LINGER,
+  IDLE_INPUT,
+  RESPAWN_ROCKETS,
+  SAFE_ZONES,
+  STARTER_BUILD,
+  TICK_DT,
+  buildValue,
+} from '@arena/shared';
 import { describe, expect, it } from 'vitest';
 import { World, type DeathEvent } from '../src/world/World';
 import { OPEN_SPACE, shipRecord } from './support/fixtures';
@@ -25,10 +35,11 @@ describe('World combat', () => {
     const death = runUntilDeath(world);
     expect(death?.ship.id).toBe(bob.id);
     expect(death?.killerName).toBe('alice');
-    expect(alice.carriedCredits).toBe(BOUNTY_BASE);
+    expect(alice.carriedCredits).toBe(BOUNTY_BASE + Math.floor(buildValue(STARTER_BUILD) * BOUNTY_SHARE));
     const zone = SAFE_ZONES[0];
     expect([bob.x, bob.y]).toEqual([zone?.x, zone?.y]);
-    expect(bob.hull).toBe(100);
+    expect(bob.hull).toBe(bob.stats.maxHull);
+    expect(bob.rockets).toBe(RESPAWN_ROCKETS);
   });
 
   it('shield blocks damage', () => {
@@ -36,8 +47,8 @@ describe('World combat', () => {
     world.setInput(alice.id, 1, { ...IDLE_INPUT, fire: true });
     world.setInput(bob.id, 1, { ...IDLE_INPUT, shield: true });
     for (let i = 0; i < 30; i += 1) world.tick(TICK_DT);
-    expect(bob.hull).toBe(100);
-    expect(bob.shieldEnergy).toBeLessThan(100);
+    expect(bob.hull).toBe(bob.stats.maxHull);
+    expect(bob.shieldEnergy).toBeLessThan(bob.stats.maxShield);
   });
 
   it('drops a crate with carried ore and half the carried credits', () => {

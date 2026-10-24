@@ -17,6 +17,7 @@ import {
 import type { ShipRecord } from '../db/PlayerRepository';
 import { randomAsteroid, scatterOre, type AsteroidFields } from './AsteroidField';
 import { applyDamage, bountyFor, fireWeapons, updateShield } from './Combat';
+import { toggleDock, type DockOutcome } from './Docking';
 import {
   createShip,
   respawnShip,
@@ -135,6 +136,12 @@ export class World {
     return asteroid;
   }
 
+  dock(shipId: number): DockOutcome {
+    const ship = this.ships.get(shipId);
+    if (!ship) return { ok: false, reason: 'out_of_range' };
+    return toggleDock(ship, this.elapsed);
+  }
+
   entitiesNear(x: number, y: number, radius: number): WorldEntity[] {
     return this.grid.queryRadius(x, y, radius);
   }
@@ -167,6 +174,12 @@ export class World {
       if (next) {
         ship.input = next.input;
         ship.lastSeq = next.seq;
+      }
+      if (ship.docked) {
+        ship.vx = 0;
+        ship.vy = 0;
+        ship.shieldUp = false;
+        continue;
       }
       const inSafeZone = zoneAt(ship.x, ship.y) !== undefined;
       updateShield(ship, dt, inSafeZone);

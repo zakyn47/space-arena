@@ -5,6 +5,8 @@ import {
   DISCONNECT_LINGER,
   IDLE_INPUT,
   LOOT_CREDIT_SHARE,
+  ORE_PICKUP_LIFETIME,
+  PICKUP_RADIUS,
   SHIP_RADIUS,
   WORLD_SIZE,
   nearestZone,
@@ -13,6 +15,7 @@ import {
   type ShipInput,
 } from '@arena/shared';
 import type { ShipRecord } from '../db/PlayerRepository';
+import { randomAsteroid, scatterOre, type AsteroidFields } from './AsteroidField';
 import { applyHit, bountyFor, tryFire, updateShield } from './Combat';
 import {
   createShip,
@@ -45,6 +48,7 @@ export interface TickEvents {
 
 const GRID_CELL_SIZE = 512;
 const INPUT_QUEUE_LIMIT = 4;
+const ASTEROID_SPAWNS_PER_TICK = 20;
 const HIT_QUERY_RADIUS = SHIP_RADIUS + ASTEROID_MAX_RADIUS;
 
 function outOfBounds(x: number, y: number): boolean {
@@ -67,6 +71,7 @@ export class World {
   constructor(options: WorldOptions = {}) {
     this.rng = options.rng ?? Math.random;
     this.asteroidTarget = options.asteroidTarget ?? ASTEROID_TARGET_COUNT;
+    while (this.asteroids.size < this.asteroidTarget) this.addAsteroid(randomAsteroid(this.rng));
   }
 
   get time(): number {
@@ -125,6 +130,12 @@ export class World {
     if (ship) ship.lingerUntil = null;
   }
 
+  addAsteroid(fields: AsteroidFields): AsteroidEntity {
+    const asteroid: AsteroidEntity = { kind: 'asteroid', id: this.allocateId(), ...fields };
+    this.asteroids.set(asteroid.id, asteroid);
+    return asteroid;
+  }
+
   entitiesNear(x: number, y: number, radius: number): WorldEntity[] {
     return this.grid.queryRadius(x, y, radius);
   }
@@ -137,7 +148,10 @@ export class World {
     this.stepBullets(dt);
     this.rebuildGrid();
     this.resolveBulletHits();
+    this.collectPickups();
     this.resolveDeaths(events.died);
+    this.expirePickups();
+    this.maintainAsteroids();
     this.expireLingering(events.departed);
     return events;
   }
@@ -195,8 +209,14 @@ export class World {
   }
 
   private isHit(bullet: BulletEntity, entity: WorldEntity): boolean {
-    if (entity.kind !== 'ship' || entity.id === bullet.ownerId) return false;
-    return this.sweptDistance(bullet, entity) <= SHIP_RADIUS;
+    switch (entity.kind) {
+      case 'ship':
+        return entity.id !== bullet.ownerId && this.sweptDistance(bullet, entity) <= SHIP_RADIUS;
+      case 'asteroid':
+        return this.asteroids.has(entity.id) && this.sweptDistance(bullet, entity) <= entity.radius;
+      default:
+        return false;
+    }
   }
 
   private sweptDistance(bullet: BulletEntity, entity: WorldEntity): number {
@@ -205,6 +225,53 @@ export class World {
 
   private applyBulletTo(entity: WorldEntity, bullet: BulletEntity): void {
     if (entity.kind === 'ship') applyHit(entity, bullet, this.elapsed);
+    if (entity.kind === 'asteroid') this.damageAsteroid(entity, bullet.damage);
+  }
+
+  private damageAsteroid(asteroid: AsteroidEntity, damage: number): void {
+    asteroid.hp -= damage;
+    if (asteroid.hp > 0) return;
+    this.asteroids.delete(asteroid.id);
+    for (const point of scatterOre(asteroid, this.rng)) {
+      const ore: OreEntity = { kind: 'ore', id: this.allocateId(), ...point, expiresAt: this.elapsed + ORE_PICKUP_LIFETIME };
+      this.orePickups.set(ore.id, ore);
+    }
+  }
+
+  private collectPickups(): void {
+    for (const ship of this.ships.values()) {
+      for (const entity of this.grid.queryRadius(ship.x, ship.y, PICKUP_RADIUS)) {
+        if (entity.kind === 'ore') this.collectOre(ship, entity);
+        if (entity.kind === 'crate') this.collectCrate(ship, entity);
+      }
+    }
+  }
+
+  private collectOre(ship: ShipEntity, ore: OreEntity): void {
+    if (!this.orePickups.has(ore.id) || ship.ore >= ship.stats.cargoCapacity) return;
+    ship.ore += 1;
+    this.orePickups.delete(ore.id);
+  }
+
+  private collectCrate(ship: ShipEntity, crate: CrateEntity): void {
+    if (!this.crates.has(crate.id)) return;
+    ship.carriedCredits += crate.credits;
+    ship.ore = Math.min(ship.stats.cargoCapacity, ship.ore + crate.ore);
+    this.crates.delete(crate.id);
+  }
+
+  private expirePickups(): void {
+    for (const collection of [this.orePickups, this.crates]) {
+      for (const pickup of collection.values()) {
+        if (pickup.expiresAt <= this.elapsed) collection.delete(pickup.id);
+      }
+    }
+  }
+
+  private maintainAsteroids(): void {
+    for (let i = 0; i < ASTEROID_SPAWNS_PER_TICK && this.asteroids.size < this.asteroidTarget; i += 1) {
+      this.addAsteroid(randomAsteroid(this.rng));
+    }
   }
 
   private resolveDeaths(died: DeathEvent[]): void {

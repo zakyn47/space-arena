@@ -23,6 +23,8 @@ export function toEntityState(entity: WorldEntity): EntityState {
       return { kind: 'bullet', id: entity.id, x: entity.x, y: entity.y, vx: entity.vx, vy: entity.vy, weaponId: entity.weaponId, mk: entity.mk };
     case 'rocket':
       return { kind: 'rocket', id: entity.id, x: entity.x, y: entity.y, vx: entity.vx, vy: entity.vy, angle: entity.angle };
+    case 'orb':
+      return { kind: 'orb', id: entity.id, x: entity.x, y: entity.y, vx: entity.vx, vy: entity.vy };
     case 'spaceMine':
       return { kind: 'spaceMine', id: entity.id, x: entity.x, y: entity.y };
     case 'asteroid':

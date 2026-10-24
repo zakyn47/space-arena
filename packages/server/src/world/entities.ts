@@ -105,7 +105,22 @@ export interface RocketEntity {
   readonly expiresAt: number;
 }
 
-export type Projectile = BulletEntity | RocketEntity;
+export interface OrbEntity {
+  readonly kind: 'orb';
+  readonly id: number;
+  readonly ownerId: number;
+  x: number;
+  y: number;
+  prevX: number;
+  prevY: number;
+  readonly vx: number;
+  readonly vy: number;
+  readonly damage: number;
+  readonly fromNpc: true;
+  readonly expiresAt: number;
+}
+
+export type Projectile = BulletEntity | RocketEntity | OrbEntity;
 
 export interface SpaceMineEntity {
   readonly kind: 'spaceMine';
@@ -148,7 +163,7 @@ export interface CrateEntity {
   readonly expiresAt: number;
 }
 
-export type WorldEntity = ShipEntity | BulletEntity | RocketEntity | SpaceMineEntity | AsteroidEntity | OreEntity | CrateEntity;
+export type WorldEntity = ShipEntity | BulletEntity | RocketEntity | OrbEntity | SpaceMineEntity | AsteroidEntity | OreEntity | CrateEntity;
 
 export function createShip(id: number, accountId: number, name: string, record: ShipRecord): ShipEntity {
   const stats = statsFor(record.build, record.captain);

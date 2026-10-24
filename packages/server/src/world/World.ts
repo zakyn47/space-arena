@@ -11,10 +11,14 @@ import {
   MAX_ACTIVE_MINES,
   MINE_DAMAGE,
   MINE_BLAST_RADIUS,
+  ORB_DAMAGE,
+  ORB_LIFETIME,
+  ORB_SPEED,
   ORE_PICKUP_LIFETIME,
   PICKUP_RADIUS,
   SHIP_RADIUS,
   WORLD_SIZE,
+  forward,
   nearestZone,
   stepMotion,
   zoneAt,
@@ -35,6 +39,7 @@ import {
   type BulletEntity,
   type CrateEntity,
   type OreEntity,
+  type OrbEntity,
   type Projectile,
   type RocketEntity,
   type ShipEntity,
@@ -86,6 +91,7 @@ export class World {
   private readonly ships = new Map<number, ShipEntity>();
   private readonly bullets = new Map<number, BulletEntity>();
   private readonly rockets = new Map<number, RocketEntity>();
+  private readonly orbs = new Map<number, OrbEntity>();
   private readonly mines = new Map<number, SpaceMineEntity>();
   private readonly asteroids = new Map<number, AsteroidEntity>();
   private readonly orePickups = new Map<number, OreEntity>();
@@ -213,6 +219,7 @@ export class World {
     this.rebuildGrid();
     this.resolveProjectileHits(this.bullets, events.hits);
     this.resolveProjectileHits(this.rockets, events.hits);
+    this.resolveProjectileHits(this.orbs, events.hits);
     this.resolveMines(events.hits);
     this.collectPickups();
     this.resolveDeaths(events.died);
@@ -303,8 +310,29 @@ export class World {
     if (target.ore <= 0) this.asteroids.delete(target.id);
   }
 
+  fireOrb(from: ShipEntity, angle: number): void {
+    const direction = forward(angle);
+    const x = from.x + direction.x * from.radius;
+    const y = from.y + direction.y * from.radius;
+    const orb: OrbEntity = {
+      kind: 'orb',
+      id: this.allocateId(),
+      ownerId: from.id,
+      x,
+      y,
+      prevX: x,
+      prevY: y,
+      vx: direction.x * ORB_SPEED,
+      vy: direction.y * ORB_SPEED,
+      damage: ORB_DAMAGE,
+      fromNpc: true,
+      expiresAt: this.elapsed + ORB_LIFETIME,
+    };
+    this.orbs.set(orb.id, orb);
+  }
+
   private stepProjectiles(dt: number): void {
-    for (const bullet of this.bullets.values()) {
+    for (const bullet of [...this.bullets.values(), ...this.orbs.values()]) {
       bullet.prevX = bullet.x;
       bullet.prevY = bullet.y;
       bullet.x += bullet.vx * dt;
@@ -313,7 +341,7 @@ export class World {
     for (const rocket of this.rockets.values()) {
       steerRocket(rocket, rocket.targetId === null ? undefined : this.ships.get(rocket.targetId), dt);
     }
-    for (const collection of [this.bullets, this.rockets]) {
+    for (const collection of [this.bullets, this.rockets, this.orbs]) {
       for (const projectile of collection.values()) {
         if (this.isExpired(projectile)) collection.delete(projectile.id);
       }
@@ -333,7 +361,7 @@ export class World {
 
   private rebuildGrid(): void {
     this.grid.clear();
-    for (const collection of [this.ships, this.bullets, this.rockets, this.mines, this.asteroids, this.orePickups, this.crates]) {
+    for (const collection of [this.ships, this.bullets, this.rockets, this.orbs, this.mines, this.asteroids, this.orePickups, this.crates]) {
       for (const entity of collection.values()) this.grid.insert(entity);
     }
   }

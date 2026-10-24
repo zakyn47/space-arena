@@ -7,7 +7,7 @@ const SESSION_TTL_MS = 7 * 24 * 3_600_000;
 
 const CredentialsSchema = z.object({
   username: z.string().regex(/^[a-zA-Z0-9_]{3,16}$/),
-  password: z.string().min(8).max(128),
+  password: z.string().min(1).max(128),
 });
 
 export type AuthResult =

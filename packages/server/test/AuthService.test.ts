@@ -21,9 +21,14 @@ describe('AuthService', () => {
     expect(auth.resolveToken(result.token)?.username).toBe('alice');
   });
 
+  it('accepts any non-empty password', async () => {
+    expect((await auth.register({ username: 'alice', password: '1' })).ok).toBe(true);
+    expect((await auth.login({ username: 'alice', password: '1' })).ok).toBe(true);
+  });
+
   it('rejects bad formats with 400', async () => {
     expect(await auth.register({ username: 'a', password: 'password1' })).toMatchObject({ ok: false, status: 400 });
-    expect(await auth.register({ username: 'alice', password: 'short' })).toMatchObject({ ok: false, status: 400 });
+    expect(await auth.register({ username: 'alice', password: '' })).toMatchObject({ ok: false, status: 400 });
     expect(await auth.register({ username: 'bad name!', password: 'password1' })).toMatchObject({ ok: false, status: 400 });
   });
 

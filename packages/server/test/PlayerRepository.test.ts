@@ -39,6 +39,7 @@ describe('ships', () => {
       bankedCredits: 0,
       build: STARTER_BUILD,
       rockets: NEW_ACCOUNT_ROCKETS,
+      salvage: [],
       x: SAFE_ZONES[0]?.x,
       y: SAFE_ZONES[0]?.y,
     });
@@ -47,7 +48,7 @@ describe('ships', () => {
   it('round-trips builds and rockets', () => {
     const id = repo.createAccount('alice', 'hash', 1);
     const build = { ...STARTER_BUILD, slots: { ...STARTER_BUILD.slots, utility: [{ gearId: 'armor' as const, mk: 2 as const }] } };
-    const record = { accountId: id, bankedCredits: 500, build, rockets: 3, x: 10, y: 20 };
+    const record = { accountId: id, bankedCredits: 500, build, rockets: 3, salvage: [{ gearId: 'armor' as const, mk: 2 as const }], x: 10, y: 20 };
     repo.saveShips([record], 5);
     expect(repo.loadShip(id)).toEqual(record);
   });
@@ -75,6 +76,7 @@ describe('migration from version 1', () => {
       bankedCredits: 100 + 200 + 400 + 250 + 150,
       build: STARTER_BUILD,
       rockets: 10,
+      salvage: [],
       x: 50,
       y: 60,
     });
@@ -96,7 +98,7 @@ describe('invalid stored builds', () => {
     const warnings: string[] = [];
     const first = PlayerRepository.open(path);
     const id = first.createAccount('alice', 'hash', 1);
-    first.saveShips([{ accountId: id, bankedCredits: 0, build: STARTER_BUILD, rockets: 4, x: 1, y: 2 }], 1);
+    first.saveShips([{ accountId: id, bankedCredits: 0, build: STARTER_BUILD, rockets: 4, salvage: [], x: 1, y: 2 }], 1);
     first.close();
     const db = new Database(path);
     db.prepare("UPDATE ships SET gear_json = '{\"weapon\":[{\"gearId\":\"laser9000\",\"mk\":1}]}'").run();
@@ -105,6 +107,41 @@ describe('invalid stored builds', () => {
     expect(second.loadShip(id).build).toEqual(STARTER_BUILD);
     expect(second.loadShip(id).rockets).toBe(4);
     expect(warnings[0]).toContain(`account ${id}`);
+    second.close();
+  });
+});
+
+describe('migration to version 3', () => {
+  it('adds an empty salvage hold to version-2 ships', async () => {
+    const path = join(await mkdtemp(join(tmpdir(), 'v2-')), 'arena.db');
+    const db = new Database(path);
+    db.exec(`
+      CREATE TABLE accounts (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT NOT NULL UNIQUE COLLATE NOCASE, password_hash TEXT NOT NULL, created_at INTEGER NOT NULL);
+      CREATE TABLE sessions (token_hash TEXT PRIMARY KEY, account_id INTEGER NOT NULL REFERENCES accounts(id), expires_at INTEGER NOT NULL);
+      CREATE TABLE ships (account_id INTEGER PRIMARY KEY REFERENCES accounts(id), banked_credits INTEGER NOT NULL, hull_id TEXT NOT NULL, gear_json TEXT NOT NULL, rockets INTEGER NOT NULL, pos_x REAL NOT NULL, pos_y REAL NOT NULL, updated_at INTEGER NOT NULL);
+      INSERT INTO accounts (username, password_hash, created_at) VALUES ('alice', 'hash', 1);
+      PRAGMA user_version = 2;
+    `);
+    db.prepare('INSERT INTO ships VALUES (1, 77, ?, ?, 3, 5, 6, 1)').run('scout', JSON.stringify(STARTER_BUILD.slots));
+    db.close();
+    const repo3 = PlayerRepository.open(path);
+    expect(repo3.loadShip(1)).toMatchObject({ bankedCredits: 77, rockets: 3, salvage: [] });
+    repo3.close();
+  });
+
+  it('falls back to an empty hold for invalid salvage', async () => {
+    const path = join(await mkdtemp(join(tmpdir(), 'bad-salvage-')), 'arena.db');
+    const warnings: string[] = [];
+    const first = PlayerRepository.open(path);
+    const id = first.createAccount('alice', 'hash', 1);
+    first.saveShips([{ accountId: id, bankedCredits: 0, build: STARTER_BUILD, rockets: 4, salvage: [], x: 1, y: 2 }], 1);
+    first.close();
+    const db = new Database(path);
+    db.prepare("UPDATE ships SET salvage_json = '[{\"gearId\":\"x\",\"mk\":9}]'").run();
+    db.close();
+    const second = PlayerRepository.open(path, (message) => warnings.push(message));
+    expect(second.loadShip(id).salvage).toEqual([]);
+    expect(warnings.some((w) => w.includes('salvage'))).toBe(true);
     second.close();
   });
 });

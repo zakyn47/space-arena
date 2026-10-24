@@ -1,4 +1,4 @@
-import { NEW_ACCOUNT_ROCKETS, SAFE_ZONES, STARTER_BUILD, parseBuild, type Build } from '@arena/shared';
+import { NEW_ACCOUNT_ROCKETS, SAFE_ZONES, STARTER_BUILD, parseBuild, parseSalvage, type Build, type InstalledGear } from '@arena/shared';
 import Database from 'better-sqlite3';
 import { migrate } from './migrations';
 
@@ -18,6 +18,7 @@ export interface ShipRecord {
   readonly bankedCredits: number;
   readonly build: Build;
   readonly rockets: number;
+  readonly salvage: readonly InstalledGear[];
   readonly x: number;
   readonly y: number;
 }
@@ -44,20 +45,22 @@ interface ShipDbRow {
   hull_id: string;
   gear_json: string;
   rockets: number;
+  salvage_json: string;
   pos_x: number;
   pos_y: number;
 }
 
-type ShipParams = [number, number, string, string, number, number, number, number];
+type ShipParams = [number, number, string, string, number, string, number, number, number];
 
 const UPSERT_SHIP = `
-INSERT INTO ships (account_id, banked_credits, hull_id, gear_json, rockets, pos_x, pos_y, updated_at)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+INSERT INTO ships (account_id, banked_credits, hull_id, gear_json, rockets, salvage_json, pos_x, pos_y, updated_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 ON CONFLICT(account_id) DO UPDATE SET
   banked_credits = excluded.banked_credits,
   hull_id = excluded.hull_id,
   gear_json = excluded.gear_json,
   rockets = excluded.rockets,
+  salvage_json = excluded.salvage_json,
   pos_x = excluded.pos_x,
   pos_y = excluded.pos_y,
   updated_at = excluded.updated_at
@@ -79,6 +82,7 @@ function defaultShip(accountId: number): ShipRecord {
     bankedCredits: 0,
     build: STARTER_BUILD,
     rockets: NEW_ACCOUNT_ROCKETS,
+    salvage: [],
     x: spawn?.x ?? 0,
     y: spawn?.y ?? 0,
   };
@@ -91,6 +95,7 @@ function shipParams(record: ShipRecord, now: number): ShipParams {
     record.build.hullId,
     JSON.stringify(record.build.slots),
     record.rockets,
+    JSON.stringify(record.salvage),
     record.x,
     record.y,
     now,
@@ -162,7 +167,7 @@ export class PlayerRepository {
   loadShip(accountId: number): ShipRecord {
     const row = this.db
       .prepare<[number], ShipDbRow>(
-        'SELECT banked_credits, hull_id, gear_json, rockets, pos_x, pos_y FROM ships WHERE account_id = ?',
+        'SELECT banked_credits, hull_id, gear_json, rockets, salvage_json, pos_x, pos_y FROM ships WHERE account_id = ?',
       )
       .get(accountId);
     if (!row) return defaultShip(accountId);
@@ -171,6 +176,7 @@ export class PlayerRepository {
       bankedCredits: row.banked_credits,
       build: this.decodeBuild(accountId, row),
       rockets: row.rockets,
+      salvage: this.decodeSalvage(accountId, row),
       x: row.pos_x,
       y: row.pos_y,
     };
@@ -181,6 +187,13 @@ export class PlayerRepository {
     if (build) return build;
     this.warn(`invalid stored build for account ${accountId}; using starter build`);
     return STARTER_BUILD;
+  }
+
+  private decodeSalvage(accountId: number, row: ShipDbRow): InstalledGear[] {
+    const salvage = parseSalvage(safeJson(row.salvage_json));
+    if (salvage) return salvage;
+    this.warn(`invalid stored salvage for account ${accountId}; using empty hold`);
+    return [];
   }
 
   saveShips(records: readonly ShipRecord[], now: number): void {

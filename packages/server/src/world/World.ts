@@ -324,16 +324,15 @@ export class World {
 
   fireOrb(from: ShipEntity, angle: number): void {
     const direction = forward(angle);
-    const x = from.x + direction.x * from.radius;
-    const y = from.y + direction.y * from.radius;
     const orb: OrbEntity = {
       kind: 'orb',
       id: this.allocateId(),
       ownerId: from.id,
-      x,
-      y,
-      prevX: x,
-      prevY: y,
+      // spawn at the center so the swept segment covers pilots hugging the boss
+      x: from.x,
+      y: from.y,
+      prevX: from.x,
+      prevY: from.y,
       vx: direction.x * ORB_SPEED,
       vy: direction.y * ORB_SPEED,
       damage: ORB_DAMAGE,

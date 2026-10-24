@@ -51,6 +51,16 @@ describe('plasma orbs', () => {
     expect(events.flatMap((tick) => tick.hits)).toContainEqual(expect.objectContaining({ shipId: target.id, shield: false }));
   });
 
+  it('hit pilots hugging the boss inside its radius', () => {
+    const world = new World({ asteroidTarget: 0 });
+    const boss = world.addLeviathan(OPEN_SPACE.x, OPEN_SPACE.y);
+    const target = world.addShip(1, 'alice', shipRecord(OPEN_SPACE.x, OPEN_SPACE.y - 40, 1));
+    world.fireOrb(boss, 0);
+    for (let i = 0; i < Math.ceil(1 / TICK_DT); i += 1) world.tick(TICK_DT);
+    expect(target.hull).toBe(target.stats.maxHull - ORB_DAMAGE);
+    expect(target.lastHitBy).toBe(boss.id);
+  });
+
   it('are blocked by a raised shield', () => {
     const world = new World({ asteroidTarget: 0 });
     const boss = world.addLeviathan(OPEN_SPACE.x, OPEN_SPACE.y);

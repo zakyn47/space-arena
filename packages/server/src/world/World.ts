@@ -1,12 +1,13 @@
 import {
   ASTEROID_MAX_RADIUS,
-  PIRATE_EXPERIENCE,
+  NPC_EXPERIENCE,
   PLAYER_KILL_EXPERIENCE,
   gainExperience,
   ASTEROID_TARGET_COUNT,
   CRATE_LIFETIME,
   DISCONNECT_LINGER,
   IDLE_INPUT,
+  LEVIATHAN_RADIUS,
   MAX_ACTIVE_MINES,
   MINE_DAMAGE,
   MINE_BLAST_RADIUS,
@@ -26,6 +27,7 @@ import { randomAsteroid, scatterOre, type AsteroidFields } from './AsteroidField
 import { applyDamage, bountyFor, fireWeapons, updateShield } from './Combat';
 import { toggleDock, type DockOutcome } from './Docking';
 import {
+  createLeviathan,
   createPirateShip,
   createShip,
   respawnShip,
@@ -69,7 +71,7 @@ export interface TickEvents {
 const GRID_CELL_SIZE = 512;
 const INPUT_QUEUE_LIMIT = 4;
 const ASTEROID_SPAWNS_PER_TICK = 20;
-const HIT_QUERY_RADIUS = SHIP_RADIUS + ASTEROID_MAX_RADIUS;
+const HIT_QUERY_RADIUS = Math.max(LEVIATHAN_RADIUS, SHIP_RADIUS + ASTEROID_MAX_RADIUS);
 
 function patrolSpecs(option: WorldOptions['pirates']): readonly PatrolSpec[] | null {
   if (option === true) return DEFAULT_PATROLS;
@@ -140,6 +142,12 @@ export class World {
 
   playerShips(): ShipEntity[] {
     return [...this.ships.values()].filter((ship) => ship.npc === null);
+  }
+
+  addLeviathan(x: number, y: number): ShipEntity {
+    const ship = createLeviathan(this.allocateId(), x, y);
+    this.ships.set(ship.id, ship);
+    return ship;
   }
 
   npcShips(): ShipEntity[] {
@@ -265,7 +273,7 @@ export class World {
   private resolveMines(hits: HitEvent[]): void {
     for (const mine of this.mines.values()) {
       const nearby = this.grid
-        .queryRadius(mine.x, mine.y, MINE_BLAST_RADIUS)
+        .queryRadius(mine.x, mine.y, MINE_BLAST_RADIUS + LEVIATHAN_RADIUS - SHIP_RADIUS)
         .filter((entity): entity is ShipEntity => entity.kind === 'ship');
       if (!nearby.some((ship) => triggeredBy(mine, ship, this.elapsed))) continue;
       this.mines.delete(mine.id);
@@ -346,7 +354,7 @@ export class World {
   private isHit(projectile: Projectile, entity: WorldEntity): boolean {
     switch (entity.kind) {
       case 'ship':
-        return entity.id !== projectile.ownerId && !(projectile.fromNpc && entity.npc !== null) && this.sweptDistance(projectile, entity) <= SHIP_RADIUS;
+        return entity.id !== projectile.ownerId && !(projectile.fromNpc && entity.npc !== null) && this.sweptDistance(projectile, entity) <= entity.radius;
       case 'asteroid':
         return this.asteroids.has(entity.id) && this.sweptDistance(projectile, entity) <= entity.radius;
       default:
@@ -416,11 +424,12 @@ export class World {
       if (ship.hull > 0) continue;
       const killer = ship.lastHitBy === null ? undefined : this.ships.get(ship.lastHitBy);
       if (killer && killer.id !== ship.id && killer.npc === null) {
-        const xp = ship.npc === null ? PLAYER_KILL_EXPERIENCE : PIRATE_EXPERIENCE[ship.npc];
+        const xp = ship.npc === null ? PLAYER_KILL_EXPERIENCE : NPC_EXPERIENCE[ship.npc];
         killer.captain = gainExperience(killer.captain, xp);
       }
       if (ship.npc !== null) {
-        this.spawnCrate(ship.x, ship.y, this.director?.pirateLoot(ship.npc) ?? { credits: 0, ore: 0, gear: null });
+        const loot = ship.npc === 'leviathan' ? undefined : this.director?.pirateLoot(ship.npc);
+        this.spawnCrate(ship.x, ship.y, loot ?? { credits: 0, ore: 0, gear: null });
         this.ships.delete(ship.id);
         continue;
       }

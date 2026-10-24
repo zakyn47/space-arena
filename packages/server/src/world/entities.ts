@@ -1,6 +1,14 @@
 import {
   IDLE_INPUT,
+  LEVIATHAN_MAX_HULL,
+  LEVIATHAN_MAX_SPEED,
+  LEVIATHAN_RADIUS,
+  LEVIATHAN_THRUST,
+  LEVIATHAN_TURN_RATE,
   NEW_CAPTAIN,
+  NPC_NAMES,
+  SHIP_RADIUS,
+  type NpcKind,
   type Captain,
   STARTER_BUILD,
   statsFor,
@@ -27,7 +35,8 @@ export interface ShipEntity {
   readonly id: number;
   readonly accountId: number;
   readonly name: string;
-  npc: PirateTier | null;
+  npc: NpcKind | null;
+  radius: number;
   x: number;
   y: number;
   vx: number;
@@ -149,6 +158,7 @@ export function createShip(id: number, accountId: number, name: string, record: 
     accountId,
     name,
     npc: null,
+    radius: SHIP_RADIUS,
     x: record.x,
     y: record.y,
     vx: 0,
@@ -244,4 +254,43 @@ export function toShipRecord(ship: ShipEntity): ShipRecord {
     x: ship.x,
     y: ship.y,
   };
+}
+
+const LEVIATHAN_STATS: ShipStats = {
+  maxHull: LEVIATHAN_MAX_HULL,
+  thrust: LEVIATHAN_THRUST,
+  maxSpeed: LEVIATHAN_MAX_SPEED,
+  turnRate: LEVIATHAN_TURN_RATE,
+  maxShield: 0,
+  shieldRegen: 0,
+  shieldDrain: 0,
+  cargoCapacity: 0,
+  maxRockets: 0,
+  miningRate: 0,
+  miningRange: 0,
+  weapons: [],
+};
+
+export function createLeviathan(id: number, x: number, y: number): ShipEntity {
+  const ship = createShip(id, -id, NPC_NAMES.leviathan, {
+    accountId: -id,
+    bankedCredits: 0,
+    build: STARTER_BUILD,
+    captain: NEW_CAPTAIN,
+    ordnance: 'rockets',
+    rockets: 0,
+    pvpKills: 0,
+    salvage: [],
+    x,
+    y,
+  });
+  Object.assign(ship, {
+    npc: 'leviathan',
+    radius: LEVIATHAN_RADIUS,
+    stats: LEVIATHAN_STATS,
+    hull: LEVIATHAN_MAX_HULL,
+    shieldEnergy: 0,
+    weaponCooldowns: [],
+  } satisfies Partial<ShipEntity>);
+  return ship;
 }

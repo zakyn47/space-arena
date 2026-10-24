@@ -3,8 +3,9 @@ import type { ShipEntity, SpaceMineEntity } from './entities';
 
 const DROP_GAP = 12;
 
-function distance(mine: SpaceMineEntity, ship: ShipEntity): number {
-  return Math.hypot(ship.x - mine.x, ship.y - mine.y);
+// Thresholds are tuned for a normal ship's center; larger ships are measured from their hull edge.
+function reach(mine: SpaceMineEntity, ship: ShipEntity): number {
+  return Math.hypot(ship.x - mine.x, ship.y - mine.y) - (ship.radius - SHIP_RADIUS);
 }
 
 function canBeHit(mine: SpaceMineEntity, ship: ShipEntity): boolean {
@@ -26,9 +27,9 @@ export function dropMine(ship: ShipEntity, id: number, time: number): SpaceMineE
 }
 
 export function triggeredBy(mine: SpaceMineEntity, ship: ShipEntity, time: number): boolean {
-  return time >= mine.armedAt && canBeHit(mine, ship) && distance(mine, ship) <= MINE_TRIGGER_RADIUS;
+  return time >= mine.armedAt && canBeHit(mine, ship) && reach(mine, ship) <= MINE_TRIGGER_RADIUS;
 }
 
 export function blastVictims(mine: SpaceMineEntity, ships: Iterable<ShipEntity>): ShipEntity[] {
-  return [...ships].filter((ship) => canBeHit(mine, ship) && distance(mine, ship) <= MINE_BLAST_RADIUS);
+  return [...ships].filter((ship) => canBeHit(mine, ship) && reach(mine, ship) <= MINE_BLAST_RADIUS);
 }

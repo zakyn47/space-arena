@@ -1,6 +1,6 @@
 import { MINE_ARM_TIME, MINE_BLAST_RADIUS, MINE_TRIGGER_RADIUS, SHIP_RADIUS } from '@arena/shared';
 import { describe, expect, it } from 'vitest';
-import { createShip } from '../src/world/entities';
+import { createLeviathan, createShip } from '../src/world/entities';
 import { blastVictims, dropMine, triggeredBy } from '../src/world/SpaceMines';
 import { shipRecord } from './support/fixtures';
 
@@ -41,5 +41,15 @@ describe('blastVictims', () => {
     const near = at(2, mine.x + MINE_BLAST_RADIUS - 1, mine.y);
     const far = at(3, mine.x + MINE_BLAST_RADIUS + 1, mine.y);
     expect(blastVictims(mine, [owner, near, far])).toEqual([near]);
+  });
+});
+
+describe('large ships', () => {
+  it('trigger and take blasts by their edge, not their center', () => {
+    const mine = dropMine(at(1, 1_000, 1_000), 50, 0);
+    const boss = createLeviathan(9, mine.x + MINE_TRIGGER_RADIUS + 50, mine.y);
+    expect(triggeredBy(mine, boss, MINE_ARM_TIME)).toBe(true);
+    const farBoss = createLeviathan(10, mine.x + MINE_BLAST_RADIUS + 50, mine.y);
+    expect(blastVictims(mine, [farBoss])).toEqual([farBoss]);
   });
 });

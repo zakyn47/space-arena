@@ -1,10 +1,10 @@
-import { BASE_LOADOUT } from '@arena/shared';
+import { NEW_ACCOUNT_ROCKETS, STARTER_BUILD } from '@arena/shared';
 import type { ShipRecord } from '../../src/db/PlayerRepository';
 
 export const OPEN_SPACE = { x: 8_000, y: 8_000 } as const;
 
 export function shipRecord(x: number, y: number, accountId = 0): ShipRecord {
-  return { accountId, bankedCredits: 0, loadout: BASE_LOADOUT, x, y };
+  return { accountId, bankedCredits: 0, build: STARTER_BUILD, rockets: NEW_ACCOUNT_ROCKETS, x, y };
 }
 
 export function seeded(seed: number): () => number {

@@ -1,5 +1,6 @@
-import { BASE_LOADOUT, SAFE_ZONES, type Loadout } from '@arena/shared';
+import { NEW_ACCOUNT_ROCKETS, SAFE_ZONES, STARTER_BUILD, parseBuild, type Build } from '@arena/shared';
 import Database from 'better-sqlite3';
+import { migrate } from './migrations';
 
 export interface AccountRow {
   readonly id: number;
@@ -15,7 +16,8 @@ export interface SessionInfo {
 export interface ShipRecord {
   readonly accountId: number;
   readonly bankedCredits: number;
-  readonly loadout: Loadout;
+  readonly build: Build;
+  readonly rockets: number;
   readonly x: number;
   readonly y: number;
 }
@@ -39,73 +41,56 @@ interface SessionDbRow {
 
 interface ShipDbRow {
   banked_credits: number;
-  hull_tier: number;
-  engine_tier: number;
-  weapon_tier: number;
-  shield_tier: number;
-  cargo_tier: number;
+  hull_id: string;
+  gear_json: string;
+  rockets: number;
   pos_x: number;
   pos_y: number;
 }
 
-type ShipParams = [number, number, number, number, number, number, number, number, number, number];
-
-const SCHEMA = `
-CREATE TABLE IF NOT EXISTS accounts (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  username TEXT NOT NULL UNIQUE COLLATE NOCASE,
-  password_hash TEXT NOT NULL,
-  created_at INTEGER NOT NULL
-);
-CREATE TABLE IF NOT EXISTS sessions (
-  token_hash TEXT PRIMARY KEY,
-  account_id INTEGER NOT NULL REFERENCES accounts(id),
-  expires_at INTEGER NOT NULL
-);
-CREATE TABLE IF NOT EXISTS ships (
-  account_id INTEGER PRIMARY KEY REFERENCES accounts(id),
-  banked_credits INTEGER NOT NULL,
-  hull_tier INTEGER NOT NULL,
-  engine_tier INTEGER NOT NULL,
-  weapon_tier INTEGER NOT NULL,
-  shield_tier INTEGER NOT NULL,
-  cargo_tier INTEGER NOT NULL,
-  pos_x REAL NOT NULL,
-  pos_y REAL NOT NULL,
-  updated_at INTEGER NOT NULL
-);
-`;
+type ShipParams = [number, number, string, string, number, number, number, number];
 
 const UPSERT_SHIP = `
-INSERT INTO ships (account_id, banked_credits, hull_tier, engine_tier, weapon_tier, shield_tier, cargo_tier, pos_x, pos_y, updated_at)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+INSERT INTO ships (account_id, banked_credits, hull_id, gear_json, rockets, pos_x, pos_y, updated_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 ON CONFLICT(account_id) DO UPDATE SET
   banked_credits = excluded.banked_credits,
-  hull_tier = excluded.hull_tier,
-  engine_tier = excluded.engine_tier,
-  weapon_tier = excluded.weapon_tier,
-  shield_tier = excluded.shield_tier,
-  cargo_tier = excluded.cargo_tier,
+  hull_id = excluded.hull_id,
+  gear_json = excluded.gear_json,
+  rockets = excluded.rockets,
   pos_x = excluded.pos_x,
   pos_y = excluded.pos_y,
   updated_at = excluded.updated_at
 `;
 
+function safeJson(text: string): unknown {
+  try {
+    const value: unknown = JSON.parse(text);
+    return value;
+  } catch {
+    return null;
+  }
+}
+
 function defaultShip(accountId: number): ShipRecord {
   const spawn = SAFE_ZONES[0];
-  return { accountId, bankedCredits: 0, loadout: BASE_LOADOUT, x: spawn?.x ?? 0, y: spawn?.y ?? 0 };
+  return {
+    accountId,
+    bankedCredits: 0,
+    build: STARTER_BUILD,
+    rockets: NEW_ACCOUNT_ROCKETS,
+    x: spawn?.x ?? 0,
+    y: spawn?.y ?? 0,
+  };
 }
 
 function shipParams(record: ShipRecord, now: number): ShipParams {
-  const { loadout } = record;
   return [
     record.accountId,
     record.bankedCredits,
-    loadout.hull,
-    loadout.engine,
-    loadout.weapon,
-    loadout.shield,
-    loadout.cargo,
+    record.build.hullId,
+    JSON.stringify(record.build.slots),
+    record.rockets,
     record.x,
     record.y,
     now,
@@ -115,18 +100,21 @@ function shipParams(record: ShipRecord, now: number): ShipParams {
 export class PlayerRepository {
   private readonly saveMany: (records: readonly ShipRecord[], now: number) => void;
 
-  private constructor(private readonly db: Database.Database) {
+  private constructor(
+    private readonly db: Database.Database,
+    private readonly warn: (message: string) => void,
+  ) {
     const upsert = db.prepare<ShipParams>(UPSERT_SHIP);
     this.saveMany = db.transaction((records: readonly ShipRecord[], now: number) => {
       for (const record of records) upsert.run(...shipParams(record, now));
     });
   }
 
-  static open(path: string): PlayerRepository {
+  static open(path: string, warn: (message: string) => void = console.warn): PlayerRepository {
     const db = new Database(path);
     db.pragma('journal_mode = WAL');
-    db.exec(SCHEMA);
-    return new PlayerRepository(db);
+    migrate(db);
+    return new PlayerRepository(db, warn);
   }
 
   close(): void {
@@ -174,24 +162,25 @@ export class PlayerRepository {
   loadShip(accountId: number): ShipRecord {
     const row = this.db
       .prepare<[number], ShipDbRow>(
-        `SELECT banked_credits, hull_tier, engine_tier, weapon_tier, shield_tier, cargo_tier, pos_x, pos_y
-         FROM ships WHERE account_id = ?`,
+        'SELECT banked_credits, hull_id, gear_json, rockets, pos_x, pos_y FROM ships WHERE account_id = ?',
       )
       .get(accountId);
     if (!row) return defaultShip(accountId);
     return {
       accountId,
       bankedCredits: row.banked_credits,
-      loadout: {
-        hull: row.hull_tier,
-        engine: row.engine_tier,
-        weapon: row.weapon_tier,
-        shield: row.shield_tier,
-        cargo: row.cargo_tier,
-      },
+      build: this.decodeBuild(accountId, row),
+      rockets: row.rockets,
       x: row.pos_x,
       y: row.pos_y,
     };
+  }
+
+  private decodeBuild(accountId: number, row: ShipDbRow): Build {
+    const build = parseBuild({ hullId: row.hull_id, slots: safeJson(row.gear_json) });
+    if (build) return build;
+    this.warn(`invalid stored build for account ${accountId}; using starter build`);
+    return STARTER_BUILD;
   }
 
   saveShips(records: readonly ShipRecord[], now: number): void {

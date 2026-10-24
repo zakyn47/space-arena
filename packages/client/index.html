@@ -37,14 +37,23 @@
         <div class="info-panel" role="tabpanel" data-panel="play">
           <div class="eyebrow">PILOT ACCESS / 01</div>
           <h2 id="login-title">Ready for launch?</h2>
-          <p class="muted">Sign in to your ship or start a new flight. Pick any pilot name that is not taken yet.</p>
-          <label for="pilot-name">Pilot name</label>
-          <input id="pilot-name" name="username" autocomplete="username" placeholder="Enter your callsign" required />
-          <label for="pilot-password">Password</label>
-          <input id="pilot-password" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" required />
-          <div class="actions">
-            <button type="submit" value="login" class="primary">Launch →</button>
-            <button type="submit" value="register">Create pilot</button>
+          <div id="resume-pilot" class="resume" hidden>
+            <p class="muted">Welcome back, pilot. Your ship is waiting.</p>
+            <div class="actions">
+              <button type="button" id="resume-play" class="primary">Play as <span id="resume-name"></span> →</button>
+              <button type="button" id="resume-switch">Use another pilot</button>
+            </div>
+          </div>
+          <div id="login-fields">
+            <p class="muted">Sign in to your ship or start a new flight. Pick any pilot name that is not taken yet.</p>
+            <label for="pilot-name">Pilot name</label>
+            <input id="pilot-name" name="username" autocomplete="username" placeholder="Enter your callsign" required />
+            <label for="pilot-password">Password</label>
+            <input id="pilot-password" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" required />
+            <div class="actions">
+              <button type="submit" value="login" class="primary">Launch →</button>
+              <button type="submit" value="register">Create pilot</button>
+            </div>
           </div>
           <p id="login-error" role="alert"></p>
           <div class="login-help keyboard-help"><span><kbd>W A S D</kbd> Fly</span><span><kbd>E</kbd> Dock & refit</span><span><kbd>F</kbd> Mine</span></div>

@@ -11,7 +11,8 @@ h3 { font-size: 20px; font-weight: 600; }
 .eyebrow { color: var(--cyan); font-size: 10px; font-weight: 700; letter-spacing: .19em; line-height: 1.7; }
 .muted { color: var(--muted); font-size: 13px; line-height: 1.6; }
 #login { position: absolute; inset: 0; z-index: 2; display: grid; grid-template-columns: 1.15fr 1fr; align-items: center; gap: clamp(32px, 7vw, 120px); padding: clamp(24px, 7vw, 110px); overflow-y: auto; background: radial-gradient(ellipse at 25% 55%, #10375470, transparent 55%), linear-gradient(90deg, #05060d35, #05060dc9), url('/world/starfield_tile.png') repeat; }
-#login[hidden], #shop[hidden], #game[hidden], #loader[hidden], .info-panel[hidden] { display: none; }
+#login[hidden], #shop[hidden], #game[hidden], #loader[hidden], .info-panel[hidden], #resume-pilot[hidden], #login-fields[hidden] { display: none; }
+.resume .muted { margin-top: 10px; }
 #loader { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; background: radial-gradient(ellipse at 50% 45%, #10375470, transparent 60%), linear-gradient(#05060dd0, #05060dd0), url('/world/starfield_tile.png') repeat; }
 .loader-card { display: grid; justify-items: center; gap: 18px; width: min(360px, calc(100% - 48px)); text-align: center; }
 .loader-ship { width: 96px; height: 96px; image-rendering: pixelated; filter: drop-shadow(0 0 22px #5ec8ff55); animation: loader-orbit 2.4s ease-in-out infinite; }

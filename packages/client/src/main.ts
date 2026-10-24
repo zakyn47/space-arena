@@ -2,9 +2,9 @@ import { runSession, type GameDom } from './game/GameSession';
 import { SpriteFactory } from './render/SpriteFactory';
 import { Loader, loadingLabel } from './ui/Loader';
 import { LoginScreen } from './ui/LoginScreen';
+import { forgetPilot, loadPilot, savePilot } from './ui/savedPilot';
 import { setupMobileDisplay } from './ui/MobileDisplay';
 
-const TOKEN_KEY = 'arena.token';
 
 function element<T extends HTMLElement>(id: string, type: { new (): T; prototype: T }): T {
   const found = document.getElementById(id);
@@ -25,17 +25,15 @@ async function main(): Promise<void> {
   };
   const sprites = await SpriteFactory.load((done, total) => loader.show(loadingLabel(done, total), total === 0 ? null : done / total));
   loader.hide();
-  let token = localStorage.getItem(TOKEN_KEY);
   let message = '';
   for (;;) {
-    token ??= await login.waitForToken(message);
-    localStorage.setItem(TOKEN_KEY, token);
+    const pilot = await login.waitForPilot(message, loadPilot(localStorage));
+    savePilot(localStorage, pilot);
     loader.show('Connecting to the arena…');
-    const reason = await runSession(token, sprites, dom, () => loader.hide());
+    const reason = await runSession(pilot.token, sprites, dom, () => loader.hide());
     loader.hide();
-    if (reason === 'unauthorized') localStorage.removeItem(TOKEN_KEY);
-    token = null;
-    message = reason;
+    if (reason === 'unauthorized') forgetPilot(localStorage);
+    message = reason === 'unauthorized' ? 'Session expired — please sign in again' : reason;
   }
 }
 

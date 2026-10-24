@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import { extname, resolve, sep } from 'node:path';
+import type { HighscoreEntry } from '@arena/shared';
 import type { AuthResult, AuthService } from '../auth/AuthService';
 import type { RateLimiter } from '../auth/RateLimiter';
 
@@ -28,6 +29,7 @@ export interface HttpDeps {
   readonly limiter: RateLimiter;
   readonly staticDir: string;
   readonly trustProxy?: boolean;
+  readonly highscores: () => readonly HighscoreEntry[];
   readonly now: () => number;
 }
 
@@ -87,6 +89,7 @@ async function handle(deps: HttpDeps, root: string, req: IncomingMessage, res: S
   const url = new URL(req.url ?? '/', 'http://localhost');
   const action = AUTH_ROUTES[url.pathname];
   if (req.method === 'POST' && action) return handleAuth(deps, req, res, action);
+  if (req.method === 'GET' && url.pathname === '/api/highscores') return sendJson(res, 200, { highscores: deps.highscores() });
   if (req.method === 'GET') return serveStatic(root, url.pathname, res);
   sendJson(res, 404, { error: 'not found' });
 }

@@ -25,7 +25,8 @@ export class GameLoop {
 
   step(): void {
     const events = this.world.tick(TICK_DT);
-    const changed = [...events.died.map((event) => event.ship), ...events.departed];
+    const killers = events.died.flatMap((event) => (event.killer && event.killer.npc === null && event.killer !== event.ship ? [event.killer] : []));
+    const changed = [...events.died.map((event) => event.ship), ...killers, ...events.departed];
     if (changed.length > 0) this.store.saveShips(changed.map(toShipRecord), this.now());
     this.output.notifyDeaths(events.died);
     this.pendingHits.push(...events.hits);

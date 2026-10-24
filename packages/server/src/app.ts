@@ -12,6 +12,7 @@ import { World } from './world/World';
 const AUTH_BURST = 10;
 const AUTH_REFILL_PER_MS = 1 / 6_000;
 const MAX_WS_PAYLOAD = 4_096;
+const HIGHSCORE_LIMIT = 10;
 
 export interface AppConfig {
   readonly dbPath: string;
@@ -38,6 +39,7 @@ export function createApp(config: AppConfig): App {
     limiter: new RateLimiter(AUTH_BURST, AUTH_REFILL_PER_MS),
     staticDir: config.staticDir,
     trustProxy: config.trustProxy,
+    highscores: () => repo.highscores(HIGHSCORE_LIMIT),
     now: Date.now,
   });
   const wss = new WebSocketServer({ server, path: '/ws', maxPayload: MAX_WS_PAYLOAD });

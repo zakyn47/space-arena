@@ -50,6 +50,7 @@ describe('GameLoop', () => {
     world.setInput(alice.id, 1, { ...IDLE_INPUT, fire: true });
     for (let i = 0; i < 200 && deaths.length === 0; i += 1) loop.step();
     expect(deaths[0]?.killerName).toBe('alice');
-    expect(saved.map((record) => record.accountId)).toEqual([2]);
+    expect(saved.map((record) => record.accountId)).toEqual([2, 1]);
+    expect(saved[1]?.pvpKills).toBe(1);
   });
 });

@@ -56,6 +56,7 @@ export interface WorldOptions {
 
 export interface DeathEvent {
   readonly ship: ShipEntity;
+  readonly killer: ShipEntity | null;
   readonly killerName: string | null;
 }
 
@@ -423,11 +424,14 @@ export class World {
         this.ships.delete(ship.id);
         continue;
       }
-      if (killer && killer.npc === null && ship.npc === null) killer.carriedCredits += bountyFor(ship.build);
+      if (killer && killer.npc === null && ship.npc === null) {
+        killer.carriedCredits += bountyFor(ship.build);
+        killer.pvpKills += 1;
+      }
       this.dropCrate(ship);
       const zone = nearestZone(ship.x, ship.y);
       respawnShip(ship, zone.x, zone.y);
-      died.push({ ship, killerName: killer?.name ?? null });
+      died.push({ ship, killer: killer ?? null, killerName: killer?.name ?? null });
     }
   }
 

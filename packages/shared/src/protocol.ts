@@ -209,6 +209,16 @@ export interface SnapshotMessage {
   readonly hits?: readonly HitEvent[];
 }
 
+export interface HighscoreEntry {
+  readonly rank: number;
+  readonly username: string;
+  readonly kills: number;
+}
+
+export const HighscoresResponseSchema = z.object({
+  highscores: z.array(z.object({ rank: z.number().int().positive(), username: z.string(), kills: z.number().int().nonnegative() })),
+});
+
 export interface DiedMessage {
   readonly type: 'died';
   readonly killer: string | null;

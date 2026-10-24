@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { authenticate } from '../src/api';
+import { authenticate, fetchHighscores } from '../src/api';
 
 function stubFetch(status: number, body: unknown): void {
   vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify(body), { status })));
@@ -27,5 +27,20 @@ describe('authenticate', () => {
     stubFetch(200, { token: 'abc' });
     await authenticate('register', 'alice', 'password1');
     expect(vi.mocked(fetch).mock.calls[0]?.[0]).toBe('/api/register');
+  });
+});
+
+describe('fetchHighscores', () => {
+  it('returns the ranked list', async () => {
+    stubFetch(200, { highscores: [{ rank: 1, username: 'alice', kills: 4 }] });
+    expect(await fetchHighscores()).toEqual([{ rank: 1, username: 'alice', kills: 4 }]);
+    expect(vi.mocked(fetch).mock.calls[0]?.[0]).toBe('/api/highscores');
+  });
+
+  it('returns null for a failed or malformed response', async () => {
+    stubFetch(500, { error: 'boom' });
+    expect(await fetchHighscores()).toBeNull();
+    stubFetch(200, { highscores: [{ rank: 'one' }] });
+    expect(await fetchHighscores()).toBeNull();
   });
 });

@@ -1,4 +1,5 @@
 import { authenticate, type AuthMode } from '../api';
+import { showHighscores } from './highscores';
 
 export class LoginScreen {
   constructor(
@@ -35,6 +36,8 @@ export class LoginScreen {
     for (const panel of this.form.querySelectorAll<HTMLElement>('[role="tabpanel"]')) {
       panel.hidden = panel.dataset.panel !== name;
     }
+    const highscores = this.form.querySelector('#highscores-body');
+    if (name === 'highscores' && highscores instanceof HTMLTableSectionElement) void showHighscores(highscores);
   }
 
   private modeOf(event: SubmitEvent): AuthMode {

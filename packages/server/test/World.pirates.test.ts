@@ -22,6 +22,7 @@ describe('World pirates', () => {
     expect(world.npcShips()).toHaveLength(0);
     expect(reported).toBe(0);
     expect(hunter.carriedCredits).toBe(0);
+    expect(hunter.pvpKills).toBe(0);
     world.tick(TICK_DT);
     expect(world.entitiesNear(10_000, 10_000, 30_000).some((e) => e.kind === 'crate' && e.credits === 40)).toBe(true);
   });

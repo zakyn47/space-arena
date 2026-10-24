@@ -32,6 +32,7 @@
           <button type="button" role="tab" data-tab="play" aria-selected="true">Play</button>
           <button type="button" role="tab" data-tab="controls" aria-selected="false">Controls</button>
           <button type="button" role="tab" data-tab="rules" aria-selected="false">Rules</button>
+          <button type="button" role="tab" data-tab="highscores" aria-selected="false">Highscores</button>
         </div>
         <div class="info-panel" role="tabpanel" data-panel="play">
           <div class="eyebrow">PILOT ACCESS / 01</div>
@@ -88,6 +89,15 @@
             <li><b>Hangar.</b> Buy hulls and Mk1–Mk3 gear. Replaced or sold gear refunds 50%.</li>
             <li><b>Captain.</b> Earn XP from banked ore and kills. Each level gives a skill point for gunnery, engineering, piloting or mining. Skills are permanent.</li>
           </ul>
+        </div>
+        <div class="info-panel" role="tabpanel" data-panel="highscores" hidden>
+          <div class="eyebrow">HALL OF FAME / 04</div>
+          <h2>Highscores</h2>
+          <p class="muted">Top 10 pilots by player kills. Pirate kills do not count.</p>
+          <table class="highscores-table">
+            <thead><tr><th>Rank</th><th>Pilot</th><th>Kills</th></tr></thead>
+            <tbody id="highscores-body"></tbody>
+          </table>
         </div>
       </section>
     </form>

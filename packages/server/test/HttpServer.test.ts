@@ -21,6 +21,7 @@ async function start(capacity: number, trustProxy = false): Promise<void> {
     limiter: new RateLimiter(capacity, 0),
     staticDir,
     trustProxy,
+    highscores: () => repo.highscores(10),
     now: Date.now,
   });
   await new Promise<void>((resolve) => server.listen(0, resolve));
@@ -87,6 +88,18 @@ describe('rate limiting behind a trusted proxy', () => {
     await post('/api/login', { username: 'x', password: 'password1' }, first);
     expect((await post('/api/login', { username: 'x', password: 'password1' }, first)).status).toBe(429);
     expect((await post('/api/login', { username: 'x', password: 'password1' }, { 'x-real-ip': '203.0.113.2' })).status).toBe(401);
+  });
+});
+
+describe('highscores', () => {
+  beforeEach(() => start(10));
+
+  it('serves the ranked pvp list without a login', async () => {
+    const id = repo.createAccount('alice', 'hash', 1);
+    repo.saveShips([{ ...repo.loadShip(id), pvpKills: 4 }], 1);
+    const response = await fetch(`${base}/api/highscores`);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ highscores: [{ rank: 1, username: 'alice', kills: 4 }] });
   });
 });
 

@@ -139,6 +139,8 @@ describe('server integration', () => {
     expect(respawned.self.build).toEqual(STARTER_BUILD);
     expect(respawned.self.rockets).toBe(0);
     expect(respawned.self.docked).toBe(false);
+    const scores = await (await fetch(`http://127.0.0.1:${port}/api/highscores`)).json();
+    expect(scores).toEqual({ highscores: [{ rank: 1, username: 'alice', kills: 1 }] });
 
     alice.input(2, IDLE_INPUT);
     const zone = SAFE_ZONES[0] ?? { x: 0, y: 0 };

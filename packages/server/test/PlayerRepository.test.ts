@@ -41,6 +41,7 @@ describe('ships', () => {
       captain: NEW_CAPTAIN,
       ordnance: 'rockets',
       rockets: NEW_ACCOUNT_ROCKETS,
+      pvpKills: 0,
       salvage: [],
       x: SAFE_ZONES[0]?.x,
       y: SAFE_ZONES[0]?.y,
@@ -50,7 +51,7 @@ describe('ships', () => {
   it('round-trips builds and rockets', () => {
     const id = repo.createAccount('alice', 'hash', 1);
     const build = { ...STARTER_BUILD, slots: { ...STARTER_BUILD.slots, utility: [{ gearId: 'armor' as const, mk: 2 as const }] } };
-    const record = { captain: NEW_CAPTAIN, accountId: id, bankedCredits: 500, build, ordnance: 'rockets' as const, rockets: 3, salvage: [{ gearId: 'armor' as const, mk: 2 as const }], x: 10, y: 20 };
+    const record = { captain: NEW_CAPTAIN, accountId: id, bankedCredits: 500, build, ordnance: 'rockets' as const, pvpKills: 0, rockets: 3, salvage: [{ gearId: 'armor' as const, mk: 2 as const }], x: 10, y: 20 };
     repo.saveShips([record], 5);
     expect(repo.loadShip(id)).toEqual(record);
   });
@@ -81,6 +82,7 @@ describe('migration from version 1', () => {
       captain: NEW_CAPTAIN,
       ordnance: 'rockets',
       rockets: 10,
+      pvpKills: 0,
       salvage: [],
       x: 50,
       y: 60,
@@ -103,7 +105,7 @@ describe('invalid stored builds', () => {
     const warnings: string[] = [];
     const first = PlayerRepository.open(path);
     const id = first.createAccount('alice', 'hash', 1);
-    first.saveShips([{ captain: NEW_CAPTAIN, accountId: id, bankedCredits: 0, build: STARTER_BUILD, ordnance: 'rockets' as const, rockets: 4, salvage: [], x: 1, y: 2 }], 1);
+    first.saveShips([{ captain: NEW_CAPTAIN, accountId: id, bankedCredits: 0, build: STARTER_BUILD, ordnance: 'rockets' as const, pvpKills: 0, rockets: 4, salvage: [], x: 1, y: 2 }], 1);
     first.close();
     const db = new Database(path);
     db.prepare("UPDATE ships SET gear_json = '{\"weapon\":[{\"gearId\":\"laser9000\",\"mk\":1}]}'").run();
@@ -139,7 +141,7 @@ describe('migration to version 3', () => {
     const warnings: string[] = [];
     const first = PlayerRepository.open(path);
     const id = first.createAccount('alice', 'hash', 1);
-    first.saveShips([{ captain: NEW_CAPTAIN, accountId: id, bankedCredits: 0, build: STARTER_BUILD, ordnance: 'rockets' as const, rockets: 4, salvage: [], x: 1, y: 2 }], 1);
+    first.saveShips([{ captain: NEW_CAPTAIN, accountId: id, bankedCredits: 0, build: STARTER_BUILD, ordnance: 'rockets' as const, pvpKills: 0, rockets: 4, salvage: [], x: 1, y: 2 }], 1);
     first.close();
     const db = new Database(path);
     db.prepare("UPDATE ships SET salvage_json = '[{\"gearId\":\"x\",\"mk\":9}]'").run();
@@ -167,7 +169,7 @@ describe('captain persistence', () => {
     first.saveShips([{ ...first.loadShip(id), bankedCredits: 700 }], 1);
     first.close();
     const db = new Database(path);
-    db.exec('ALTER TABLE ships DROP COLUMN captain_json; ALTER TABLE ships DROP COLUMN ordnance; PRAGMA user_version = 3');
+    db.exec('ALTER TABLE ships DROP COLUMN captain_json; ALTER TABLE ships DROP COLUMN ordnance; ALTER TABLE ships DROP COLUMN pvp_kills; PRAGMA user_version = 3');
     db.close();
     const migrated = PlayerRepository.open(path);
     expect(migrated.loadShip(id)).toMatchObject({ bankedCredits: 700, captain: NEW_CAPTAIN });
@@ -211,7 +213,7 @@ describe('ordnance persistence', () => {
     first.saveShips([{ ...first.loadShip(id), bankedCredits: 900, rockets: 3 }], 1);
     first.close();
     const db = new Database(path);
-    db.exec('ALTER TABLE ships DROP COLUMN ordnance; PRAGMA user_version = 4');
+    db.exec('ALTER TABLE ships DROP COLUMN ordnance; ALTER TABLE ships DROP COLUMN pvp_kills; PRAGMA user_version = 4');
     db.close();
     const migrated = PlayerRepository.open(path);
     expect(migrated.loadShip(id)).toMatchObject({ bankedCredits: 900, rockets: 3, ordnance: 'rockets' });
@@ -232,5 +234,52 @@ describe('ordnance persistence', () => {
     expect(second.loadShip(id)).toMatchObject({ ordnance: 'rockets', rockets: 0 });
     expect(warnings[0]).toContain(`ordnance for account ${id}`);
     second.close();
+  });
+});
+
+describe('pvp highscores', () => {
+  function pilot(name: string, pvpKills: number): void {
+    const id = repo.createAccount(name, 'hash', 1);
+    repo.saveShips([{ ...repo.loadShip(id), pvpKills }], 1);
+  }
+
+  it('round-trips the kill count', () => {
+    const id = repo.createAccount('ace', 'hash', 1);
+    repo.saveShips([{ ...repo.loadShip(id), pvpKills: 7 }], 1);
+    expect(repo.loadShip(id).pvpKills).toBe(7);
+  });
+
+  it('ranks pilots by kills, shares tied ranks and skips pilots without kills', () => {
+    pilot('carol', 3);
+    pilot('alice', 5);
+    pilot('bob', 3);
+    pilot('dave', 1);
+    pilot('erin', 0);
+    repo.createAccount('frank', 'hash', 1);
+    expect(repo.highscores(10)).toEqual([
+      { rank: 1, username: 'alice', kills: 5 },
+      { rank: 2, username: 'bob', kills: 3 },
+      { rank: 2, username: 'carol', kills: 3 },
+      { rank: 4, username: 'dave', kills: 1 },
+    ]);
+  });
+
+  it('limits the list', () => {
+    for (let i = 0; i < 12; i += 1) pilot(`pilot${i}`, 20 - i);
+    expect(repo.highscores(10)).toHaveLength(10);
+  });
+
+  it('migrates version 5 ships to zero kills', async () => {
+    const path = join(await mkdtemp(join(tmpdir(), 'v5-')), 'arena.db');
+    const first = PlayerRepository.open(path);
+    const id = first.createAccount('pilot', 'hash', 1);
+    first.saveShips([{ ...first.loadShip(id), bankedCredits: 300 }], 1);
+    first.close();
+    const db = new Database(path);
+    db.exec('ALTER TABLE ships DROP COLUMN pvp_kills; PRAGMA user_version = 5');
+    db.close();
+    const migrated = PlayerRepository.open(path);
+    expect(migrated.loadShip(id)).toMatchObject({ bankedCredits: 300, pvpKills: 0 });
+    migrated.close();
   });
 });

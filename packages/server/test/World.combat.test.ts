@@ -50,6 +50,9 @@ describe('World combat', () => {
     expect(bob.hull).toBe(bob.stats.maxHull);
     expect(bob.rockets).toBe(0);
     expect(bob.ordnance).toBe('rockets');
+    expect(alice.pvpKills).toBe(1);
+    expect(bob.pvpKills).toBe(0);
+    expect(death?.killer).toBe(alice);
   });
 
   it('shield blocks damage', () => {

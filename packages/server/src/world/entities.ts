@@ -47,6 +47,7 @@ export interface ShipEntity {
   ordnance: Ordnance;
   rockets: number;
   rocketCooldown: number;
+  pvpKills: number;
   dockCooldownUntil: number;
   lastDamagedAt: number;
   lastHitBy: number | null;
@@ -167,6 +168,7 @@ export function createShip(id: number, accountId: number, name: string, record: 
     ordnance: record.ordnance,
     rockets: record.rockets,
     rocketCooldown: 0,
+    pvpKills: record.pvpKills,
     dockCooldownUntil: -Infinity,
     lastDamagedAt: -Infinity,
     lastHitBy: null,
@@ -190,6 +192,7 @@ export function createPirateShip(id: number, tier: PirateTier, x: number, y: num
     captain: NEW_CAPTAIN,
     ordnance: 'rockets',
     rockets: spec.rockets,
+    pvpKills: 0,
     salvage: [],
     x,
     y,
@@ -236,6 +239,7 @@ export function toShipRecord(ship: ShipEntity): ShipRecord {
     captain: ship.captain,
     ordnance: ship.ordnance,
     rockets: ship.rockets,
+    pvpKills: ship.pvpKills,
     salvage: ship.salvage,
     x: ship.x,
     y: ship.y,

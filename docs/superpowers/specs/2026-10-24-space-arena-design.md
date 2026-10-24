@@ -73,7 +73,7 @@ The `shared` package is the key invariant: the same physics step runs on server 
 ### 5.3 Data flow
 
 1. Client sends `{ seq, thrust, reverse, left, right, fire, shield }` at 30 Hz.
-2. Server queues inputs per player, applies them on each tick.
+2. Server queues up to 4 inputs per player and consumes one input per tick. When the queue is empty, the last input stays active.
 3. Server sends each player a snapshot at 20 Hz with entities from `InterestManager`, plus `lastProcessedSeq`.
 4. Client reconciles its own ship (rewind to server state, replay unacknowledged inputs) and interpolates all others.
 
@@ -101,7 +101,7 @@ Each tier improves its stats by roughly 20–25%; cost roughly doubles per tier.
 
 ### 6.2 Combat
 
-- Space (held): fire forward, limited by weapon cooldown. Bullets live 1.5 s and collide with ships and asteroids.
+- Space (held): fire forward, limited by weapon cooldown. Bullets live 1.5 s and collide with ships and asteroids. Hit tests use the swept segment of the bullet's last step so fast bullets cannot tunnel.
 - Shift (held): raise shield. While up, all damage is blocked, energy drains, and the ship cannot fire. At 0 energy the shield drops with a 1 s lockout. Energy regenerates while the shield is down.
 - Hull at 0: ship dies. Free-for-all; every other ship is hostile.
 
@@ -111,6 +111,7 @@ Each tier improves its stats by roughly 20–25%; cost roughly doubles per tier.
 - Carried state: ore and unbanked credits. Kill bounties go to unbanked credits.
 - Kill bounty = fixed base + a share of the victim's total installed upgrade value.
 - Docking: ship is inside a safe zone, below a speed threshold, and has taken no damage in the last 5 s. On docking, ore is sold automatically, all unbanked credits are banked, and the shop opens.
+- Docking fully repairs the hull.
 - Upgrades are bought with banked credits only.
 
 ### 6.4 Death
@@ -134,7 +135,7 @@ Each tier improves its stats by roughly 20–25%; cost roughly doubles per tier.
 ### 7.1 Schema (SQLite)
 
 - `accounts(id INTEGER PK, username TEXT UNIQUE, password_hash TEXT, created_at INTEGER)`
-- `sessions(token TEXT PK, account_id INTEGER, expires_at INTEGER)`
+- `sessions(token_hash TEXT PK, account_id INTEGER, expires_at INTEGER)` (SHA-256 of the token; the raw token is never stored)
 - `ships(account_id INTEGER PK, banked_credits INTEGER, hull_tier, engine_tier, weapon_tier, shield_tier, cargo_tier INTEGER, pos_x REAL, pos_y REAL, updated_at INTEGER)`
 
 ### 7.2 Save points

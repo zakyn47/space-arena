@@ -20,3 +20,12 @@ html, body { margin: 0; height: 100%; background: #05060d; color: #e6f1ff; overf
 #shop button:disabled { opacity: 0.4; cursor: default; }
 #shop .result { min-height: 1em; font-size: 13px; color: #ffc83c; }
 #toast { position: absolute; top: 40%; left: 50%; transform: translateX(-50%); font-size: 24px; color: #ff9a3c; text-shadow: 0 2px 4px #000; pointer-events: none; }
+#shop { min-width: 520px; max-height: 60vh; overflow-y: auto; }
+#shop .tabs { display: flex; gap: 6px; }
+#shop .tabs button:disabled { opacity: 1; background: #1f4f8a; }
+#shop .summary { font-size: 13px; color: #9fb4d9; }
+#shop .list { display: grid; gap: 4px; }
+#shop .options { margin-top: 6px; padding-top: 6px; border-top: 1px solid #2a3a66; }
+#shop .row { grid-template-columns: 32px 1fr auto auto; }
+#shop .options .row { grid-template-columns: 1fr auto 1.2fr auto; }
+#shop .delta { font-size: 12px; color: #3cffb0; }

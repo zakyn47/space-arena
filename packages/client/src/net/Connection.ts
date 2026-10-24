@@ -1,6 +1,6 @@
 import type { ClientMessage, ServerMessage } from '@arena/shared';
 
-const SERVER_MESSAGE_TYPES: ReadonlySet<string> = new Set(['welcome', 'snapshot', 'died', 'buyResult', 'kicked']);
+const SERVER_MESSAGE_TYPES: ReadonlySet<string> = new Set(['welcome', 'snapshot', 'died', 'shopResult', 'kicked']);
 
 export function isServerMessage(value: unknown): value is ServerMessage {
   return (

@@ -47,7 +47,9 @@ export function createApp(config: AppConfig): App {
     loop,
     saveAll: () => repo.saveShips(world.allShips().map(toShipRecord), Date.now()),
     close: async () => {
+      const closed = [...wss.clients].map((client) => new Promise<void>((resolve) => client.once('close', () => resolve())));
       for (const client of wss.clients) client.terminate();
+      await Promise.all(closed);
       wss.close();
       await new Promise<void>((resolve) => server.close(() => resolve()));
       repo.close();

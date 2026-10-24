@@ -27,3 +27,13 @@
 - `icon_rocket` and `gear_*` (48×48): same flat glyph style as the other UI icons, white with cyan accent:
   pulse laser = slim energy emitter, heavy cannon = thick barrel, shield generator = dome emitter,
   thruster = nozzle with flame, armor = layered plates, cargo pod = container, rocket rack = rocket pod with three tubes.
+
+## Pirates and mining update
+
+- Pirate ships (64×64, nose up, same top-down rendering as the player fleet): red `#E0403A` and black livery, jagged hostile silhouettes, scavenged mismatched armor plates.
+  - `pirate_raider`: small scrappy interceptor with one gun.
+  - `pirate_marauder`: medium aggressive raider with twin guns and spiked wings.
+  - `pirate_warlord`: large heavily armored flagship, multiple barrels, skull-like prow.
+- `mining_beam` (16×64): vertical teal `#3CFFB0` energy beam with a bright white core, seamlessly tileable top-to-bottom, transparent edges.
+- `gear_mining_laser` (48×48): UI glyph, drill emitter with a small beam.
+- `icon_salvage` (48×48): UI glyph, gear cog over a crate.

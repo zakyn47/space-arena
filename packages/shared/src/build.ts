@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { GEAR, GEAR_IDS, gearTier, type GearId, type Mk } from './catalog/gear';
 import { HULLS, HULL_IDS, SLOT_TYPES, type HullId, type SlotType } from './catalog/hulls';
-import { BASE_MAX_ROCKETS, EMPTY_ENGINE_FACTOR, SELL_BACK_SHARE, SHIELD_DRAIN } from './constants';
+import { BASE_MAX_ROCKETS, EMPTY_ENGINE_FACTOR, SALVAGE_CAPACITY, SELL_BACK_SHARE, SHIELD_DRAIN } from './constants';
 
 export interface InstalledGear {
   readonly gearId: GearId;
@@ -40,6 +40,8 @@ export interface ShipStats {
   readonly shieldDrain: number;
   readonly cargoCapacity: number;
   readonly maxRockets: number;
+  readonly miningRate: number;
+  readonly miningRange: number;
   readonly weapons: readonly WeaponMount[];
 }
 
@@ -58,13 +60,20 @@ const BuildSchema = z
   })
   .strict();
 
+const SalvageSchema = z.array(InstalledGearSchema).max(SALVAGE_CAPACITY);
+
+export function parseSalvage(value: unknown): InstalledGear[] | null {
+  const parsed = SalvageSchema.safeParse(value);
+  return parsed.success ? parsed.data : null;
+}
+
 export const STARTER_BUILD: Build = {
   hullId: 'scout',
   slots: {
     weapon: [{ gearId: 'pulse_laser', mk: 1 }],
     shield: [{ gearId: 'shield_gen', mk: 1 }],
     engine: [{ gearId: 'thruster', mk: 1 }],
-    utility: [null],
+    utility: [{ gearId: 'mining_laser', mk: 1 }],
   },
 };
 
@@ -104,6 +113,8 @@ export function statsFor(build: Build): ShipStats {
   let maxHull = hull.maxHull;
   let cargoCapacity = hull.cargoCapacity;
   let maxRockets = BASE_MAX_ROCKETS;
+  let miningRate = 0;
+  let miningRange = 0;
   let maxShield = 0;
   let shieldRegen = 0;
   let motionFactor = EMPTY_ENGINE_FACTOR;
@@ -127,6 +138,10 @@ export function statsFor(build: Build): ShipStats {
         cargoCapacity += effect.cargo;
         maxRockets += effect.rockets;
         break;
+      case 'mining':
+        miningRate += effect.rate;
+        miningRange = Math.max(miningRange, effect.range);
+        break;
     }
   }
   return {
@@ -139,6 +154,8 @@ export function statsFor(build: Build): ShipStats {
     shieldDrain: SHIELD_DRAIN,
     cargoCapacity,
     maxRockets,
+    miningRate,
+    miningRange,
     weapons,
   };
 }

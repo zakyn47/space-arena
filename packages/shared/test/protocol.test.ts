@@ -11,6 +11,7 @@ const input = {
   fire: false,
   shield: false,
   rocket: true,
+  mine: false,
 };
 
 const parse = (value: unknown) => parseClientMessage(JSON.stringify(value));
@@ -27,6 +28,13 @@ describe('parseClientMessage', () => {
     expect(parse({ type: 'buyGear', gearId: 'armor', mk: 2, slot: { type: 'utility', index: 0 } })).not.toBeNull();
     expect(parse({ type: 'sellGear', slot: { type: 'weapon', index: 1 } })).not.toBeNull();
     expect(parse({ type: 'buyRockets', count: 5 })).not.toBeNull();
+  });
+
+  it('accepts salvage actions and the mine flag', () => {
+    expect(parse({ ...input, mine: true })).not.toBeNull();
+    expect(parse({ type: 'installSalvage', index: 2, slot: { type: 'utility', index: 0 } })).not.toBeNull();
+    expect(parse({ type: 'sellSalvage', index: 0 })).not.toBeNull();
+    expect(parse({ type: 'sellSalvage', index: 3 })).toBeNull();
   });
 
   it('rejects unknown ids, bad mk, bad counts and removed messages', () => {
@@ -48,6 +56,7 @@ describe('parseClientMessage', () => {
       right: true,
       fire: false,
       shield: false,
+      mine: false,
     };
     expect(parse(withoutRocket)).toBeNull();
     expect(parse({ ...input, x: 5 })).toBeNull();

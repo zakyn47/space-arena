@@ -1,8 +1,9 @@
 import { z } from 'zod';
-import { MkSchema, type Build } from './build';
+import { MkSchema, type Build, type InstalledGear } from './build';
 import { GEAR_IDS, type GearId, type Mk } from './catalog/gear';
 import { HULL_IDS, SLOT_TYPES, type HullId } from './catalog/hulls';
-import { MAX_ROCKETS_PER_PURCHASE } from './constants';
+import type { PirateTier } from './catalog/pirates';
+import { MAX_ROCKETS_PER_PURCHASE, SALVAGE_CAPACITY } from './constants';
 import type { SafeZone } from './world';
 
 const SlotRefSchema = z.object({ type: z.enum(SLOT_TYPES), index: z.number().int().nonnegative().max(8) }).strict();
@@ -20,6 +21,7 @@ const InputSchema = z
     fire: z.boolean(),
     shield: z.boolean(),
     rocket: z.boolean(),
+    mine: z.boolean(),
   })
   .strict();
 
@@ -37,6 +39,14 @@ const BuyRocketsSchema = z
   .object({ type: z.literal('buyRockets'), count: z.number().int().min(1).max(MAX_ROCKETS_PER_PURCHASE) })
   .strict();
 
+const SalvageIndexSchema = z.number().int().min(0).max(SALVAGE_CAPACITY - 1);
+
+const InstallSalvageSchema = z
+  .object({ type: z.literal('installSalvage'), index: SalvageIndexSchema, slot: SlotRefSchema })
+  .strict();
+
+const SellSalvageSchema = z.object({ type: z.literal('sellSalvage'), index: SalvageIndexSchema }).strict();
+
 const ClientMessageSchema = z.discriminatedUnion('type', [
   HelloSchema,
   InputSchema,
@@ -45,11 +55,13 @@ const ClientMessageSchema = z.discriminatedUnion('type', [
   BuyGearSchema,
   SellGearSchema,
   BuyRocketsSchema,
+  InstallSalvageSchema,
+  SellSalvageSchema,
 ]);
 
 export type ClientMessage = z.infer<typeof ClientMessageSchema>;
 export type InputMessage = z.infer<typeof InputSchema>;
-export type ShopAction = Extract<ClientMessage, { type: 'buyHull' | 'buyGear' | 'sellGear' | 'buyRockets' }>;
+export type ShopAction = Extract<ClientMessage, { type: 'buyHull' | 'buyGear' | 'sellGear' | 'buyRockets' | 'installSalvage' | 'sellSalvage' }>;
 
 export function parseClientMessage(raw: string): ClientMessage | null {
   let json: unknown;
@@ -73,6 +85,8 @@ export interface ShipState {
   readonly angle: number;
   readonly shieldUp: boolean;
   readonly hullId: HullId;
+  readonly npc: PirateTier | null;
+  readonly miningTargetId: number | null;
 }
 
 export interface BulletState {
@@ -117,6 +131,7 @@ export interface CrateState {
   readonly id: number;
   readonly x: number;
   readonly y: number;
+  readonly hasGear: boolean;
 }
 
 export type EntityState = ShipState | BulletState | RocketState | AsteroidState | OreState | CrateState;
@@ -143,6 +158,8 @@ export interface SelfState {
   readonly docked: boolean;
   readonly canDock: boolean;
   readonly dockCooldown: number;
+  readonly salvage: readonly InstalledGear[];
+  readonly miningTargetId: number | null;
 }
 
 export interface WelcomeMessage {

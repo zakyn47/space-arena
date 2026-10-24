@@ -10,6 +10,7 @@ export interface ShipInput {
   readonly fire: boolean;
   readonly shield: boolean;
   readonly rocket: boolean;
+  readonly mine: boolean;
 }
 
 export const IDLE_INPUT: ShipInput = {
@@ -20,6 +21,7 @@ export const IDLE_INPUT: ShipInput = {
   fire: false,
   shield: false,
   rocket: false,
+  mine: false,
 };
 
 export interface ShipMotion {

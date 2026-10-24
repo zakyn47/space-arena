@@ -4,6 +4,7 @@ import {
   buildValue,
   fitsHull,
   parseBuild,
+  parseSalvage,
   refitToHull,
   resaleValue,
   statsFor,
@@ -62,7 +63,7 @@ describe('statsFor', () => {
 
 describe('values', () => {
   it('prices the starter build', () => {
-    expect(buildValue(STARTER_BUILD)).toBe(750);
+    expect(buildValue(STARTER_BUILD)).toBe(1_050);
   });
 
   it('sells back at half, rounded down', () => {
@@ -89,6 +90,7 @@ describe('refitToHull', () => {
     const { build, leftovers } = refitToHull(STARTER_BUILD, 'gunship');
     expect(build.slots.weapon).toEqual([{ gearId: 'pulse_laser', mk: 1 }, null, null]);
     expect(build.slots.shield).toEqual([{ gearId: 'shield_gen', mk: 1 }, null]);
+    expect(build.slots.utility).toEqual([{ gearId: 'mining_laser', mk: 1 }]);
     expect(leftovers).toEqual([]);
   });
 
@@ -97,5 +99,35 @@ describe('refitToHull', () => {
     expect(build.slots.weapon).toEqual([{ gearId: 'pulse_laser', mk: 1 }]);
     expect(leftovers).toEqual([{ gearId: 'heavy_cannon', mk: 2 }, { gearId: 'shield_gen', mk: 3 }]);
     expect(fitsHull(build)).toBe(true);
+  });
+});
+
+describe('mining and salvage', () => {
+  it('gives the starter build a mining laser', () => {
+    const stats = statsFor(STARTER_BUILD);
+    expect(stats.miningRate).toBe(1);
+    expect(stats.miningRange).toBe(150);
+    expect(buildValue(STARTER_BUILD)).toBe(1_050);
+  });
+
+  it('stacks mining rates and keeps the longest range', () => {
+    const freighter = {
+      hullId: 'freighter' as const,
+      slots: {
+        weapon: [null],
+        shield: [null],
+        engine: [null],
+        utility: [{ gearId: 'mining_laser' as const, mk: 1 as const }, { gearId: 'mining_laser' as const, mk: 3 as const }, null],
+      },
+    };
+    expect(statsFor(freighter).miningRate).toBe(4.5);
+    expect(statsFor(freighter).miningRange).toBe(250);
+  });
+
+  it('parses salvage lists up to capacity', () => {
+    expect(parseSalvage([{ gearId: 'armor', mk: 2 }])).toEqual([{ gearId: 'armor', mk: 2 }]);
+    expect(parseSalvage([])).toEqual([]);
+    expect(parseSalvage([{ gearId: 'armor', mk: 1 }, { gearId: 'armor', mk: 1 }, { gearId: 'armor', mk: 1 }, { gearId: 'armor', mk: 1 }])).toBeNull();
+    expect(parseSalvage([{ gearId: 'nope', mk: 1 }])).toBeNull();
   });
 });

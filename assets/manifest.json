@@ -27,6 +27,12 @@
     {"id": "gear_thruster", "file": "ui/gear_thruster.png", "width": 48, "height": 48, "anchor": [0.5, 0.5], "frames": 1},
     {"id": "gear_armor", "file": "ui/gear_armor.png", "width": 48, "height": 48, "anchor": [0.5, 0.5], "frames": 1},
     {"id": "gear_cargo_pod", "file": "ui/gear_cargo_pod.png", "width": 48, "height": 48, "anchor": [0.5, 0.5], "frames": 1},
-    {"id": "gear_rocket_rack", "file": "ui/gear_rocket_rack.png", "width": 48, "height": 48, "anchor": [0.5, 0.5], "frames": 1}
+    {"id": "gear_rocket_rack", "file": "ui/gear_rocket_rack.png", "width": 48, "height": 48, "anchor": [0.5, 0.5], "frames": 1},
+    {"id": "pirate_raider", "file": "ships/pirate_raider.png", "width": 64, "height": 64, "anchor": [0.5, 0.5], "frames": 1},
+    {"id": "pirate_marauder", "file": "ships/pirate_marauder.png", "width": 64, "height": 64, "anchor": [0.5, 0.5], "frames": 1},
+    {"id": "pirate_warlord", "file": "ships/pirate_warlord.png", "width": 64, "height": 64, "anchor": [0.5, 0.5], "frames": 1},
+    {"id": "mining_beam", "file": "fx/mining_beam.png", "width": 16, "height": 64, "anchor": [0.5, 1], "frames": 1},
+    {"id": "gear_mining_laser", "file": "ui/gear_mining_laser.png", "width": 48, "height": 48, "anchor": [0.5, 0.5], "frames": 1},
+    {"id": "icon_salvage", "file": "ui/icon_salvage.png", "width": 48, "height": 48, "anchor": [0.5, 0.5], "frames": 1}
   ]
 }

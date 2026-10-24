@@ -8,6 +8,7 @@ export const GEAR_IDS = [
   'armor',
   'cargo_pod',
   'rocket_rack',
+  'mining_laser',
 ] as const;
 
 export type GearId = (typeof GEAR_IDS)[number];
@@ -42,7 +43,13 @@ export interface UtilityEffect {
   readonly rockets: number;
 }
 
-export type GearEffect = WeaponEffect | ShieldEffect | EngineEffect | UtilityEffect;
+export interface MiningEffect {
+  readonly kind: 'mining';
+  readonly rate: number;
+  readonly range: number;
+}
+
+export type GearEffect = WeaponEffect | ShieldEffect | EngineEffect | UtilityEffect | MiningEffect;
 
 export interface GearTier {
   readonly cost: number;
@@ -73,6 +80,10 @@ function utility(cost: number, bonus: Partial<Omit<UtilityEffect, 'kind'>>): Gea
     cost,
     effect: { kind: 'utility', hull: bonus.hull ?? 0, cargo: bonus.cargo ?? 0, rockets: bonus.rockets ?? 0 },
   };
+}
+
+function mining(cost: number, rate: number, range: number): GearTier {
+  return { cost, effect: { kind: 'mining', rate, range } };
 }
 
 export const GEAR: Readonly<Record<GearId, GearSpec>> = {
@@ -117,6 +128,12 @@ export const GEAR: Readonly<Record<GearId, GearSpec>> = {
     name: 'Rocket Rack',
     slot: 'utility',
     tiers: [utility(200, { rockets: 5 }), utility(600, { rockets: 10 }), utility(1_300, { rockets: 15 })],
+  },
+  mining_laser: {
+    id: 'mining_laser',
+    name: 'Mining Laser',
+    slot: 'utility',
+    tiers: [mining(300, 1, 150), mining(800, 2, 200), mining(1_800, 3.5, 250)],
   },
 };
 

@@ -6,3 +6,4 @@ export * from './assets';
 export * from './catalog/hulls';
 export * from './catalog/gear';
 export * from './build';
+export * from './catalog/pirates';

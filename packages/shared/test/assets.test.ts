@@ -21,6 +21,7 @@ describe('asset manifest', () => {
       'shield_bubble', 'ore_pickup', 'loot_crate', 'explosion', 'safe_zone_station', 'starfield_tile',
       'icon_rocket', 'gear_pulse_laser', 'gear_heavy_cannon', 'gear_shield_gen', 'gear_thruster',
       'gear_armor', 'gear_cargo_pod', 'gear_rocket_rack',
+      'pirate_raider', 'pirate_marauder', 'pirate_warlord', 'mining_beam', 'gear_mining_laser', 'icon_salvage',
     ];
     expect(required.filter((id) => !ids.has(id))).toEqual([]);
   });

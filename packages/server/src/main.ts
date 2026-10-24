@@ -4,6 +4,7 @@ import { createApp } from './app';
 const app = createApp({
   dbPath: process.env.DB_PATH ?? 'arena.db',
   staticDir: fileURLToPath(new URL('../../client/dist', import.meta.url)),
+  trustProxy: process.env.TRUST_PROXY === '1',
 });
 const timer = app.loop.start();
 const port = Number(process.env.PORT ?? 8080);

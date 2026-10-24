@@ -27,6 +27,7 @@ export interface HttpDeps {
   readonly auth: AuthService;
   readonly limiter: RateLimiter;
   readonly staticDir: string;
+  readonly trustProxy?: boolean;
   readonly now: () => number;
 }
 
@@ -52,8 +53,14 @@ async function readJson(req: IncomingMessage): Promise<unknown> {
   }
 }
 
+function clientIp(req: IncomingMessage, trustProxy: boolean): string {
+  const forwarded = req.headers['x-real-ip'];
+  if (trustProxy && typeof forwarded === 'string') return forwarded;
+  return req.socket.remoteAddress ?? 'unknown';
+}
+
 async function handleAuth(deps: HttpDeps, req: IncomingMessage, res: ServerResponse, action: AuthAction): Promise<void> {
-  if (!deps.limiter.tryConsume(req.socket.remoteAddress ?? 'unknown', deps.now())) {
+  if (!deps.limiter.tryConsume(clientIp(req, deps.trustProxy ?? false), deps.now())) {
     return sendJson(res, 429, { error: 'too many requests' });
   }
   const body = await readJson(req);

@@ -12,7 +12,7 @@ let repo: PlayerRepository;
 let server: Server;
 let base: string;
 
-async function start(capacity: number): Promise<void> {
+async function start(capacity: number, trustProxy = false): Promise<void> {
   const staticDir = await mkdtemp(join(tmpdir(), 'static-'));
   await writeFile(join(staticDir, 'index.html'), '<h1>arena</h1>');
   repo = PlayerRepository.open(':memory:');
@@ -20,6 +20,7 @@ async function start(capacity: number): Promise<void> {
     auth: new AuthService(repo),
     limiter: new RateLimiter(capacity, 0),
     staticDir,
+    trustProxy,
     now: Date.now,
   });
   await new Promise<void>((resolve) => server.listen(0, resolve));
@@ -28,10 +29,10 @@ async function start(capacity: number): Promise<void> {
   base = `http://127.0.0.1:${address.port}`;
 }
 
-function post(path: string, body: unknown): Promise<Response> {
+function post(path: string, body: unknown, headers: Record<string, string> = {}): Promise<Response> {
   return fetch(`${base}${path}`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json', ...headers },
     body: JSON.stringify(body),
   });
 }
@@ -70,6 +71,22 @@ describe('rate limiting', () => {
   it('returns 429 after the burst', async () => {
     await post('/api/login', { username: 'x', password: 'password1' });
     expect((await post('/api/login', { username: 'x', password: 'password1' })).status).toBe(429);
+  });
+
+  it('ignores X-Real-IP unless the proxy is trusted', async () => {
+    await post('/api/login', { username: 'x', password: 'password1' }, { 'x-real-ip': '203.0.113.1' });
+    expect((await post('/api/login', { username: 'x', password: 'password1' }, { 'x-real-ip': '203.0.113.2' })).status).toBe(429);
+  });
+});
+
+describe('rate limiting behind a trusted proxy', () => {
+  beforeEach(() => start(1, true));
+
+  it('limits each X-Real-IP separately', async () => {
+    const first = { 'x-real-ip': '203.0.113.1' };
+    await post('/api/login', { username: 'x', password: 'password1' }, first);
+    expect((await post('/api/login', { username: 'x', password: 'password1' }, first)).status).toBe(429);
+    expect((await post('/api/login', { username: 'x', password: 'password1' }, { 'x-real-ip': '203.0.113.2' })).status).toBe(401);
   });
 });
 

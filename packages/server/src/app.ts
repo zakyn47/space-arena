@@ -18,6 +18,7 @@ export interface AppConfig {
   readonly staticDir: string;
   readonly asteroidTarget?: number;
   readonly pirates?: boolean;
+  readonly trustProxy?: boolean;
 }
 
 export interface App {
@@ -36,6 +37,7 @@ export function createApp(config: AppConfig): App {
     auth,
     limiter: new RateLimiter(AUTH_BURST, AUTH_REFILL_PER_MS),
     staticDir: config.staticDir,
+    trustProxy: config.trustProxy,
     now: Date.now,
   });
   const wss = new WebSocketServer({ server, path: '/ws', maxPayload: MAX_WS_PAYLOAD });

@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# Forced command for the Space Arena CI key in root's authorized_keys.
+# Accepts only "deploy sha-<hex>" with the job's short-lived GITHUB_TOKEN on stdin,
+# so no long-lived registry credential is stored on the host.
+set -euo pipefail
+
+cmd="${SSH_ORIGINAL_COMMAND:-}"
+if [[ ! "$cmd" =~ ^deploy\ (sha-[0-9a-f]{7,40})$ ]]; then
+  logger -t space-arena-deploy "refused: $cmd"
+  echo "command not allowed" >&2
+  exit 1
+fi
+image="ghcr.io/zakyn47/space-arena:${BASH_REMATCH[1]}"
+
+cd /opt/space-arena
+DOCKER_CONFIG="$(mktemp -d)"
+export DOCKER_CONFIG
+trap 'rm -rf "$DOCKER_CONFIG"' EXIT
+docker login ghcr.io -u zakyn47 --password-stdin >/dev/null
+docker pull -q "$image" </dev/null
+
+prev="$(sed -n 's/^IMAGE=//p' .env 2>/dev/null || true)"
+echo "IMAGE=$image" > .env
+if ! docker compose up -d --wait --wait-timeout 90 </dev/null; then
+  echo "deploy of $image failed"
+  docker compose logs --tail 50 </dev/null || true
+  if [ -n "$prev" ]; then
+    echo "rolling back to $prev"
+    echo "IMAGE=$prev" > .env
+    docker compose up -d --wait --wait-timeout 90 </dev/null
+  fi
+  exit 1
+fi
+
+# Older tags are only a rollback aid; keep the 3 newest plus the current one.
+docker image ls ghcr.io/zakyn47/space-arena --format '{{.CreatedAt}}\t{{.Repository}}:{{.Tag}}' </dev/null \
+  | sort -r | tail -n +4 | cut -f2 | grep -vx "$image" | xargs -r docker image rm >/dev/null || true
+
+echo "space-arena $image deployed"

@@ -69,6 +69,10 @@ assets/            sprites (PNG), manifest.json (the contract), STYLE.md (art di
 - Use `seeded(n)` from the server fixtures for anything random; construct `World` with `asteroidTarget: 0` and without `pirates` unless the test is about them.
 - `packages/server/test/integration.test.ts` drives the real app over WebSockets; extend it for end-to-end behavior.
 
+## Deploy
+
+Every push to `master` runs `.github/workflows/deploy.yml`: checks, then a Docker image pushed to `ghcr.io/zakyn47/space-arena:sha-<short>`, then `ssh hetzner "deploy <tag>"`. The CI key can only run `/usr/local/sbin/space-arena-deploy` (copy in `deploy/`), which pulls the image and restarts `/opt/space-arena` with rollback on a failed health check. nginx (`deploy/nginx-space-arena.conf`) terminates TLS for `spacearena.duckdns.org` and proxies to `127.0.0.1:8100`; the SQLite DB lives in the `space-arena_data` volume. Files in `deploy/` are not synced automatically: copy changes to the server by hand.
+
 ## Git
 
 - Work on `master` unless told otherwise. Commit only when asked or when your task explicitly says to.

@@ -1,6 +1,7 @@
 import {
   ASTEROID_MAX_RADIUS,
   NPC_EXPERIENCE,
+  type NpcKind,
   PLAYER_KILL_EXPERIENCE,
   gainExperience,
   ASTEROID_TARGET_COUNT,
@@ -53,12 +54,14 @@ import { canMine, findMiningTarget, mineStep } from './Mining';
 import { acquireTarget, launchRocket, steerRocket, tryLaunch } from './Rockets';
 import { blastVictims, dropMine, triggeredBy } from './SpaceMines';
 import { DEFAULT_PATROLS, PirateDirector, type PatrolSpec, type PirateHost } from './pirates/PirateDirector';
+import { BossDirector, type BossHost } from './boss/BossDirector';
 import { SpatialGrid } from './SpatialGrid';
 
 export interface WorldOptions {
   readonly rng?: () => number;
   readonly asteroidTarget?: number;
   readonly pirates?: boolean | readonly PatrolSpec[];
+  readonly boss?: boolean;
 }
 
 export interface DeathEvent {
@@ -100,6 +103,7 @@ export class World {
   private readonly rng: () => number;
   private readonly asteroidTarget: number;
   private readonly director: PirateDirector | null;
+  private readonly boss: BossDirector | null;
   private readonly pirateHost: PirateHost = {
     spawnPirate: (tier, x, y) => {
       const ship = createPirateShip(this.allocateId(), tier, x, y);
@@ -108,6 +112,12 @@ export class World {
     },
     ship: (id) => this.ships.get(id),
     players: () => this.playerShips(),
+  };
+  private readonly bossHost: BossHost = {
+    spawnLeviathan: (x, y) => this.addLeviathan(x, y),
+    ship: (id) => this.ships.get(id),
+    players: () => this.playerShips(),
+    fireOrb: (from, angle) => this.fireOrb(from, angle),
   };
   private nextId = 1;
   private elapsed = 0;
@@ -118,6 +128,7 @@ export class World {
     this.asteroidTarget = options.asteroidTarget ?? ASTEROID_TARGET_COUNT;
     const patrols = patrolSpecs(options.pirates);
     this.director = patrols && new PirateDirector(this.rng, patrols);
+    this.boss = options.boss ? new BossDirector(this.rng) : null;
     while (this.asteroids.size < this.asteroidTarget) this.addAsteroid(randomAsteroid(this.rng));
   }
 
@@ -214,6 +225,7 @@ export class World {
     this.ticks += 1;
     const events: TickEvents = { died: [], departed: [], hits: [] };
     this.director?.step(this.pirateHost, this.elapsed);
+    this.boss?.step(this.bossHost, this.elapsed, dt);
     this.stepShips(dt);
     this.stepProjectiles(dt);
     this.rebuildGrid();
@@ -456,8 +468,7 @@ export class World {
         killer.captain = gainExperience(killer.captain, xp);
       }
       if (ship.npc !== null) {
-        const loot = ship.npc === 'leviathan' ? undefined : this.director?.pirateLoot(ship.npc);
-        this.spawnCrate(ship.x, ship.y, loot ?? { credits: 0, ore: 0, gear: null });
+        this.spawnCrate(ship.x, ship.y, this.npcLoot(ship.npc));
         this.ships.delete(ship.id);
         continue;
       }
@@ -470,6 +481,12 @@ export class World {
       respawnShip(ship, zone.x, zone.y);
       died.push({ ship, killer: killer ?? null, killerName: killer?.name ?? null });
     }
+  }
+
+  private npcLoot(kind: NpcKind): CrateDrop {
+    const empty: CrateDrop = { credits: 0, ore: 0, gear: null };
+    if (kind === 'leviathan') return this.boss?.loot() ?? empty;
+    return this.director?.pirateLoot(kind) ?? empty;
   }
 
   private dropCrate(ship: ShipEntity): void {

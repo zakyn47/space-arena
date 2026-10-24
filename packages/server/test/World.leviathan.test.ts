@@ -76,3 +76,27 @@ describe('plasma orbs', () => {
     expect(orbsNear(world)).toBe(0);
   });
 });
+
+describe('Leviathan in the world', () => {
+  it('spawns at the center when the boss is enabled', () => {
+    const world = new World({ asteroidTarget: 0, boss: true });
+    world.tick(TICK_DT);
+    expect(world.npcShips().filter((ship) => ship.npc === 'leviathan')).toHaveLength(1);
+  });
+
+  it('drops loot and grants XP on death without a died event or pvp kill', () => {
+    const world = new World({ asteroidTarget: 0, boss: true, rng: seeded(8) });
+    world.tick(TICK_DT);
+    const boss = world.npcShips().find((ship) => ship.npc === 'leviathan');
+    if (!boss) throw new Error('no boss');
+    const hunter = world.addShip(1, 'alice', shipRecord(boss.x, boss.y + 300, 1));
+    boss.hull = 0;
+    boss.lastHitBy = hunter.id;
+    const events = world.tick(TICK_DT);
+    expect(events.died).toEqual([]);
+    expect(hunter.pvpKills).toBe(0);
+    expect(hunter.captain.xp).toBe(500);
+    world.tick(TICK_DT);
+    expect(world.entitiesNear(boss.x, boss.y, 200).some((entity) => entity.kind === 'crate' && entity.credits === 1_500)).toBe(true);
+  });
+});

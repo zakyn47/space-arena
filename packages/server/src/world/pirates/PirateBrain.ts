@@ -93,6 +93,10 @@ function attack(ship: ShipEntity, target: ShipEntity): ShipInput {
   };
 }
 
+export function steerToward(ship: ShipEntity, goal: Point, desiredSpeed: number): ShipInput {
+  return movement(steer(ship, goal, desiredSpeed));
+}
+
 export function isValidTarget(candidate: ShipEntity): boolean {
   return candidate.npc === null && !candidate.docked && zoneAt(candidate.x, candidate.y) === undefined;
 }

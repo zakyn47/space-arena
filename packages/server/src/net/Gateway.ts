@@ -1,6 +1,7 @@
 import {
   MAX_INPUTS_PER_SECOND,
   SAFE_ZONES,
+  RADAR_EVERY_SNAPSHOTS,
   VIEW_RADIUS,
   WORLD_SIZE,
   parseClientMessage,
@@ -14,6 +15,7 @@ import type { PlayerRepository, SessionInfo } from '../db/PlayerRepository';
 import type { LoopOutput } from '../GameLoop';
 import { toShipRecord } from '../world/entities';
 import type { DeathEvent, World } from '../world/World';
+import { buildRadar } from './radar';
 import { buildSnapshot } from './snapshot';
 
 const HELLO_TIMEOUT_MS = 5_000;
@@ -47,6 +49,7 @@ function send(socket: WebSocket, message: ServerMessage): void {
 
 export class Gateway implements LoopOutput {
   private readonly sessions = new Map<number, Session>();
+  private broadcasts = 0;
 
   constructor(private readonly deps: GatewayDeps) {}
 
@@ -56,10 +59,14 @@ export class Gateway implements LoopOutput {
 
   broadcastSnapshots(): void {
     const { world } = this.deps;
+    const radarShips = this.broadcasts % RADAR_EVERY_SNAPSHOTS === 0 ? [...world.playerShips(), ...world.npcShips()] : null;
+    this.broadcasts += 1;
     for (const session of this.sessions.values()) {
       const ship = world.shipById(session.shipId);
       if (!ship) continue;
-      send(session.socket, buildSnapshot(ship, world.entitiesNear(ship.x, ship.y, VIEW_RADIUS), world.tickCount, world.time));
+      const nearby = world.entitiesNear(ship.x, ship.y, VIEW_RADIUS);
+      const radar = radarShips ? buildRadar(ship, radarShips) : undefined;
+      send(session.socket, buildSnapshot(ship, nearby, world.tickCount, world.time, radar));
     }
   }
 

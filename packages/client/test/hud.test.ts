@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { dockPrompt, hudLines } from '../src/ui/Hud';
+import { dockPrompt, hudLines, minimapDots } from '../src/ui/Hud';
 import { selfState } from './support/self';
 
 describe('dockPrompt', () => {
@@ -29,5 +29,14 @@ describe('hudLines', () => {
 
   it('omits an empty prompt', () => {
     expect(hudLines(selfState(), null)).toHaveLength(7);
+  });
+});
+
+describe('minimapDots', () => {
+  it('scales radar blips to the minimap and colors them by kind', () => {
+    expect(minimapDots([{ x: 10_000, y: 5_000, kind: 'player' }, { x: 0, y: 20_000, kind: 'pirate' }], 160 / 20_000)).toEqual([
+      { x: 80, y: 40, color: '#ffffff' },
+      { x: 0, y: 160, color: '#ff4d4d' },
+    ]);
   });
 });

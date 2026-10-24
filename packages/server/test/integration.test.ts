@@ -165,6 +165,23 @@ describe('server integration', () => {
     expect((await pump(first, 'kicked')).reason).toBe('logged in elsewhere');
   });
 
+  it('sends radar with every fifth snapshot', async () => {
+    const alice = await TestClient.connect(port, await register('alice'));
+    const bob = await TestClient.connect(port, await register('bob'));
+    const aliceShip = app.world.shipById((await pump(alice, 'welcome')).shipId);
+    const bobShip = app.world.shipById((await pump(bob, 'welcome')).shipId);
+    if (!aliceShip || !bobShip) throw new Error('ships missing');
+    Object.assign(bobShip, { x: aliceShip.x + 1_000, y: aliceShip.y });
+    alice.clear();
+    for (let step = 0; step < 30; step += 1) app.loop.step();
+    await settle();
+    const snapshots = alice.messages.filter((m): m is MessageOf<'snapshot'> => m.type === 'snapshot');
+    const withRadar = snapshots.filter((s) => s.radar !== undefined);
+    expect(snapshots).toHaveLength(20);
+    expect(withRadar).toHaveLength(4);
+    expect(withRadar[0]?.radar).toEqual([{ x: Math.round(bobShip.x), y: Math.round(bobShip.y), kind: 'player' }]);
+  });
+
   it('mines with F and never saves pirates', async () => {
     const alice = await TestClient.connect(port, await register('alice'));
     const ship = app.world.shipById((await pump(alice, 'welcome')).shipId);

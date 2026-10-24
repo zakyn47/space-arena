@@ -169,12 +169,19 @@ export interface WelcomeMessage {
   readonly safeZones: readonly SafeZone[];
 }
 
+export interface RadarBlip {
+  readonly x: number;
+  readonly y: number;
+  readonly kind: 'player' | 'pirate';
+}
+
 export interface SnapshotMessage {
   readonly type: 'snapshot';
   readonly tick: number;
   readonly lastSeq: number;
   readonly self: SelfState;
   readonly entities: readonly EntityState[];
+  readonly radar?: readonly RadarBlip[];
 }
 
 export interface DiedMessage {

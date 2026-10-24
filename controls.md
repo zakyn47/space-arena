@@ -33,5 +33,6 @@ Keys use physical positions, so they work the same on any keyboard layout.
 - **Mining laser:** hold `F` facing an asteroid within range; ore flows straight into cargo. Every new pilot has a Mining Laser Mk1; better lasers are in the build menu. You cannot mine while firing, shielded, docked or in a safe zone.
 - **Pirates:** red ships roam open space — Raiders near the stations, Marauders farther out, Warlords in the deep. They attack pilots who come within ~800 px. Destroyed pirates drop a crate with credits, ore and sometimes a gear item.
 - **Salvage:** gear from crates goes into your salvage hold (3 items, lost on death). While docked, install it for free or sell it for 50% in the build menu's Ship tab.
+- **Minimap:** you are the cyan square, stations are green circles, other pilots within 4 000 px are white dots, and every pirate on the map is a red dot.
 - **Mining:** shoot asteroids, then fly over the ore they drop to collect it (up to your cargo capacity).
 - **Death** costs all installed upgrades, carried ore, and unbanked credits. Banked credits are safe.

@@ -44,3 +44,5 @@ export const SHIELD_DRAIN = 30;
 
 export const SALVAGE_CAPACITY = 3;
 export const MINING_CONE = Math.PI / 4;
+export const RADAR_PLAYER_RANGE = 4_000;
+export const RADAR_EVERY_SNAPSHOTS = 5;

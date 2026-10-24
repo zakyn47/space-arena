@@ -4,7 +4,6 @@ import {
   CRATE_LIFETIME,
   DISCONNECT_LINGER,
   IDLE_INPUT,
-  LOOT_CREDIT_SHARE,
   ORE_PICKUP_LIFETIME,
   PICKUP_RADIUS,
   SHIP_RADIUS,
@@ -20,6 +19,7 @@ import { randomAsteroid, scatterOre, type AsteroidFields } from './AsteroidField
 import { applyDamage, bountyFor, fireWeapons, updateShield } from './Combat';
 import { toggleDock, type DockOutcome } from './Docking';
 import {
+  createPirateShip,
   createShip,
   respawnShip,
   type AsteroidEntity,
@@ -32,13 +32,17 @@ import {
   type WorldEntity,
 } from './entities';
 import { distanceToSegment } from './geometry';
+import { playerDeathCrates, takeCrate, type CrateDrop } from './Loot';
 import { applyShopAction, type ShopOutcome } from './Shop';
+import { canMine, findMiningTarget, mineStep } from './Mining';
 import { acquireTarget, launchRocket, steerRocket, tryLaunch } from './Rockets';
+import { DEFAULT_PATROLS, PirateDirector, type PatrolSpec, type PirateHost } from './pirates/PirateDirector';
 import { SpatialGrid } from './SpatialGrid';
 
 export interface WorldOptions {
   readonly rng?: () => number;
   readonly asteroidTarget?: number;
+  readonly pirates?: boolean | readonly PatrolSpec[];
 }
 
 export interface DeathEvent {
@@ -56,6 +60,11 @@ const INPUT_QUEUE_LIMIT = 4;
 const ASTEROID_SPAWNS_PER_TICK = 20;
 const HIT_QUERY_RADIUS = SHIP_RADIUS + ASTEROID_MAX_RADIUS;
 
+function patrolSpecs(option: WorldOptions['pirates']): readonly PatrolSpec[] | null {
+  if (option === true) return DEFAULT_PATROLS;
+  return option === false || option === undefined ? null : option;
+}
+
 function outOfBounds(x: number, y: number): boolean {
   return x < 0 || y < 0 || x > WORLD_SIZE || y > WORLD_SIZE;
 }
@@ -70,6 +79,16 @@ export class World {
   private readonly grid = new SpatialGrid<WorldEntity>(GRID_CELL_SIZE);
   private readonly rng: () => number;
   private readonly asteroidTarget: number;
+  private readonly director: PirateDirector | null;
+  private readonly pirateHost: PirateHost = {
+    spawnPirate: (tier, x, y) => {
+      const ship = createPirateShip(this.allocateId(), tier, x, y);
+      this.ships.set(ship.id, ship);
+      return ship;
+    },
+    ship: (id) => this.ships.get(id),
+    players: () => this.playerShips(),
+  };
   private nextId = 1;
   private elapsed = 0;
   private ticks = 0;
@@ -77,6 +96,8 @@ export class World {
   constructor(options: WorldOptions = {}) {
     this.rng = options.rng ?? Math.random;
     this.asteroidTarget = options.asteroidTarget ?? ASTEROID_TARGET_COUNT;
+    const patrols = patrolSpecs(options.pirates);
+    this.director = patrols && new PirateDirector(this.rng, patrols);
     while (this.asteroids.size < this.asteroidTarget) this.addAsteroid(randomAsteroid(this.rng));
   }
 
@@ -105,8 +126,12 @@ export class World {
     return undefined;
   }
 
-  allShips(): ShipEntity[] {
-    return [...this.ships.values()];
+  playerShips(): ShipEntity[] {
+    return [...this.ships.values()].filter((ship) => ship.npc === null);
+  }
+
+  npcShips(): ShipEntity[] {
+    return [...this.ships.values()].filter((ship) => ship.npc !== null);
   }
 
   setInput(shipId: number, seq: number, input: ShipInput): void {
@@ -137,7 +162,7 @@ export class World {
   }
 
   addAsteroid(fields: AsteroidFields): AsteroidEntity {
-    const asteroid: AsteroidEntity = { kind: 'asteroid', id: this.allocateId(), ...fields };
+    const asteroid: AsteroidEntity = { kind: 'asteroid', id: this.allocateId(), ...fields, ore: fields.ore ?? fields.oreYield * 2 };
     this.asteroids.set(asteroid.id, asteroid);
     return asteroid;
   }
@@ -162,6 +187,7 @@ export class World {
     this.elapsed += dt;
     this.ticks += 1;
     const events: TickEvents = { died: [], departed: [] };
+    this.director?.step(this.pirateHost, this.elapsed);
     this.stepShips(dt);
     this.stepProjectiles(dt);
     this.rebuildGrid();
@@ -192,6 +218,7 @@ export class World {
         ship.vx = 0;
         ship.vy = 0;
         ship.shieldUp = false;
+        ship.miningTargetId = null;
         continue;
       }
       const inSafeZone = zoneAt(ship.x, ship.y) !== undefined;
@@ -204,7 +231,27 @@ export class World {
         const rocket = launchRocket(ship, this.allocateId(), this.elapsed, acquireTarget(ship, this.ships.values()));
         this.rockets.set(rocket.id, rocket);
       }
+      this.stepMining(ship, dt, inSafeZone);
     }
+  }
+
+  private stepMining(ship: ShipEntity, dt: number, inSafeZone: boolean): void {
+    if (!canMine(ship, inSafeZone)) {
+      ship.miningTargetId = null;
+      ship.miningProgress = 0;
+      return;
+    }
+    const nearby = this.grid
+      .queryRadius(ship.x, ship.y, ship.stats.miningRange + ASTEROID_MAX_RADIUS)
+      .filter((entity): entity is AsteroidEntity => entity.kind === 'asteroid' && this.asteroids.has(entity.id));
+    const target = findMiningTarget(ship, nearby);
+    if (!target) {
+      ship.miningTargetId = null;
+      ship.miningProgress = 0;
+      return;
+    }
+    mineStep(ship, target, dt);
+    if (target.ore <= 0) this.asteroids.delete(target.id);
   }
 
   private stepProjectiles(dt: number): void {
@@ -254,7 +301,7 @@ export class World {
   private isHit(projectile: Projectile, entity: WorldEntity): boolean {
     switch (entity.kind) {
       case 'ship':
-        return entity.id !== projectile.ownerId && this.sweptDistance(projectile, entity) <= SHIP_RADIUS;
+        return entity.id !== projectile.ownerId && !(projectile.fromNpc && entity.npc !== null) && this.sweptDistance(projectile, entity) <= SHIP_RADIUS;
       case 'asteroid':
         return this.asteroids.has(entity.id) && this.sweptDistance(projectile, entity) <= entity.radius;
       default:
@@ -283,6 +330,7 @@ export class World {
 
   private collectPickups(): void {
     for (const ship of this.ships.values()) {
+      if (ship.npc !== null) continue;
       for (const entity of this.grid.queryRadius(ship.x, ship.y, PICKUP_RADIUS)) {
         if (entity.kind === 'ore') this.collectOre(ship, entity);
         if (entity.kind === 'crate') this.collectCrate(ship, entity);
@@ -298,9 +346,9 @@ export class World {
 
   private collectCrate(ship: ShipEntity, crate: CrateEntity): void {
     if (!this.crates.has(crate.id)) return;
-    ship.carriedCredits += crate.credits;
-    ship.ore = Math.min(ship.stats.cargoCapacity, ship.ore + crate.ore);
-    this.crates.delete(crate.id);
+    const leftover = takeCrate(ship, crate);
+    if (leftover === null) this.crates.delete(crate.id);
+    else this.crates.set(crate.id, { ...crate, ...leftover });
   }
 
   private expirePickups(): void {
@@ -320,8 +368,13 @@ export class World {
   private resolveDeaths(died: DeathEvent[]): void {
     for (const ship of this.ships.values()) {
       if (ship.hull > 0) continue;
+      if (ship.npc !== null) {
+        this.spawnCrate(ship.x, ship.y, this.director?.pirateLoot(ship.npc) ?? { credits: 0, ore: 0, gear: null });
+        this.ships.delete(ship.id);
+        continue;
+      }
       const killer = ship.lastHitBy === null ? undefined : this.ships.get(ship.lastHitBy);
-      if (killer) killer.carriedCredits += bountyFor(ship.build);
+      if (killer && killer.npc === null && ship.npc === null) killer.carriedCredits += bountyFor(ship.build);
       this.dropCrate(ship);
       const zone = nearestZone(ship.x, ship.y);
       respawnShip(ship, zone.x, zone.y);
@@ -330,17 +383,11 @@ export class World {
   }
 
   private dropCrate(ship: ShipEntity): void {
-    const credits = Math.floor(ship.carriedCredits * LOOT_CREDIT_SHARE);
-    if (ship.ore === 0 && credits === 0) return;
-    const crate: CrateEntity = {
-      kind: 'crate',
-      id: this.allocateId(),
-      x: ship.x,
-      y: ship.y,
-      ore: ship.ore,
-      credits,
-      expiresAt: this.elapsed + CRATE_LIFETIME,
-    };
+    playerDeathCrates(ship).forEach((drop, index) => this.spawnCrate(ship.x + index * 12, ship.y, drop));
+  }
+
+  private spawnCrate(x: number, y: number, drop: CrateDrop): void {
+    const crate: CrateEntity = { kind: 'crate', id: this.allocateId(), x, y, ...drop, expiresAt: this.elapsed + CRATE_LIFETIME };
     this.crates.set(crate.id, crate);
   }
 

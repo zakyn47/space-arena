@@ -59,6 +59,7 @@ export function fireWeapons(
       damage: weapon.damage,
       weaponId: weapon.gearId,
       mk: weapon.mk,
+      fromNpc: ship.npc !== null,
       expiresAt: time + BULLET_LIFETIME,
     });
   });

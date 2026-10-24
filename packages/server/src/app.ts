@@ -17,6 +17,7 @@ export interface AppConfig {
   readonly dbPath: string;
   readonly staticDir: string;
   readonly asteroidTarget?: number;
+  readonly pirates?: boolean;
 }
 
 export interface App {
@@ -30,7 +31,7 @@ export interface App {
 export function createApp(config: AppConfig): App {
   const repo = PlayerRepository.open(config.dbPath);
   const auth = new AuthService(repo);
-  const world = new World({ asteroidTarget: config.asteroidTarget });
+  const world = new World({ asteroidTarget: config.asteroidTarget, pirates: config.pirates ?? true });
   const server = createHttpServer({
     auth,
     limiter: new RateLimiter(AUTH_BURST, AUTH_REFILL_PER_MS),
@@ -45,7 +46,7 @@ export function createApp(config: AppConfig): App {
     server,
     world,
     loop,
-    saveAll: () => repo.saveShips(world.allShips().map(toShipRecord), Date.now()),
+    saveAll: () => repo.saveShips(world.playerShips().map(toShipRecord), Date.now()),
     close: async () => {
       const closed = [...wss.clients].map((client) => new Promise<void>((resolve) => client.once('close', () => resolve())));
       for (const client of wss.clients) client.terminate();

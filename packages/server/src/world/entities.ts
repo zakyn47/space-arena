@@ -6,10 +6,14 @@ import {
   type Build,
   type GearId,
   type Mk,
+  PIRATE_NAMES,
+  type InstalledGear,
+  type PirateTier,
   type ShipInput,
   type ShipStats,
 } from '@arena/shared';
 import type { ShipRecord } from '../db/PlayerRepository';
+import { PIRATE_SPECS } from './pirates/tiers';
 
 export interface QueuedInput {
   readonly seq: number;
@@ -21,6 +25,7 @@ export interface ShipEntity {
   readonly id: number;
   readonly accountId: number;
   readonly name: string;
+  npc: PirateTier | null;
   x: number;
   y: number;
   vx: number;
@@ -46,6 +51,9 @@ export interface ShipEntity {
   lastSeq: number;
   docked: boolean;
   lingerUntil: number | null;
+  salvage: InstalledGear[];
+  miningProgress: number;
+  miningTargetId: number | null;
 }
 
 export interface BulletEntity {
@@ -61,6 +69,7 @@ export interface BulletEntity {
   readonly damage: number;
   readonly weaponId: GearId;
   readonly mk: Mk;
+  readonly fromNpc: boolean;
   readonly expiresAt: number;
 }
 
@@ -78,6 +87,7 @@ export interface RocketEntity {
   angle: number;
   speed: number;
   readonly damage: number;
+  readonly fromNpc: boolean;
   readonly expiresAt: number;
 }
 
@@ -91,6 +101,7 @@ export interface AsteroidEntity {
   readonly radius: number;
   hp: number;
   readonly oreYield: number;
+  ore: number;
   readonly variant: number;
 }
 
@@ -109,6 +120,7 @@ export interface CrateEntity {
   readonly y: number;
   readonly ore: number;
   readonly credits: number;
+  readonly gear: InstalledGear | null;
   readonly expiresAt: number;
 }
 
@@ -121,6 +133,7 @@ export function createShip(id: number, accountId: number, name: string, record: 
     id,
     accountId,
     name,
+    npc: null,
     x: record.x,
     y: record.y,
     vx: 0,
@@ -146,7 +159,25 @@ export function createShip(id: number, accountId: number, name: string, record: 
     lastSeq: 0,
     docked: false,
     lingerUntil: null,
+    salvage: [...record.salvage],
+    miningProgress: 0,
+    miningTargetId: null,
   };
+}
+
+export function createPirateShip(id: number, tier: PirateTier, x: number, y: number): ShipEntity {
+  const spec = PIRATE_SPECS[tier];
+  const ship = createShip(id, -id, PIRATE_NAMES[tier], {
+    accountId: -id,
+    bankedCredits: 0,
+    build: spec.build,
+    rockets: spec.rockets,
+    salvage: [],
+    x,
+    y,
+  });
+  ship.npc = tier;
+  return ship;
 }
 
 export function respawnShip(ship: ShipEntity, x: number, y: number): void {
@@ -172,6 +203,9 @@ export function respawnShip(ship: ShipEntity, x: number, y: number): void {
     lastDamagedAt: -Infinity,
     lastHitBy: null,
     docked: false,
+    salvage: [],
+    miningProgress: 0,
+    miningTargetId: null,
   } satisfies Partial<ShipEntity>);
 }
 
@@ -181,6 +215,7 @@ export function toShipRecord(ship: ShipEntity): ShipRecord {
     bankedCredits: ship.bankedCredits,
     build: ship.build,
     rockets: ship.rockets,
+    salvage: ship.salvage,
     x: ship.x,
     y: ship.y,
   };

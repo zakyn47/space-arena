@@ -152,8 +152,8 @@ export class Gateway implements LoopOutput {
     }
     session.inputsInWindow += 1;
     if (session.inputsInWindow > MAX_INPUTS_PER_SECOND) return;
-    const { seq, thrust, reverse, left, right, fire, shield, rocket } = message;
-    this.deps.world.setInput(session.shipId, seq, { thrust, reverse, left, right, fire, shield, rocket });
+    const { seq, thrust, reverse, left, right, fire, shield, rocket, mine } = message;
+    this.deps.world.setInput(session.shipId, seq, { thrust, reverse, left, right, fire, shield, rocket, mine });
   }
 
   private onClose(session: Session): void {

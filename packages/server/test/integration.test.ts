@@ -8,6 +8,7 @@ import {
   STARTER_BUILD,
   buildValue,
 } from '@arena/shared';
+import Database from 'better-sqlite3';
 import { mkdtemp } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -95,7 +96,7 @@ async function register(username: string): Promise<string> {
 beforeEach(async () => {
   const dir = await mkdtemp(join(tmpdir(), 'arena-'));
   dbPath = join(dir, 'arena.db');
-  app = createApp({ dbPath, staticDir: dir, asteroidTarget: 0 });
+  app = createApp({ dbPath, staticDir: dir, asteroidTarget: 0, pirates: false });
   await new Promise<void>((resolve) => app.server.listen(0, resolve));
   const address = app.server.address();
   if (address === null || typeof address === 'string') throw new Error('no port');
@@ -164,6 +165,17 @@ describe('server integration', () => {
     expect((await pump(first, 'kicked')).reason).toBe('logged in elsewhere');
   });
 
+  it('mines with F and never saves pirates', async () => {
+    const alice = await TestClient.connect(port, await register('alice'));
+    const ship = app.world.shipById((await pump(alice, 'welcome')).shipId);
+    if (!ship) throw new Error('ship missing');
+    Object.assign(ship, { x: OPEN_SPACE.x, y: OPEN_SPACE.y });
+    app.world.addAsteroid({ x: OPEN_SPACE.x, y: OPEN_SPACE.y - 150, radius: 40, hp: 80, oreYield: 3, variant: 1 });
+    alice.input(1, { ...IDLE_INPUT, mine: true });
+    const mined = await pump(alice, 'snapshot', (s) => s.self.ore >= 2);
+    expect(mined.self.miningTargetId).not.toBeNull();
+  });
+
   it('saves a ship that disconnects in open space after the linger', async () => {
     const alice = await TestClient.connect(port, await register('alice'));
     const ship = app.world.shipById((await pump(alice, 'welcome')).shipId);
@@ -192,5 +204,21 @@ describe('server integration', () => {
     const saved = account && repo.loadShip(account.id);
     repo.close();
     expect(saved?.x).toBeCloseTo(zone.x);
+  });
+});
+
+describe('with pirates', () => {
+  it('never saves pirate ships', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'arena-pirates-'));
+    const piratePath = join(dir, 'arena.db');
+    const pirateApp = createApp({ dbPath: piratePath, staticDir: dir, asteroidTarget: 0, pirates: true });
+    for (let step = 0; step < 3; step += 1) pirateApp.loop.step();
+    expect(pirateApp.world.npcShips().length).toBeGreaterThan(0);
+    pirateApp.saveAll();
+    await pirateApp.close();
+    const db = new Database(piratePath);
+    const row = db.prepare<[], { n: number }>('SELECT COUNT(*) AS n FROM ships WHERE account_id < 0').get();
+    db.close();
+    expect(row?.n).toBe(0);
   });
 });

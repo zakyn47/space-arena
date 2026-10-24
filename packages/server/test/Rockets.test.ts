@@ -61,3 +61,14 @@ describe('steerRocket', () => {
     expect(rocket.y).toBeLessThan(rocket.prevY);
   });
 });
+
+describe('npc targeting', () => {
+  it('pirate rockets ignore other pirates', () => {
+    const shooter = at(1, 1_000, 1_000);
+    shooter.npc = 'raider';
+    const pirate = at(2, 1_000, 800);
+    pirate.npc = 'raider';
+    const player = at(3, 1_000, 600);
+    expect(acquireTarget(shooter, [pirate, player])?.id).toBe(3);
+  });
+});

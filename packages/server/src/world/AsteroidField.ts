@@ -1,7 +1,7 @@
 import { ASTEROID_MAX_RADIUS, ASTEROID_MIN_RADIUS, WORLD_SIZE, distanceToNearestZone } from '@arena/shared';
 import type { AsteroidEntity } from './entities';
 
-export type AsteroidFields = Omit<AsteroidEntity, 'kind' | 'id'>;
+export type AsteroidFields = Omit<AsteroidEntity, 'kind' | 'id' | 'ore'> & { readonly ore?: number };
 
 const ZONE_CLEARANCE = 300;
 const RICHNESS_DISTANCE = 8_000;

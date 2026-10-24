@@ -6,7 +6,6 @@ import {
   captainLevel,
   BOUNTY_SHARE,
   IDLE_INPUT,
-  RESPAWN_ROCKETS,
   SAFE_ZONES,
   STARTER_BUILD,
   buildValue,
@@ -138,7 +137,7 @@ describe('server integration', () => {
     bob.clear();
     const respawned = await pump(bob, 'snapshot');
     expect(respawned.self.build).toEqual(STARTER_BUILD);
-    expect(respawned.self.rockets).toBe(RESPAWN_ROCKETS);
+    expect(respawned.self.rockets).toBe(0);
     expect(respawned.self.docked).toBe(false);
 
     alice.input(2, IDLE_INPUT);

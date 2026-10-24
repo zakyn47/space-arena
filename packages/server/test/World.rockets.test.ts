@@ -13,7 +13,7 @@ describe('World rockets', () => {
     for (let i = 0; i < 300 && killer === null; i += 1) killer = world.tick(TICK_DT).died[0]?.killerName ?? null;
     expect(killer).toBe('alice');
     expect(alice.rockets).toBeLessThanOrEqual(7);
-    expect(bob.rockets).toBe(5);
+    expect(bob.rockets).toBe(0);
   });
 
   it('is absorbed by a raised shield', () => {

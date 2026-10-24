@@ -3,7 +3,6 @@ import {
   BOUNTY_SHARE,
   DISCONNECT_LINGER,
   IDLE_INPUT,
-  RESPAWN_ROCKETS,
   SAFE_ZONES,
   STARTER_BUILD,
   TICK_DT,
@@ -49,7 +48,7 @@ describe('World combat', () => {
     const zone = SAFE_ZONES[0];
     expect([bob.x, bob.y]).toEqual([zone?.x, zone?.y]);
     expect(bob.hull).toBe(bob.stats.maxHull);
-    expect(bob.rockets).toBe(RESPAWN_ROCKETS);
+    expect(bob.rockets).toBe(0);
     expect(bob.ordnance).toBe('rockets');
   });
 

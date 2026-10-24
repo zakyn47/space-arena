@@ -59,7 +59,7 @@ While `self.docked` is true, the predictor does not step motion; it adopts the s
 - Each tick, steer toward the locked target (limited by turn rate) while it exists; then accelerate along the heading.
 - Hits use the swept segment of the last step against ships (radius 24) and asteroids, like bullets. A raised shield absorbs the hit. Rockets despawn on entering a safe zone or leaving the world.
 - Cannot fire while shielded, docked, or in a safe zone. Each shot uses one rocket.
-- Ammo: new account 10 rockets; respawn after death 5 rockets; death loses all carried rockets. Rocket count is persisted.
+- Ammo: new account 10 rockets; respawn after death 0 rockets; death loses all carried rockets. Rocket count is persisted.
 - Rockets are an entity type of their own on server and in snapshots.
 
 ## 5. Hulls and Gear
@@ -180,7 +180,7 @@ Remove `ship_t0`–`ship_t5`, `bullet_t1`, `bullet_t3`, `bullet_t5`, and `icon_h
 ## 11. Testing
 
 - Unit: catalog stats and `statsFor` rules (empty engine, no weapon, multiple weapons, multiple shield generators); build value and bounty; every shop operation including refunds, fit-on-hull-change, failures leaving state unchanged; dock state machine (range, speed, damage, cooldown, frozen input, undock); rocket lock (cone, range, nearest), steering, hit, shield absorb, ammo rules (10/5/0); migration from a version-1 database with tiers to version 2 with correct refunds; invalid `gear_json` fallback; client view-models for build menu and HUD prompt; predictor freeze while docked.
-- Integration: E-dock, buy gear, undock, fire a rocket that kills a target, victim respawns with the starter build and 5 rockets.
+- Integration: E-dock, buy gear, undock, fire a rocket that kills a target, victim respawns with the starter build and no rockets.
 
 ## 12. Build Orchestration
 

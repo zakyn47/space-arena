@@ -37,7 +37,6 @@ export const ROCKET_PRICE = 25;
 export const MAX_ROCKETS_PER_PURCHASE = 20;
 export const BASE_MAX_ROCKETS = 10;
 export const NEW_ACCOUNT_ROCKETS = 10;
-export const RESPAWN_ROCKETS = 5;
 export const MINE_COOLDOWN = 0.5;
 export const MINE_ARM_TIME = 1.5;
 export const MINE_LIFETIME = 60;

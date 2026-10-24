@@ -10,38 +10,47 @@ const input = {
   right: true,
   fire: false,
   shield: false,
+  rocket: true,
 };
 
+const parse = (value: unknown) => parseClientMessage(JSON.stringify(value));
+
 describe('parseClientMessage', () => {
-  it('accepts hello', () => {
-    expect(parseClientMessage(JSON.stringify({ type: 'hello', token: 'abc' }))).toEqual({
-      type: 'hello',
-      token: 'abc',
-    });
+  it('accepts hello, input and dock', () => {
+    expect(parse({ type: 'hello', token: 'abc' })).toEqual({ type: 'hello', token: 'abc' });
+    expect(parse(input)).toEqual(input);
+    expect(parse({ type: 'dock' })).toEqual({ type: 'dock' });
   });
 
-  it('accepts input', () => {
-    expect(parseClientMessage(JSON.stringify(input))).toEqual(input);
+  it('accepts shop actions with catalog ids', () => {
+    expect(parse({ type: 'buyHull', hullId: 'fighter' })).not.toBeNull();
+    expect(parse({ type: 'buyGear', gearId: 'armor', mk: 2, slot: { type: 'utility', index: 0 } })).not.toBeNull();
+    expect(parse({ type: 'sellGear', slot: { type: 'weapon', index: 1 } })).not.toBeNull();
+    expect(parse({ type: 'buyRockets', count: 5 })).not.toBeNull();
   });
 
-  it('accepts buy with a known line', () => {
-    expect(parseClientMessage(JSON.stringify({ type: 'buy', line: 'weapon' }))).toEqual({
-      type: 'buy',
-      line: 'weapon',
-    });
+  it('rejects unknown ids, bad mk, bad counts and removed messages', () => {
+    expect(parse({ type: 'buyHull', hullId: 'battleship' })).toBeNull();
+    expect(parse({ type: 'buyGear', gearId: 'armor', mk: 4, slot: { type: 'utility', index: 0 } })).toBeNull();
+    expect(parse({ type: 'sellGear', slot: { type: 'cockpit', index: 0 } })).toBeNull();
+    expect(parse({ type: 'buyRockets', count: 0 })).toBeNull();
+    expect(parse({ type: 'buyRockets', count: 21 })).toBeNull();
+    expect(parse({ type: 'buy', line: 'weapon' })).toBeNull();
   });
 
-  it('rejects unknown upgrade lines', () => {
-    expect(parseClientMessage(JSON.stringify({ type: 'buy', line: 'laser' }))).toBeNull();
-  });
-
-  it('rejects extra fields', () => {
-    expect(parseClientMessage(JSON.stringify({ ...input, x: 5 }))).toBeNull();
-  });
-
-  it('rejects negative or fractional seq', () => {
-    expect(parseClientMessage(JSON.stringify({ ...input, seq: -1 }))).toBeNull();
-    expect(parseClientMessage(JSON.stringify({ ...input, seq: 1.5 }))).toBeNull();
+  it('rejects input without the rocket flag or with extra fields', () => {
+    const withoutRocket = {
+      type: 'input',
+      seq: 7,
+      thrust: true,
+      reverse: false,
+      left: false,
+      right: true,
+      fire: false,
+      shield: false,
+    };
+    expect(parse(withoutRocket)).toBeNull();
+    expect(parse({ ...input, x: 5 })).toBeNull();
   });
 
   it('rejects invalid JSON', () => {

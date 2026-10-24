@@ -1,6 +1,11 @@
 import { z } from 'zod';
-import { UPGRADE_LINES, type Loadout, type UpgradeLine } from './upgrades';
+import { MkSchema, type Build } from './build';
+import { GEAR_IDS, type GearId, type Mk } from './catalog/gear';
+import { HULL_IDS, SLOT_TYPES, type HullId } from './catalog/hulls';
+import { MAX_ROCKETS_PER_PURCHASE } from './constants';
 import type { SafeZone } from './world';
+
+const SlotRefSchema = z.object({ type: z.enum(SLOT_TYPES), index: z.number().int().nonnegative().max(8) }).strict();
 
 const HelloSchema = z.object({ type: z.literal('hello'), token: z.string().min(1).max(128) }).strict();
 
@@ -14,15 +19,37 @@ const InputSchema = z
     right: z.boolean(),
     fire: z.boolean(),
     shield: z.boolean(),
+    rocket: z.boolean(),
   })
   .strict();
 
-const BuySchema = z.object({ type: z.literal('buy'), line: z.enum(UPGRADE_LINES) }).strict();
+const DockSchema = z.object({ type: z.literal('dock') }).strict();
 
-const ClientMessageSchema = z.discriminatedUnion('type', [HelloSchema, InputSchema, BuySchema]);
+const BuyHullSchema = z.object({ type: z.literal('buyHull'), hullId: z.enum(HULL_IDS) }).strict();
+
+const BuyGearSchema = z
+  .object({ type: z.literal('buyGear'), gearId: z.enum(GEAR_IDS), mk: MkSchema, slot: SlotRefSchema })
+  .strict();
+
+const SellGearSchema = z.object({ type: z.literal('sellGear'), slot: SlotRefSchema }).strict();
+
+const BuyRocketsSchema = z
+  .object({ type: z.literal('buyRockets'), count: z.number().int().min(1).max(MAX_ROCKETS_PER_PURCHASE) })
+  .strict();
+
+const ClientMessageSchema = z.discriminatedUnion('type', [
+  HelloSchema,
+  InputSchema,
+  DockSchema,
+  BuyHullSchema,
+  BuyGearSchema,
+  SellGearSchema,
+  BuyRocketsSchema,
+]);
 
 export type ClientMessage = z.infer<typeof ClientMessageSchema>;
 export type InputMessage = z.infer<typeof InputSchema>;
+export type ShopAction = Extract<ClientMessage, { type: 'buyHull' | 'buyGear' | 'sellGear' | 'buyRockets' }>;
 
 export function parseClientMessage(raw: string): ClientMessage | null {
   let json: unknown;
@@ -45,7 +72,7 @@ export interface ShipState {
   readonly vy: number;
   readonly angle: number;
   readonly shieldUp: boolean;
-  readonly hullTier: number;
+  readonly hullId: HullId;
 }
 
 export interface BulletState {
@@ -55,7 +82,18 @@ export interface BulletState {
   readonly y: number;
   readonly vx: number;
   readonly vy: number;
-  readonly tier: number;
+  readonly weaponId: GearId;
+  readonly mk: Mk;
+}
+
+export interface RocketState {
+  readonly kind: 'rocket';
+  readonly id: number;
+  readonly x: number;
+  readonly y: number;
+  readonly vx: number;
+  readonly vy: number;
+  readonly angle: number;
 }
 
 export interface AsteroidState {
@@ -81,7 +119,7 @@ export interface CrateState {
   readonly y: number;
 }
 
-export type EntityState = ShipState | BulletState | AsteroidState | OreState | CrateState;
+export type EntityState = ShipState | BulletState | RocketState | AsteroidState | OreState | CrateState;
 
 export interface SelfState {
   readonly id: number;
@@ -99,8 +137,12 @@ export interface SelfState {
   readonly cargoCapacity: number;
   readonly carriedCredits: number;
   readonly bankedCredits: number;
-  readonly loadout: Loadout;
+  readonly build: Build;
+  readonly rockets: number;
+  readonly maxRockets: number;
   readonly docked: boolean;
+  readonly canDock: boolean;
+  readonly dockCooldown: number;
 }
 
 export interface WelcomeMessage {
@@ -123,20 +165,15 @@ export interface DiedMessage {
   readonly killer: string | null;
 }
 
-export type BuyFailure = 'not_docked' | 'max_tier' | 'insufficient_credits';
+export type ShopFailure = 'not_docked' | 'insufficient_credits' | 'slot_mismatch' | 'rocket_cap' | 'unknown_item';
 
-export type BuyResultMessage =
-  | { readonly type: 'buyResult'; readonly line: UpgradeLine; readonly ok: true }
-  | { readonly type: 'buyResult'; readonly line: UpgradeLine; readonly ok: false; readonly reason: BuyFailure };
+export type ShopResultMessage =
+  | { readonly type: 'shopResult'; readonly ok: true }
+  | { readonly type: 'shopResult'; readonly ok: false; readonly reason: ShopFailure };
 
 export interface KickedMessage {
   readonly type: 'kicked';
   readonly reason: string;
 }
 
-export type ServerMessage =
-  | WelcomeMessage
-  | SnapshotMessage
-  | DiedMessage
-  | BuyResultMessage
-  | KickedMessage;
+export type ServerMessage = WelcomeMessage | SnapshotMessage | DiedMessage | ShopResultMessage | KickedMessage;

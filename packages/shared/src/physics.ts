@@ -1,5 +1,5 @@
 import { REVERSE_THRUST_FACTOR } from './constants';
-import type { ShipStats } from './upgrades';
+import type { ShipStats } from './build';
 import { clampToWorld } from './world';
 
 export interface ShipInput {
@@ -9,6 +9,7 @@ export interface ShipInput {
   readonly right: boolean;
   readonly fire: boolean;
   readonly shield: boolean;
+  readonly rocket: boolean;
 }
 
 export const IDLE_INPUT: ShipInput = {
@@ -18,6 +19,7 @@ export const IDLE_INPUT: ShipInput = {
   right: false,
   fire: false,
   shield: false,
+  rocket: false,
 };
 
 export interface ShipMotion {

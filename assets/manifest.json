@@ -1,17 +1,8 @@
 {
   "sprites": [
-    {"id": "ship_t0", "file": "ships/ship_t0.png", "width": 64, "height": 64, "anchor": [0.5, 0.5], "frames": 1},
-    {"id": "ship_t1", "file": "ships/ship_t1.png", "width": 64, "height": 64, "anchor": [0.5, 0.5], "frames": 1},
-    {"id": "ship_t2", "file": "ships/ship_t2.png", "width": 64, "height": 64, "anchor": [0.5, 0.5], "frames": 1},
-    {"id": "ship_t3", "file": "ships/ship_t3.png", "width": 64, "height": 64, "anchor": [0.5, 0.5], "frames": 1},
-    {"id": "ship_t4", "file": "ships/ship_t4.png", "width": 64, "height": 64, "anchor": [0.5, 0.5], "frames": 1},
-    {"id": "ship_t5", "file": "ships/ship_t5.png", "width": 64, "height": 64, "anchor": [0.5, 0.5], "frames": 1},
     {"id": "bullet_t0", "file": "bullets/bullet_t0.png", "width": 16, "height": 16, "anchor": [0.5, 0.5], "frames": 1},
-    {"id": "bullet_t1", "file": "bullets/bullet_t1.png", "width": 16, "height": 16, "anchor": [0.5, 0.5], "frames": 1},
     {"id": "bullet_t2", "file": "bullets/bullet_t2.png", "width": 16, "height": 16, "anchor": [0.5, 0.5], "frames": 1},
-    {"id": "bullet_t3", "file": "bullets/bullet_t3.png", "width": 16, "height": 16, "anchor": [0.5, 0.5], "frames": 1},
     {"id": "bullet_t4", "file": "bullets/bullet_t4.png", "width": 16, "height": 16, "anchor": [0.5, 0.5], "frames": 1},
-    {"id": "bullet_t5", "file": "bullets/bullet_t5.png", "width": 16, "height": 16, "anchor": [0.5, 0.5], "frames": 1},
     {"id": "shield_bubble", "file": "fx/shield_bubble.png", "width": 96, "height": 96, "anchor": [0.5, 0.5], "frames": 1},
     {"id": "explosion", "file": "fx/explosion.png", "width": 512, "height": 64, "anchor": [0.5, 0.5], "frames": 8},
     {"id": "asteroid_1", "file": "world/asteroid_1.png", "width": 128, "height": 128, "anchor": [0.5, 0.5], "frames": 1},
@@ -22,10 +13,20 @@
     {"id": "loot_crate", "file": "world/loot_crate.png", "width": 32, "height": 32, "anchor": [0.5, 0.5], "frames": 1},
     {"id": "safe_zone_station", "file": "world/safe_zone_station.png", "width": 256, "height": 256, "anchor": [0.5, 0.5], "frames": 1},
     {"id": "starfield_tile", "file": "world/starfield_tile.png", "width": 512, "height": 512, "anchor": [0, 0], "frames": 1},
-    {"id": "icon_hull", "file": "ui/icon_hull.png", "width": 48, "height": 48, "anchor": [0.5, 0.5], "frames": 1},
-    {"id": "icon_engine", "file": "ui/icon_engine.png", "width": 48, "height": 48, "anchor": [0.5, 0.5], "frames": 1},
-    {"id": "icon_weapon", "file": "ui/icon_weapon.png", "width": 48, "height": 48, "anchor": [0.5, 0.5], "frames": 1},
-    {"id": "icon_shield", "file": "ui/icon_shield.png", "width": 48, "height": 48, "anchor": [0.5, 0.5], "frames": 1},
-    {"id": "icon_cargo", "file": "ui/icon_cargo.png", "width": 48, "height": 48, "anchor": [0.5, 0.5], "frames": 1}
+    {"id": "ship_scout", "file": "ships/ship_scout.png", "width": 64, "height": 64, "anchor": [0.5, 0.5], "frames": 1},
+    {"id": "ship_fighter", "file": "ships/ship_fighter.png", "width": 64, "height": 64, "anchor": [0.5, 0.5], "frames": 1},
+    {"id": "ship_freighter", "file": "ships/ship_freighter.png", "width": 64, "height": 64, "anchor": [0.5, 0.5], "frames": 1},
+    {"id": "ship_gunship", "file": "ships/ship_gunship.png", "width": 64, "height": 64, "anchor": [0.5, 0.5], "frames": 1},
+    {"id": "bullet_cannon", "file": "bullets/bullet_cannon.png", "width": 16, "height": 16, "anchor": [0.5, 0.5], "frames": 1},
+    {"id": "rocket", "file": "bullets/rocket.png", "width": 24, "height": 24, "anchor": [0.5, 0.5], "frames": 1},
+    {"id": "rocket_trail", "file": "fx/rocket_trail.png", "width": 16, "height": 16, "anchor": [0.5, 0.5], "frames": 1},
+    {"id": "icon_rocket", "file": "ui/icon_rocket.png", "width": 48, "height": 48, "anchor": [0.5, 0.5], "frames": 1},
+    {"id": "gear_pulse_laser", "file": "ui/gear_pulse_laser.png", "width": 48, "height": 48, "anchor": [0.5, 0.5], "frames": 1},
+    {"id": "gear_heavy_cannon", "file": "ui/gear_heavy_cannon.png", "width": 48, "height": 48, "anchor": [0.5, 0.5], "frames": 1},
+    {"id": "gear_shield_gen", "file": "ui/gear_shield_gen.png", "width": 48, "height": 48, "anchor": [0.5, 0.5], "frames": 1},
+    {"id": "gear_thruster", "file": "ui/gear_thruster.png", "width": 48, "height": 48, "anchor": [0.5, 0.5], "frames": 1},
+    {"id": "gear_armor", "file": "ui/gear_armor.png", "width": 48, "height": 48, "anchor": [0.5, 0.5], "frames": 1},
+    {"id": "gear_cargo_pod", "file": "ui/gear_cargo_pod.png", "width": 48, "height": 48, "anchor": [0.5, 0.5], "frames": 1},
+    {"id": "gear_rocket_rack", "file": "ui/gear_rocket_rack.png", "width": 48, "height": 48, "anchor": [0.5, 0.5], "frames": 1}
   ]
 }

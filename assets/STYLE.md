@@ -13,3 +13,17 @@
 - `safe_zone_station`: circular space station seen from above, docking ring, green beacon lights.
 - `starfield_tile`: seamless tileable deep-space background, dark navy `#05060D` with sparse stars of varied brightness. Must tile without visible seams.
 - UI icons 48×48: flat glyph style, white with cyan accent: hull = armor plate, engine = thruster flame, weapon = crosshair, shield = shield emblem, cargo = crate.
+
+## Ship builds update
+
+- Hulls (64×64, nose up, same palette and rendering as the existing ships so they look like one fleet):
+  - `ship_scout`: small, nimble, single nose gun, slim swept wings.
+  - `ship_fighter`: medium, aggressive delta wing, two wing-mounted guns.
+  - `ship_freighter`: wide boxy cargo hull, side cargo pods, one small turret, heavy engines.
+  - `ship_gunship`: large heavily armored, three forward gun barrels, double shield emitters.
+- `bullet_cannon` (16×16): heavy glowing orange slug `#FF9A3C`, pointing up.
+- `rocket` (24×24): small missile pointing up, white-grey body, red-orange tip, fins at the back.
+- `rocket_trail` (16×16): soft round exhaust puff, orange core fading to transparent.
+- `icon_rocket` and `gear_*` (48×48): same flat glyph style as the other UI icons, white with cyan accent:
+  pulse laser = slim energy emitter, heavy cannon = thick barrel, shield generator = dome emitter,
+  thruster = nozzle with flame, armor = layered plates, cargo pod = container, rocket rack = rocket pod with three tubes.

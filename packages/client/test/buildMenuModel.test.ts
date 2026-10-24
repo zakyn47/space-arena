@@ -1,6 +1,6 @@
-import { HULLS, HULL_IDS, STARTER_BUILD, refitToHull, statsFor } from '@arena/shared';
+import { NEW_CAPTAIN, HULLS, HULL_IDS, STARTER_BUILD, refitToHull, statsFor } from '@arena/shared';
 import { describe, expect, it } from 'vitest';
-import { describeDelta, gearOptions, hullCards, rocketOffer, salvageRows, slotRows, statSummary } from '../src/ui/buildMenuModel';
+import { captainRows, describeDelta, gearOptions, hullCards, rocketOffer, salvageRows, slotRows, statSummary } from '../src/ui/buildMenuModel';
 import { selfState } from './support/self';
 
 describe('statSummary', () => {
@@ -124,5 +124,26 @@ describe('rocketOffer', () => {
   it('prices the missing rockets', () => {
     expect(rocketOffer(selfState({ rockets: 6, bankedCredits: 60 }))).toEqual({ missing: 4, fillPrice: 100, canBuyOne: true, canFill: false });
     expect(rocketOffer(selfState({ rockets: 10, bankedCredits: 60 }))).toMatchObject({ missing: 0, canBuyOne: false });
+  });
+});
+
+
+describe('captainRows', () => {
+  it('offers one-point upgrades only while docked with accurate skill deltas', () => {
+    const rows = captainRows(selfState({ docked: true }));
+    expect(rows.map((row) => row.skill)).toEqual(['gunnery', 'engineering', 'piloting', 'mining']);
+    expect(rows.every((row) => row.canTrain)).toBe(true);
+    expect(rows[1]?.delta).toBe('Hull +4, Shield +5');
+    expect(rows[2]?.delta).toBe('Speed +14');
+    expect(rows[3]?.delta).toBe('Mining +0.1/s');
+    expect(captainRows(selfState()).every((row) => !row.canTrain)).toBe(true);
+    const captain = { ...NEW_CAPTAIN, skills: { ...NEW_CAPTAIN.skills, piloting: 3 } };
+    expect(captainRows(selfState({ captain, docked: true })).every((row) => !row.canTrain)).toBe(true);
+  });
+
+  it('includes captain bonuses in equipment comparisons', () => {
+    const captain = { xp: 100, skills: { gunnery: 4, engineering: 0, piloting: 0, mining: 0 } };
+    const mk2 = gearOptions(STARTER_BUILD, { type: 'weapon', index: 0 }, 10000, captain)[1];
+    expect(mk2?.delta).toBe('Damage/s +28');
   });
 });

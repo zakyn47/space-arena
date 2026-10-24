@@ -35,6 +35,7 @@ describe('toggleDock', () => {
 
   it('undocks and enforces the 30 s cooldown', () => {
     const ship = nearStation();
+    ship.captain = { xp: 0, skills: { gunnery: 0, engineering: 0, piloting: 3, mining: 0 } };
     toggleDock(ship, 100);
     expect(toggleDock(ship, 110)).toEqual({ ok: true, docked: false });
     expect(dockCooldownRemaining(ship, 120)).toBe(DOCK_COOLDOWN - 10);

@@ -16,11 +16,28 @@
 
 Keys use physical positions, so they work the same on any keyboard layout.
 
+## Mobile / touch
+
+- The **left flight stick** steers toward the direction you hold and always applies forward thrust outside its center dead zone. The ship turns at its hull/build turn rate. Release the stick to coast; the ship keeps its inertia.
+- Hold **Reverse** for backward thrust or to slow down while facing the direction of travel. Hold **Fire**, **Shield**, **Rockets** or **Mine** with your right thumb. Steering and actions support simultaneous touches. Release a button to stop the action.
+- Tap **Dock** when available near a station. While docked, use the normal build/captain menus; tap **Undock** to return to flight.
+- Portrait and landscape are supported. Landscape gives a wider view. Touch controls hide while docked and reset when you change orientation, switch apps or lose the connection.
+- The bottom strip shows hull, shield energy and rocket ammo. Greyed actions show why they are unavailable, such as a safe zone, empty rockets or missing equipment.
+
 ## Mouse
 
 | Input | Action |
 |---|---|
 | Click tabs and **Buy** / **Sell** / **Change** in the build menu | Manage your ship (only while docked) |
+
+## Captain progression
+
+- New and existing pilots choose a captain build on first launch: spend 3 starting points in the station's **Captain** tab before undocking.
+- Captains keep XP and skills after ship destruction, hull changes and reconnects. Every level grants 1 skill point, up to level 20. Each level requires 100 × current level XP.
+- Earn 10 XP per ore banked, 50 / 100 / 250 XP for Raider / Marauder / Warlord kills, and 100 XP for player kills.
+- Train only while docked. Each skill has 10 ranks: **Gunnery** adds 5% gun damage per rank; **Engineering** adds 5% hull, shield capacity and shield regeneration; **Piloting** adds 3% thrust, speed and turning; **Mining** adds 10% mining rate and 5% cargo capacity.
+- Skills modify installed equipment; a mining skill does not replace a mining laser, and engineering does not replace a shield generator. Training is permanent.
+- The top-left HUD shows captain level and unspent points. Dock and open **Captain** to spend points and inspect the resulting ship stats.
 
 ## How the controls behave
 
@@ -36,3 +53,5 @@ Keys use physical positions, so they work the same on any keyboard layout.
 - **Minimap:** you are the cyan square, stations are green circles, other pilots within 4 000 px are white dots, and every pirate on the map is a red dot.
 - **Mining:** shoot asteroids, then fly over the ore they drop to collect it (up to your cargo capacity).
 - **Death** costs all installed upgrades, carried ore, and unbanked credits. Banked credits are safe.
+
+On mobile, tap **Landscape ⛶** to enter fullscreen landscape; tap **Exit fullscreen** to return. If orientation locking is unavailable, enable Android auto-rotate and turn the phone sideways. Mobile flight uses a wider, zoomed-out camera while controls and HUD keep their normal size.

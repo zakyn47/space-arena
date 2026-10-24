@@ -33,6 +33,7 @@
     {"id": "pirate_warlord", "file": "ships/pirate_warlord.png", "width": 64, "height": 64, "anchor": [0.5, 0.5], "frames": 1},
     {"id": "mining_beam", "file": "fx/mining_beam.png", "width": 16, "height": 64, "anchor": [0.5, 1], "frames": 1},
     {"id": "gear_mining_laser", "file": "ui/gear_mining_laser.png", "width": 48, "height": 48, "anchor": [0.5, 0.5], "frames": 1},
+    {"id": "captain_avatar", "file": "ui/captain_avatar.png", "width": 256, "height": 256, "anchor": [0.5, 0.5], "frames": 1},
     {"id": "icon_salvage", "file": "ui/icon_salvage.png", "width": 48, "height": 48, "anchor": [0.5, 0.5], "frames": 1}
   ]
 }

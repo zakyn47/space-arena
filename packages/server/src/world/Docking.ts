@@ -1,5 +1,8 @@
 import {
   DOCK_COMBAT_COOLDOWN,
+  ORE_EXPERIENCE,
+  captainNeedsTraining,
+  gainExperience,
   DOCK_COOLDOWN,
   DOCK_MAX_SPEED,
   DOCK_RANGE,
@@ -9,7 +12,7 @@ import {
 } from '@arena/shared';
 import type { ShipEntity } from './entities';
 
-export type DockFailure = 'out_of_range' | 'too_fast' | 'recent_damage' | 'cooldown';
+export type DockFailure = 'out_of_range' | 'too_fast' | 'recent_damage' | 'cooldown' | 'captain_untrained';
 
 export type DockOutcome =
   | { readonly ok: true; readonly docked: boolean }
@@ -33,6 +36,7 @@ export function canDock(ship: ShipEntity, time: number): boolean {
 }
 
 function undock(ship: ShipEntity, time: number): DockOutcome {
+  if (captainNeedsTraining(ship.captain)) return { ok: false, reason: 'captain_untrained' };
   ship.docked = false;
   ship.dockCooldownUntil = time + DOCK_COOLDOWN;
   return { ok: true, docked: false };
@@ -47,6 +51,7 @@ function dock(ship: ShipEntity): DockOutcome {
   ship.input = IDLE_INPUT;
   ship.shieldUp = false;
   ship.bankedCredits += ship.carriedCredits + ship.ore * ORE_PRICE;
+  ship.captain = gainExperience(ship.captain, ship.ore * ORE_EXPERIENCE);
   ship.carriedCredits = 0;
   ship.ore = 0;
   ship.hull = ship.stats.maxHull;
@@ -58,4 +63,9 @@ export function toggleDock(ship: ShipEntity, time: number): DockOutcome {
   if (ship.docked) return undock(ship, time);
   const failure = dockCheck(ship, time);
   return failure ? { ok: false, reason: failure } : dock(ship);
+}
+
+
+export function dockForCaptainSetup(ship: ShipEntity): void {
+  if (captainNeedsTraining(ship.captain)) dock(ship);
 }

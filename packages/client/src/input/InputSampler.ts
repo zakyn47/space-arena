@@ -15,6 +15,19 @@ const KEY_MAP: Readonly<Record<string, InputKey>> = {
 };
 
 const DOCK_KEY = 'KeyE';
+const STICK_DEAD_ZONE = 0.2;
+
+type PointerInput =
+  | { readonly kind: 'action'; readonly input: ShipInput }
+  | { readonly kind: 'stick'; readonly x: number; readonly y: number };
+
+export function flightStickInput(x: number, y: number, angle = 0, turnStep = 0): ShipInput {
+  if (Math.hypot(x, y) <= STICK_DEAD_ZONE) return IDLE_INPUT;
+  const target = Math.atan2(x, -y);
+  const delta = Math.atan2(Math.sin(target - angle), Math.cos(target - angle));
+  const tolerance = Math.max(turnStep / 2, 0.01);
+  return { ...IDLE_INPUT, thrust: true, left: delta < -tolerance, right: delta > tolerance };
+}
 
 function isEditing(target: EventTarget | null): boolean {
   return target instanceof HTMLElement && (target.isContentEditable || target.closest('input, textarea, select') !== null);
@@ -22,6 +35,7 @@ function isEditing(target: EventTarget | null): boolean {
 
 export class InputSampler {
   private readonly pressed = new Set<InputKey>();
+  private readonly pointerInputs = new Map<number, PointerInput>();
   private target: Window | null = null;
 
   private readonly onKeyDown = (event: KeyboardEvent): void => {
@@ -34,10 +48,11 @@ export class InputSampler {
 
   private readonly onBlur = (): void => {
     this.pressed.clear();
+    this.clearPointers();
   };
 
   private readonly onFocusIn = (event: FocusEvent): void => {
-    if (isEditing(event.target)) this.pressed.clear();
+    if (isEditing(event.target)) this.onBlur();
   };
 
   constructor(private readonly onDock: () => void = () => {}) {}
@@ -57,11 +72,12 @@ export class InputSampler {
     this.target?.removeEventListener('focusin', this.onFocusIn);
     this.target = null;
     this.pressed.clear();
+    this.clearPointers();
   }
 
   handleKey(code: string, down: boolean, repeat: boolean, editing = false): boolean {
     if (editing) {
-      this.pressed.clear();
+      this.onBlur();
       return false;
     }
     if (code === DOCK_KEY) {
@@ -75,17 +91,41 @@ export class InputSampler {
     return true;
   }
 
-  sample(): ShipInput {
+  setPointerInput(pointerId: number, input: ShipInput | null): void {
+    if (input === null) this.pointerInputs.delete(pointerId);
+    else this.pointerInputs.set(pointerId, { kind: 'action', input });
+  }
+
+  setPointerStick(pointerId: number, x: number, y: number): void {
+    this.pointerInputs.set(pointerId, { kind: 'stick', x, y });
+  }
+
+  clearPointers(): void {
+    this.pointerInputs.clear();
+  }
+
+  private isPressed(key: InputKey, pointers: readonly ShipInput[]): boolean {
+    if (this.pressed.has(key)) return true;
+    for (const input of pointers) {
+      if (input[key]) return true;
+    }
+    return false;
+  }
+
+  sample(angle = 0, turnStep = 0): ShipInput {
+    const pointers = [...this.pointerInputs.values()].map((source) =>
+      source.kind === 'stick' ? flightStickInput(source.x, source.y, angle, turnStep) : source.input,
+    );
     return {
       ...IDLE_INPUT,
-      thrust: this.pressed.has('thrust'),
-      reverse: this.pressed.has('reverse'),
-      left: this.pressed.has('left'),
-      right: this.pressed.has('right'),
-      fire: this.pressed.has('fire'),
-      shield: this.pressed.has('shield'),
-      rocket: this.pressed.has('rocket'),
-      mine: this.pressed.has('mine'),
+      thrust: this.isPressed('thrust', pointers),
+      reverse: this.isPressed('reverse', pointers),
+      left: this.isPressed('left', pointers),
+      right: this.isPressed('right', pointers),
+      fire: this.isPressed('fire', pointers),
+      shield: this.isPressed('shield', pointers),
+      rocket: this.isPressed('rocket', pointers),
+      mine: this.isPressed('mine', pointers),
     };
   }
 }

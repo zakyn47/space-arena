@@ -66,3 +66,11 @@ describe('parseClientMessage', () => {
     expect(parseClientMessage('{nope')).toBeNull();
   });
 });
+
+
+it('accepts only catalog skills and rejects client-supplied captain XP or ranks', () => {
+  expect(parse({ type: 'trainCaptain', skill: 'gunnery' })).toEqual({ type: 'trainCaptain', skill: 'gunnery' });
+  expect(parse({ type: 'trainCaptain', skill: 'admin' })).toBeNull();
+  expect(parse({ type: 'trainCaptain', skill: 'gunnery', rank: 10 })).toBeNull();
+  expect(parse({ type: 'trainCaptain', skill: 'gunnery', xp: 10000 })).toBeNull();
+});

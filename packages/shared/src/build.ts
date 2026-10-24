@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { NEW_CAPTAIN, captainStats, type Captain } from './captain';
 import { GEAR, GEAR_IDS, gearTier, type GearId, type Mk } from './catalog/gear';
 import { HULLS, HULL_IDS, SLOT_TYPES, type HullId, type SlotType } from './catalog/hulls';
 import { BASE_MAX_ROCKETS, EMPTY_ENGINE_FACTOR, SALVAGE_CAPACITY, SELL_BACK_SHARE, SHIELD_DRAIN } from './constants';
@@ -107,7 +108,7 @@ export function resaleValue(cost: number): number {
   return Math.floor(cost * SELL_BACK_SHARE);
 }
 
-export function statsFor(build: Build): ShipStats {
+export function statsFor(build: Build, captain: Captain = NEW_CAPTAIN): ShipStats {
   const hull = HULLS[build.hullId];
   const weapons: WeaponMount[] = [];
   let maxHull = hull.maxHull;
@@ -144,7 +145,7 @@ export function statsFor(build: Build): ShipStats {
         break;
     }
   }
-  return {
+  return captainStats({
     maxHull,
     thrust: hull.thrust * motionFactor,
     maxSpeed: hull.maxSpeed * motionFactor,
@@ -157,7 +158,7 @@ export function statsFor(build: Build): ShipStats {
     miningRate,
     miningRange,
     weapons,
-  };
+  }, captain);
 }
 
 export function slotExists(build: Build, slot: SlotRef): boolean {

@@ -13,6 +13,7 @@ import type { RawData, WebSocket, WebSocketServer } from 'ws';
 import type { AuthService } from '../auth/AuthService';
 import type { PlayerRepository, SessionInfo } from '../db/PlayerRepository';
 import type { LoopOutput } from '../GameLoop';
+import { dockForCaptainSetup } from '../world/Docking';
 import { toShipRecord } from '../world/entities';
 import type { DeathEvent, World } from '../world/World';
 import { buildRadar } from './radar';
@@ -97,6 +98,7 @@ export class Gateway implements LoopOutput {
     const { world, repo } = this.deps;
     const ship =
       world.shipByAccount(info.accountId) ?? world.addShip(info.accountId, info.username, repo.loadShip(info.accountId));
+    dockForCaptainSetup(ship);
     world.reconnect(ship.id);
     const session: Session = {
       socket,

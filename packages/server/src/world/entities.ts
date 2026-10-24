@@ -1,5 +1,7 @@
 import {
   IDLE_INPUT,
+  NEW_CAPTAIN,
+  type Captain,
   RESPAWN_ROCKETS,
   STARTER_BUILD,
   statsFor,
@@ -32,6 +34,7 @@ export interface ShipEntity {
   vy: number;
   angle: number;
   build: Build;
+  captain: Captain;
   stats: ShipStats;
   hull: number;
   shieldEnergy: number;
@@ -127,7 +130,7 @@ export interface CrateEntity {
 export type WorldEntity = ShipEntity | BulletEntity | RocketEntity | AsteroidEntity | OreEntity | CrateEntity;
 
 export function createShip(id: number, accountId: number, name: string, record: ShipRecord): ShipEntity {
-  const stats = statsFor(record.build);
+  const stats = statsFor(record.build, record.captain);
   return {
     kind: 'ship',
     id,
@@ -140,6 +143,7 @@ export function createShip(id: number, accountId: number, name: string, record: 
     vy: 0,
     angle: 0,
     build: record.build,
+    captain: record.captain,
     stats,
     hull: stats.maxHull,
     shieldEnergy: stats.maxShield,
@@ -171,6 +175,7 @@ export function createPirateShip(id: number, tier: PirateTier, x: number, y: num
     accountId: -id,
     bankedCredits: 0,
     build: spec.build,
+    captain: NEW_CAPTAIN,
     rockets: spec.rockets,
     salvage: [],
     x,
@@ -181,7 +186,7 @@ export function createPirateShip(id: number, tier: PirateTier, x: number, y: num
 }
 
 export function respawnShip(ship: ShipEntity, x: number, y: number): void {
-  const stats = statsFor(STARTER_BUILD);
+  const stats = statsFor(STARTER_BUILD, ship.captain);
   Object.assign(ship, {
     x,
     y,
@@ -214,6 +219,7 @@ export function toShipRecord(ship: ShipEntity): ShipRecord {
     accountId: ship.accountId,
     bankedCredits: ship.bankedCredits,
     build: ship.build,
+    captain: ship.captain,
     rockets: ship.rockets,
     salvage: ship.salvage,
     x: ship.x,

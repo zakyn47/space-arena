@@ -1,5 +1,8 @@
 import {
   GEAR,
+  MAX_SKILL_RANK,
+  trainCaptain,
+  type CaptainSkill,
   HULLS,
   ROCKET_PRICE,
   gearAt,
@@ -35,10 +38,19 @@ function charge(ship: ShipEntity, price: number, refund: number): boolean {
 
 function equip(ship: ShipEntity, build: Build): void {
   ship.build = build;
-  ship.stats = statsFor(build);
+  ship.stats = statsFor(build, ship.captain);
   ship.hull = ship.stats.maxHull;
   ship.shieldEnergy = Math.min(ship.shieldEnergy, ship.stats.maxShield);
   ship.rockets = Math.min(ship.rockets, ship.stats.maxRockets);
+}
+
+function trainSkill(ship: ShipEntity, skill: CaptainSkill): ShopOutcome {
+  if (ship.captain.skills[skill] >= MAX_SKILL_RANK) return fail('skill_maxed');
+  const captain = trainCaptain(ship.captain, skill);
+  if (!captain) return fail('no_skill_points');
+  ship.captain = captain;
+  equip(ship, ship.build);
+  return OK;
 }
 
 function buyHull(ship: ShipEntity, hullId: HullId): ShopOutcome {
@@ -98,6 +110,8 @@ function sellSalvage(ship: ShipEntity, index: number): ShopOutcome {
 export function applyShopAction(ship: ShipEntity, action: ShopAction): ShopOutcome {
   if (!ship.docked) return fail('not_docked');
   switch (action.type) {
+    case 'trainCaptain':
+      return trainSkill(ship, action.skill);
     case 'buyHull':
       return buyHull(ship, action.hullId);
     case 'buyGear':

@@ -1,6 +1,7 @@
 import { runSession, type GameDom } from './game/GameSession';
 import { SpriteFactory } from './render/SpriteFactory';
 import { LoginScreen } from './ui/LoginScreen';
+import { setupMobileDisplay } from './ui/MobileDisplay';
 
 const TOKEN_KEY = 'arena.token';
 
@@ -11,6 +12,7 @@ function element<T extends HTMLElement>(id: string, type: { new (): T; prototype
 }
 
 async function main(): Promise<void> {
+  setupMobileDisplay();
   const login = new LoginScreen(element('login', HTMLFormElement), element('login-error', HTMLElement));
   const dom: GameDom = {
     gameRoot: element('game', HTMLDivElement),

@@ -1,6 +1,9 @@
 import type { ClientMessage, ServerMessage, ShipInput } from '@arena/shared';
 import {
   BOUNTY_BASE,
+  NEW_CAPTAIN,
+  captainPoints,
+  captainLevel,
   BOUNTY_SHARE,
   IDLE_INPUT,
   RESPAWN_ROCKETS,
@@ -80,7 +83,7 @@ async function pump<K extends ServerMessage['type']>(
   throw new Error(`no ${type} message`);
 }
 
-async function register(username: string): Promise<string> {
+async function register(username: string, trained = true): Promise<string> {
   const response = await fetch(`http://127.0.0.1:${port}/api/register`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
@@ -89,6 +92,14 @@ async function register(username: string): Promise<string> {
   const body: unknown = await response.json();
   if (typeof body !== 'object' || body === null || !('token' in body) || typeof body.token !== 'string') {
     throw new Error('register failed');
+  }
+  if (trained) {
+    const repo = PlayerRepository.open(dbPath);
+    const account = repo.findAccountByUsername(username);
+    if (!account) throw new Error('account missing');
+    const captain = { ...NEW_CAPTAIN, skills: { ...NEW_CAPTAIN.skills, piloting: 3 } };
+    repo.saveShips([{ ...repo.loadShip(account.id), captain }], Date.now());
+    repo.close();
   }
   return body.token;
 }
@@ -238,4 +249,62 @@ describe('with pirates', () => {
     db.close();
     expect(row?.n).toBe(0);
   });
+});
+
+
+it('onboards, levels and trains a persistent captain through real sockets', async () => {
+  const token = await register('novice', false);
+  const client = await TestClient.connect(port, token);
+  const initial = await pump(client, 'snapshot');
+  expect(initial.self.docked).toBe(true);
+  expect(captainPoints(initial.self.captain)).toBe(3);
+  client.clear();
+  client.send({ type: 'dock' });
+  client.input(1, { ...IDLE_INPUT, thrust: true, fire: true });
+  const locked = await pump(client, 'snapshot', (s) => s.lastSeq === 1);
+  expect(locked.self.docked).toBe(true);
+  expect(locked.self.y).toBe(initial.self.y);
+  for (const skill of ['engineering', 'gunnery', 'piloting'] as const) {
+    client.clear();
+    client.send({ type: 'trainCaptain', skill });
+    expect(await pump(client, 'shopResult')).toEqual({ type: 'shopResult', ok: true });
+  }
+  client.clear();
+  const commissioned = await pump(client, 'snapshot', (s) => captainPoints(s.self.captain) === 0);
+  expect(commissioned.self.maxHull).toBe(84);
+  client.clear();
+  client.send({ type: 'dock' });
+  await pump(client, 'snapshot', (s) => !s.self.docked);
+  client.send({ type: 'trainCaptain', skill: 'engineering' });
+  expect(await pump(client, 'shopResult')).toEqual({ type: 'shopResult', ok: false, reason: 'not_docked' });
+  const ship = app.world.shipById(initial.self.id);
+  if (!ship) throw new Error('ship missing');
+  ship.ore = 10;
+  ship.dockCooldownUntil = -Infinity;
+  client.clear();
+  client.send({ type: 'dock' });
+  const leveled = await pump(client, 'snapshot', (s) => s.self.captain.xp === 100);
+  expect(captainLevel(leveled.self.captain)).toBe(2);
+  expect(captainPoints(leveled.self.captain)).toBe(1);
+  client.send({ type: 'trainCaptain', skill: 'engineering' });
+  expect(await pump(client, 'shopResult')).toEqual({ type: 'shopResult', ok: true });
+  const upgraded = await pump(client, 'snapshot', (s) => s.self.captain.skills.engineering === 2);
+  const saved = PlayerRepository.open(dbPath);
+  expect(saved.loadShip(ship.accountId).captain).toEqual(upgraded.self.captain);
+  saved.close();
+  client.clear();
+  ship.hull = 0;
+  await pump(client, 'died');
+  expect(ship.captain).toEqual(upgraded.self.captain);
+  expect(ship.stats.maxHull).toBe(88);
+  app.saveAll();
+  await app.close();
+  app = createApp({ dbPath, staticDir: tmpdir(), asteroidTarget: 0, pirates: false });
+  await new Promise<void>((resolve) => app.server.listen(0, resolve));
+  const address = app.server.address();
+  if (!address || typeof address === 'string') throw new Error('no port');
+  const reconnected = await TestClient.connect(address.port, token);
+  const restored = await pump(reconnected, 'snapshot');
+  expect(restored.self.captain).toEqual(upgraded.self.captain);
+  expect(restored.self.maxHull).toBe(88);
 });

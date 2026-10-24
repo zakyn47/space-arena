@@ -1,5 +1,6 @@
 import { TICK_RATE, type ServerMessage, type ShipState, type SnapshotMessage, type WelcomeMessage } from '@arena/shared';
 import { InputSampler } from '../input/InputSampler';
+import { TouchControls } from '../input/TouchControls';
 import { Connection } from '../net/Connection';
 import { Renderer } from '../render/Renderer';
 import type { SpriteFactory } from '../render/SpriteFactory';
@@ -21,6 +22,7 @@ class ActiveGame {
   private readonly predictor = new Predictor();
   private readonly interpolator = new Interpolator();
   private readonly input: InputSampler;
+  private readonly touch: TouchControls;
   private latest: SnapshotMessage | null = null;
   private inputTimer: ReturnType<typeof setInterval> | undefined;
 
@@ -32,7 +34,9 @@ class ActiveGame {
     private readonly toast: Toast,
     private readonly dom: GameDom,
   ) {
-    this.input = new InputSampler(() => this.connection.send({ type: 'dock' }));
+    const dock = (): void => this.connection.send({ type: 'dock' });
+    this.input = new InputSampler(dock);
+    this.touch = new TouchControls(dom.gameRoot, this.input, dock);
   }
 
   static async start(welcome: WelcomeMessage, connection: Connection, sprites: SpriteFactory, dom: GameDom): Promise<ActiveGame> {
@@ -68,6 +72,7 @@ class ActiveGame {
 
   stop(): void {
     clearInterval(this.inputTimer);
+    this.touch.destroy();
     this.input.detach();
     this.renderer.destroy();
     this.dom.gameRoot.hidden = true;
@@ -80,7 +85,7 @@ class ActiveGame {
   }
 
   private sendInput(): void {
-    const input = this.input.sample();
+    const input = this.input.sample(this.predictor.current?.angle ?? 0, this.predictor.turnRate / TICK_RATE);
     const seq = this.predictor.predict(input);
     this.connection.send({ type: 'input', seq, ...input });
   }
@@ -92,12 +97,13 @@ class ActiveGame {
     if (snapshot.radar) this.hud.setRadar(snapshot.radar);
     this.hud.update(snapshot.self);
     this.menu.update(snapshot.self);
+    this.touch.update(snapshot.self);
   }
 
   private draw(): void {
     if (!this.latest) return;
     const { self } = this.latest;
-    const motion = this.predictor.current ?? self;
+    const motion = this.predictor.sample() ?? self;
     const ownShip: ShipState = {
       kind: 'ship',
       id: self.id,

@@ -1,7 +1,7 @@
-import { NEW_ACCOUNT_ROCKETS, STARTER_BUILD } from '@arena/shared';
+import { NEW_CAPTAIN, NEW_ACCOUNT_ROCKETS, STARTER_BUILD } from '@arena/shared';
 import type Database from 'better-sqlite3';
 
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 
 export const BASE_SCHEMA = `
 CREATE TABLE IF NOT EXISTS accounts (
@@ -103,6 +103,10 @@ function toVersion3(db: Database.Database): void {
   db.exec("ALTER TABLE ships ADD COLUMN salvage_json TEXT NOT NULL DEFAULT '[]'");
 }
 
+function toVersion4(db: Database.Database): void {
+  db.exec(`ALTER TABLE ships ADD COLUMN captain_json TEXT NOT NULL DEFAULT '${JSON.stringify(NEW_CAPTAIN)}'`);
+}
+
 export function migrate(db: Database.Database): void {
   db.exec(BASE_SCHEMA);
   const from = userVersion(db);
@@ -110,6 +114,7 @@ export function migrate(db: Database.Database): void {
   db.transaction(() => {
     if (from < 2) toVersion2(db);
     if (from < 3) toVersion3(db);
+    if (from < 4) toVersion4(db);
     db.pragma(`user_version = ${SCHEMA_VERSION}`);
   })();
 }

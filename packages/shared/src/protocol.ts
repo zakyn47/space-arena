@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { CAPTAIN_SKILLS, type Captain } from './captain';
 import { MkSchema, type Build, type InstalledGear } from './build';
 import { GEAR_IDS, type GearId, type Mk } from './catalog/gear';
 import { HULL_IDS, SLOT_TYPES, type HullId } from './catalog/hulls';
@@ -47,6 +48,8 @@ const InstallSalvageSchema = z
 
 const SellSalvageSchema = z.object({ type: z.literal('sellSalvage'), index: SalvageIndexSchema }).strict();
 
+const TrainCaptainSchema = z.object({ type: z.literal('trainCaptain'), skill: z.enum(CAPTAIN_SKILLS) }).strict();
+
 const ClientMessageSchema = z.discriminatedUnion('type', [
   HelloSchema,
   InputSchema,
@@ -55,13 +58,14 @@ const ClientMessageSchema = z.discriminatedUnion('type', [
   BuyGearSchema,
   SellGearSchema,
   BuyRocketsSchema,
+  TrainCaptainSchema,
   InstallSalvageSchema,
   SellSalvageSchema,
 ]);
 
 export type ClientMessage = z.infer<typeof ClientMessageSchema>;
 export type InputMessage = z.infer<typeof InputSchema>;
-export type ShopAction = Extract<ClientMessage, { type: 'buyHull' | 'buyGear' | 'sellGear' | 'buyRockets' | 'installSalvage' | 'sellSalvage' }>;
+export type ShopAction = Extract<ClientMessage, { type: 'trainCaptain' | 'buyHull' | 'buyGear' | 'sellGear' | 'buyRockets' | 'installSalvage' | 'sellSalvage' }>;
 
 export function parseClientMessage(raw: string): ClientMessage | null {
   let json: unknown;
@@ -153,6 +157,7 @@ export interface SelfState {
   readonly carriedCredits: number;
   readonly bankedCredits: number;
   readonly build: Build;
+  readonly captain: Captain;
   readonly rockets: number;
   readonly maxRockets: number;
   readonly docked: boolean;
@@ -189,7 +194,7 @@ export interface DiedMessage {
   readonly killer: string | null;
 }
 
-export type ShopFailure = 'not_docked' | 'insufficient_credits' | 'slot_mismatch' | 'rocket_cap' | 'unknown_item';
+export type ShopFailure = 'not_docked' | 'insufficient_credits' | 'slot_mismatch' | 'rocket_cap' | 'unknown_item' | 'no_skill_points' | 'skill_maxed';
 
 export type ShopResultMessage =
   | { readonly type: 'shopResult'; readonly ok: true }

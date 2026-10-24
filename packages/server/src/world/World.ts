@@ -1,5 +1,8 @@
 import {
   ASTEROID_MAX_RADIUS,
+  PIRATE_EXPERIENCE,
+  PLAYER_KILL_EXPERIENCE,
+  gainExperience,
   ASTEROID_TARGET_COUNT,
   CRATE_LIFETIME,
   DISCONNECT_LINGER,
@@ -368,12 +371,16 @@ export class World {
   private resolveDeaths(died: DeathEvent[]): void {
     for (const ship of this.ships.values()) {
       if (ship.hull > 0) continue;
+      const killer = ship.lastHitBy === null ? undefined : this.ships.get(ship.lastHitBy);
+      if (killer && killer.id !== ship.id && killer.npc === null) {
+        const xp = ship.npc === null ? PLAYER_KILL_EXPERIENCE : PIRATE_EXPERIENCE[ship.npc];
+        killer.captain = gainExperience(killer.captain, xp);
+      }
       if (ship.npc !== null) {
         this.spawnCrate(ship.x, ship.y, this.director?.pirateLoot(ship.npc) ?? { credits: 0, ore: 0, gear: null });
         this.ships.delete(ship.id);
         continue;
       }
-      const killer = ship.lastHitBy === null ? undefined : this.ships.get(ship.lastHitBy);
       if (killer && killer.npc === null && ship.npc === null) killer.carriedCredits += bountyFor(ship.build);
       this.dropCrate(ship);
       const zone = nearestZone(ship.x, ship.y);

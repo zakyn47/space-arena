@@ -40,6 +40,50 @@ describe('InputSampler', () => {
     expect(sampler.sample().thrust).toBe(true);
   });
 
+  it('combines independent touch pointers and keyboard controls', () => {
+    const sampler = new InputSampler();
+    sampler.setPointerInput(1, { ...IDLE_INPUT, thrust: true, left: true });
+    sampler.setPointerInput(2, { ...IDLE_INPUT, fire: true });
+    sampler.handleKey('KeyW', true, false);
+    expect(sampler.sample()).toMatchObject({ thrust: true, left: true, fire: true });
+    sampler.setPointerInput(1, null);
+    expect(sampler.sample()).toMatchObject({ thrust: true, left: false, fire: true });
+    sampler.handleKey('KeyW', false, false);
+    expect(sampler.sample()).toMatchObject({ thrust: false, fire: true });
+    sampler.setPointerInput(2, null);
+    expect(sampler.sample()).toEqual(IDLE_INPUT);
+  });
+
+  it('keeps an action held until every touch on it is released', () => {
+    const sampler = new InputSampler();
+    sampler.setPointerInput(1, { ...IDLE_INPUT, shield: true });
+    sampler.setPointerInput(2, { ...IDLE_INPUT, shield: true });
+    sampler.setPointerInput(1, null);
+    expect(sampler.sample().shield).toBe(true);
+    sampler.clearPointers();
+    expect(sampler.sample()).toEqual(IDLE_INPUT);
+  });
+
+  it('clears held touch actions on editing or session teardown', () => {
+    const sampler = new InputSampler();
+    sampler.setPointerInput(1, { ...IDLE_INPUT, fire: true });
+    sampler.handleKey('KeyW', true, false, true);
+    expect(sampler.sample()).toEqual(IDLE_INPUT);
+    sampler.setPointerInput(1, { ...IDLE_INPUT, fire: true });
+    sampler.detach();
+    expect(sampler.sample()).toEqual(IDLE_INPUT);
+  });
+
+  it('re-evaluates the held stick against the ship heading on every sample', () => {
+    const sampler = new InputSampler();
+    sampler.setPointerStick(1, 1, 0);
+    sampler.setPointerInput(2, { ...IDLE_INPUT, fire: true });
+    expect(sampler.sample(0, 0.12)).toMatchObject({ thrust: true, right: true, fire: true });
+    expect(sampler.sample(Math.PI / 2, 0.12)).toMatchObject({ thrust: true, left: false, right: false, fire: true });
+    sampler.setPointerInput(1, null);
+    expect(sampler.sample()).toMatchObject({ thrust: false, fire: true });
+  });
+
   it('ignores unmapped keys', () => {
     expect(new InputSampler().handleKey('KeyQ', true, false)).toBe(false);
   });

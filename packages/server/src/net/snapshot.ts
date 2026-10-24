@@ -50,6 +50,7 @@ export function toSelfState(ship: ShipEntity, time: number): SelfState {
     carriedCredits: ship.carriedCredits,
     bankedCredits: ship.bankedCredits,
     build: ship.build,
+    captain: ship.captain,
     rockets: ship.rockets,
     maxRockets: ship.stats.maxRockets,
     docked: ship.docked,

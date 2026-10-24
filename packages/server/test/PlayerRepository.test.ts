@@ -1,4 +1,4 @@
-import { NEW_ACCOUNT_ROCKETS, SAFE_ZONES, STARTER_BUILD } from '@arena/shared';
+import { NEW_CAPTAIN, NEW_ACCOUNT_ROCKETS, SAFE_ZONES, STARTER_BUILD } from '@arena/shared';
 import Database from 'better-sqlite3';
 import { mkdtemp } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -38,6 +38,7 @@ describe('ships', () => {
       accountId: id,
       bankedCredits: 0,
       build: STARTER_BUILD,
+      captain: NEW_CAPTAIN,
       rockets: NEW_ACCOUNT_ROCKETS,
       salvage: [],
       x: SAFE_ZONES[0]?.x,
@@ -48,14 +49,14 @@ describe('ships', () => {
   it('round-trips builds and rockets', () => {
     const id = repo.createAccount('alice', 'hash', 1);
     const build = { ...STARTER_BUILD, slots: { ...STARTER_BUILD.slots, utility: [{ gearId: 'armor' as const, mk: 2 as const }] } };
-    const record = { accountId: id, bankedCredits: 500, build, rockets: 3, salvage: [{ gearId: 'armor' as const, mk: 2 as const }], x: 10, y: 20 };
+    const record = { captain: NEW_CAPTAIN, accountId: id, bankedCredits: 500, build, rockets: 3, salvage: [{ gearId: 'armor' as const, mk: 2 as const }], x: 10, y: 20 };
     repo.saveShips([record], 5);
     expect(repo.loadShip(id)).toEqual(record);
   });
 });
 
 describe('migration from version 1', () => {
-  async function legacyDatabase(): Promise<string> {
+  async function legacyDatabase(version = 0): Promise<string> {
     const path = join(await mkdtemp(join(tmpdir(), 'legacy-')), 'arena.db');
     const db = new Database(path);
     db.exec(`
@@ -65,16 +66,18 @@ describe('migration from version 1', () => {
       INSERT INTO accounts (username, password_hash, created_at) VALUES ('alice', 'hash', 1);
       INSERT INTO ships VALUES (1, 100, 2, 0, 1, 0, 1, 50, 60, 1);
     `);
+    db.pragma(`user_version = ${version}`);
     db.close();
     return path;
   }
 
-  it('refunds old upgrades, sets the starter build and 10 rockets', async () => {
-    const legacy = PlayerRepository.open(await legacyDatabase());
+  it.each([0, 1])('migrates legacy version %i, refunds upgrades and preserves the ship', async (version) => {
+    const legacy = PlayerRepository.open(await legacyDatabase(version));
     expect(legacy.loadShip(1)).toEqual({
       accountId: 1,
       bankedCredits: 100 + 200 + 400 + 250 + 150,
       build: STARTER_BUILD,
+      captain: NEW_CAPTAIN,
       rockets: 10,
       salvage: [],
       x: 50,
@@ -98,7 +101,7 @@ describe('invalid stored builds', () => {
     const warnings: string[] = [];
     const first = PlayerRepository.open(path);
     const id = first.createAccount('alice', 'hash', 1);
-    first.saveShips([{ accountId: id, bankedCredits: 0, build: STARTER_BUILD, rockets: 4, salvage: [], x: 1, y: 2 }], 1);
+    first.saveShips([{ captain: NEW_CAPTAIN, accountId: id, bankedCredits: 0, build: STARTER_BUILD, rockets: 4, salvage: [], x: 1, y: 2 }], 1);
     first.close();
     const db = new Database(path);
     db.prepare("UPDATE ships SET gear_json = '{\"weapon\":[{\"gearId\":\"laser9000\",\"mk\":1}]}'").run();
@@ -134,7 +137,7 @@ describe('migration to version 3', () => {
     const warnings: string[] = [];
     const first = PlayerRepository.open(path);
     const id = first.createAccount('alice', 'hash', 1);
-    first.saveShips([{ accountId: id, bankedCredits: 0, build: STARTER_BUILD, rockets: 4, salvage: [], x: 1, y: 2 }], 1);
+    first.saveShips([{ captain: NEW_CAPTAIN, accountId: id, bankedCredits: 0, build: STARTER_BUILD, rockets: 4, salvage: [], x: 1, y: 2 }], 1);
     first.close();
     const db = new Database(path);
     db.prepare("UPDATE ships SET salvage_json = '[{\"gearId\":\"x\",\"mk\":9}]'").run();
@@ -142,6 +145,51 @@ describe('migration to version 3', () => {
     const second = PlayerRepository.open(path, (message) => warnings.push(message));
     expect(second.loadShip(id).salvage).toEqual([]);
     expect(warnings.some((w) => w.includes('salvage'))).toBe(true);
+    second.close();
+  });
+});
+
+
+describe('captain persistence', () => {
+  it('preserves captain XP and skills on save and reload', () => {
+    const id = repo.createAccount('captain', 'hash', 1);
+    const captain = { xp: 300, skills: { gunnery: 2, engineering: 1, piloting: 1, mining: 0 } };
+    repo.saveShips([{ ...repo.loadShip(id), captain }], 5);
+    expect(repo.loadShip(id).captain).toEqual(captain);
+  });
+
+  it('migrates version 3 without changing ship data and runs only once', async () => {
+    const path = join(await mkdtemp(join(tmpdir(), 'v3-')), 'arena.db');
+    const first = PlayerRepository.open(path);
+    const id = first.createAccount('captain', 'hash', 1);
+    first.saveShips([{ ...first.loadShip(id), bankedCredits: 700 }], 1);
+    first.close();
+    const db = new Database(path);
+    db.exec('ALTER TABLE ships DROP COLUMN captain_json; PRAGMA user_version = 3');
+    db.close();
+    const migrated = PlayerRepository.open(path);
+    expect(migrated.loadShip(id)).toMatchObject({ bankedCredits: 700, captain: NEW_CAPTAIN });
+    const captain = { xp: 100, skills: { gunnery: 3, engineering: 1, piloting: 0, mining: 0 } };
+    migrated.saveShips([{ ...migrated.loadShip(id), captain }], 2);
+    migrated.close();
+    const reopened = PlayerRepository.open(path);
+    expect(reopened.loadShip(id).captain).toEqual(captain);
+    reopened.close();
+  });
+
+  it('warns and safely defaults corrupt captain data without losing the ship', async () => {
+    const path = join(await mkdtemp(join(tmpdir(), 'bad-captain-')), 'arena.db');
+    const first = PlayerRepository.open(path);
+    const id = first.createAccount('captain', 'hash', 1);
+    first.saveShips([{ ...first.loadShip(id), bankedCredits: 500 }], 1);
+    first.close();
+    const db = new Database(path);
+    db.prepare('UPDATE ships SET captain_json = ?').run('{"xp":-100}');
+    db.close();
+    const warnings: string[] = [];
+    const second = PlayerRepository.open(path, (message) => warnings.push(message));
+    expect(second.loadShip(id)).toMatchObject({ captain: NEW_CAPTAIN, bankedCredits: 500 });
+    expect(warnings[0]).toContain(`captain for account ${id}`);
     second.close();
   });
 });

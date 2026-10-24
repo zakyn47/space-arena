@@ -1,4 +1,12 @@
 import {
+  CAPTAIN_SKILLS,
+  CAPTAIN_SKILL_INFO,
+  MAX_SKILL_RANK,
+  NEW_CAPTAIN,
+  captainPoints,
+  trainCaptain,
+  type Captain,
+  type CaptainSkill,
   GEAR,
   GEAR_IDS,
   HULLS,
@@ -35,6 +43,7 @@ const SLOT_LETTERS: Readonly<Record<SlotType, string>> = { weapon: 'W', shield: 
 interface StatMetric {
   readonly label: string;
   readonly unit?: string;
+  readonly decimals?: number;
   readonly value: (stats: ShipStats) => number;
 }
 
@@ -45,7 +54,7 @@ const METRICS: readonly StatMetric[] = [
   { label: 'Shield', value: (s) => s.maxShield },
   { label: 'Cargo', value: (s) => s.cargoCapacity },
   { label: 'Rockets max', value: (s) => s.maxRockets },
-  { label: 'Mining', unit: '/s', value: (s) => s.miningRate },
+  { label: 'Mining', unit: '/s', decimals: 1, value: (s) => s.miningRate },
 ];
 
 export function gearLabel(gear: InstalledGear): string {
@@ -53,12 +62,12 @@ export function gearLabel(gear: InstalledGear): string {
 }
 
 export function statSummary(stats: ShipStats): string[] {
-  return METRICS.map((metric) => `${metric.label} ${Math.round(metric.value(stats))}${metric.unit ?? ''}`);
+  return METRICS.map((metric) => `${metric.label} ${Number(metric.value(stats).toFixed(metric.decimals ?? 0))}${metric.unit ?? ''}`);
 }
 
 export function describeDelta(before: ShipStats, after: ShipStats): string {
   const changes = METRICS.flatMap((metric) => {
-    const delta = Math.round(metric.value(after) - metric.value(before));
+    const delta = Number((metric.value(after) - metric.value(before)).toFixed(metric.decimals ?? 0));
     return delta === 0 ? [] : [`${metric.label} ${delta > 0 ? '+' : ''}${delta}${metric.unit ?? ''}`];
   });
   return changes.length > 0 ? changes.join(', ') : 'no change';
@@ -118,10 +127,10 @@ export interface GearOption {
   readonly delta: string;
 }
 
-export function gearOptions(build: Build, slot: SlotRef, banked: number): GearOption[] {
+export function gearOptions(build: Build, slot: SlotRef, banked: number, captain: Captain = NEW_CAPTAIN): GearOption[] {
   const current = gearAt(build, slot);
   const refund = current ? resaleValue(gearCost(current)) : 0;
-  const before = statsFor(build);
+  const before = statsFor(build, captain);
   return GEAR_IDS.filter((gearId) => GEAR[gearId].slot === slot.type).flatMap((gearId) =>
     MK_LEVELS.map((mk) => {
       const price = gearCost({ gearId, mk });
@@ -131,7 +140,7 @@ export function gearOptions(build: Build, slot: SlotRef, banked: number): GearOp
         label: gearLabel({ gearId, mk }),
         price,
         affordable: banked + refund >= price,
-        delta: describeDelta(before, statsFor(withGear(build, slot, { gearId, mk }))),
+        delta: describeDelta(before, statsFor(withGear(build, slot, { gearId, mk }), captain)),
       };
     }),
   );
@@ -181,4 +190,29 @@ export function rocketOffer(self: SelfState): RocketOffer {
     canBuyOne: missing > 0 && self.bankedCredits >= ROCKET_PRICE,
     canFill: missing > 0 && self.bankedCredits >= fillPrice,
   };
+}
+
+
+export interface CaptainRow {
+  readonly skill: CaptainSkill;
+  readonly name: string;
+  readonly description: string;
+  readonly icon: string;
+  readonly rank: number;
+  readonly canTrain: boolean;
+  readonly delta: string;
+}
+
+export function captainRows(self: SelfState): CaptainRow[] {
+  const before = statsFor(self.build, self.captain);
+  return CAPTAIN_SKILLS.map((skill) => {
+    const next = trainCaptain(self.captain, skill);
+    return {
+      skill,
+      ...CAPTAIN_SKILL_INFO[skill],
+      rank: self.captain.skills[skill],
+      canTrain: self.docked && captainPoints(self.captain) > 0 && self.captain.skills[skill] < MAX_SKILL_RANK,
+      delta: next ? describeDelta(before, statsFor(self.build, next)) : 'No upgrade available',
+    };
+  });
 }

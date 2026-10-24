@@ -1,4 +1,4 @@
-import { NEW_ACCOUNT_ROCKETS, SAFE_ZONES, STARTER_BUILD, parseBuild, parseSalvage, type Build, type InstalledGear } from '@arena/shared';
+import { NEW_CAPTAIN, parseCaptain, type Captain, NEW_ACCOUNT_ROCKETS, SAFE_ZONES, STARTER_BUILD, parseBuild, parseSalvage, type Build, type InstalledGear } from '@arena/shared';
 import Database from 'better-sqlite3';
 import { migrate } from './migrations';
 
@@ -17,6 +17,7 @@ export interface ShipRecord {
   readonly accountId: number;
   readonly bankedCredits: number;
   readonly build: Build;
+  readonly captain: Captain;
   readonly rockets: number;
   readonly salvage: readonly InstalledGear[];
   readonly x: number;
@@ -44,23 +45,25 @@ interface ShipDbRow {
   banked_credits: number;
   hull_id: string;
   gear_json: string;
+  captain_json: string;
   rockets: number;
   salvage_json: string;
   pos_x: number;
   pos_y: number;
 }
 
-type ShipParams = [number, number, string, string, number, string, number, number, number];
+type ShipParams = [number, number, string, string, number, string, string, number, number, number];
 
 const UPSERT_SHIP = `
-INSERT INTO ships (account_id, banked_credits, hull_id, gear_json, rockets, salvage_json, pos_x, pos_y, updated_at)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+INSERT INTO ships (account_id, banked_credits, hull_id, gear_json, rockets, salvage_json, captain_json, pos_x, pos_y, updated_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 ON CONFLICT(account_id) DO UPDATE SET
   banked_credits = excluded.banked_credits,
   hull_id = excluded.hull_id,
   gear_json = excluded.gear_json,
   rockets = excluded.rockets,
   salvage_json = excluded.salvage_json,
+  captain_json = excluded.captain_json,
   pos_x = excluded.pos_x,
   pos_y = excluded.pos_y,
   updated_at = excluded.updated_at
@@ -81,6 +84,7 @@ function defaultShip(accountId: number): ShipRecord {
     accountId,
     bankedCredits: 0,
     build: STARTER_BUILD,
+    captain: NEW_CAPTAIN,
     rockets: NEW_ACCOUNT_ROCKETS,
     salvage: [],
     x: spawn?.x ?? 0,
@@ -96,6 +100,7 @@ function shipParams(record: ShipRecord, now: number): ShipParams {
     JSON.stringify(record.build.slots),
     record.rockets,
     JSON.stringify(record.salvage),
+    JSON.stringify(record.captain),
     record.x,
     record.y,
     now,
@@ -167,7 +172,7 @@ export class PlayerRepository {
   loadShip(accountId: number): ShipRecord {
     const row = this.db
       .prepare<[number], ShipDbRow>(
-        'SELECT banked_credits, hull_id, gear_json, rockets, salvage_json, pos_x, pos_y FROM ships WHERE account_id = ?',
+        'SELECT banked_credits, hull_id, gear_json, rockets, salvage_json, captain_json, pos_x, pos_y FROM ships WHERE account_id = ?',
       )
       .get(accountId);
     if (!row) return defaultShip(accountId);
@@ -175,11 +180,19 @@ export class PlayerRepository {
       accountId,
       bankedCredits: row.banked_credits,
       build: this.decodeBuild(accountId, row),
+      captain: this.decodeCaptain(accountId, row),
       rockets: row.rockets,
       salvage: this.decodeSalvage(accountId, row),
       x: row.pos_x,
       y: row.pos_y,
     };
+  }
+
+  private decodeCaptain(accountId: number, row: ShipDbRow): Captain {
+    const captain = parseCaptain(safeJson(row.captain_json));
+    if (captain) return captain;
+    this.warn(`invalid stored captain for account ${accountId}; using new captain`);
+    return NEW_CAPTAIN;
   }
 
   private decodeBuild(accountId: number, row: ShipDbRow): Build {

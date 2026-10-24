@@ -41,6 +41,11 @@ function generatedStars(app: Application): Texture {
   return app.renderer.generateTexture({ target: stars, frame: new Rectangle(0, 0, 512, 512) });
 }
 
+export function cameraScale(width: number, height: number, touch: boolean): number {
+  if (!touch) return 1;
+  return Math.max(0.6, Math.hypot(width, height) / (2 * VIEW_RADIUS * 0.9));
+}
+
 export class Renderer {
   private readonly world = new Container();
   private readonly layers: Readonly<Record<LayerName, Container>> = {
@@ -56,6 +61,7 @@ export class Renderer {
   private readonly beams = new Map<number, Container>();
   private readonly effects: Effects;
   private camera = { x: 0, y: 0 };
+  private readonly touch = matchMedia('(any-pointer: coarse)');
 
   private constructor(
     private readonly app: Application,
@@ -104,11 +110,13 @@ export class Renderer {
 
   private positionCamera(): void {
     const { width, height } = this.app.screen;
+    const scale = cameraScale(width, height, this.touch.matches);
+    this.world.scale.set(scale);
     this.world.pivot.set(this.camera.x, this.camera.y);
     this.world.position.set(width / 2, height / 2);
     this.starfield.width = width;
     this.starfield.height = height;
-    this.starfield.tilePosition.set(-this.camera.x * STARFIELD_PARALLAX, -this.camera.y * STARFIELD_PARALLAX);
+    this.starfield.tilePosition.set(-this.camera.x * STARFIELD_PARALLAX * scale, -this.camera.y * STARFIELD_PARALLAX * scale);
   }
 
   private drawZones(zones: readonly SafeZone[]): void {

@@ -1,4 +1,4 @@
-import { DOCK_RANGE, SALVAGE_CAPACITY, statsFor, type RadarBlip, type SafeZone, type SelfState } from '@arena/shared';
+import { DOCK_RANGE, SALVAGE_CAPACITY, captainLevel, captainPoints, captainNeedsTraining, statsFor, type RadarBlip, type SafeZone, type SelfState } from '@arena/shared';
 
 const RADAR_COLORS: Readonly<Record<RadarBlip['kind'], string>> = { player: '#ffffff', pirate: '#ff4d4d' };
 const RADAR_DOT = 2;
@@ -14,6 +14,7 @@ export function minimapDots(blips: readonly RadarBlip[], scale: number): Minimap
 }
 
 export function dockPrompt(self: SelfState, inRange: boolean): string | null {
+  if (self.docked && captainNeedsTraining(self.captain)) return 'Choose your starting captain skills to undock';
   if (self.docked) return 'Docked — press E to undock';
   if (self.canDock) return 'Press E to dock';
   if (inRange && self.dockCooldown > 0) return `Dock available in ${Math.ceil(self.dockCooldown)}s`;
@@ -43,7 +44,7 @@ export interface AbilityState {
 }
 
 export function abilityStates(self: SelfState, inSafeZone: boolean): AbilityState[] {
-  const stats = statsFor(self.build);
+  const stats = statsFor(self.build, self.captain);
   const blocked = self.docked ? 'Docked' : inSafeZone ? 'Safe zone' : null;
   const attackBlocked = blocked ?? (self.shieldUp ? 'Shield up' : null);
   const noWeapon = stats.weapons.length === 0;
@@ -74,8 +75,8 @@ export function abilityStates(self: SelfState, inSafeZone: boolean): AbilityStat
     },
     {
       label: 'Dock', key: 'E', icon: '/world/safe_zone_station.png',
-      status: self.docked ? 'Undock' : self.canDock ? 'Dock' : self.dockCooldown > 0 ? `${Math.ceil(self.dockCooldown)}s` : 'Near station',
-      active: self.docked, unavailable: !self.docked && !self.canDock,
+      status: self.docked && captainNeedsTraining(self.captain) ? 'Choose skills' : self.docked ? 'Undock' : self.canDock ? 'Dock' : self.dockCooldown > 0 ? `${Math.ceil(self.dockCooldown)}s` : 'Near station',
+      active: self.docked, unavailable: self.docked ? captainNeedsTraining(self.captain) : !self.canDock,
     },
   ];
 }
@@ -131,7 +132,8 @@ export class Hud {
   update(self: SelfState): void {
     const inRange = this.zones.some((zone) => Math.hypot(self.x - zone.x, self.y - zone.y) <= DOCK_RANGE);
     const prompt = dockPrompt(self, inRange);
-    const lines = hudLines(self, null).slice(3);
+    const points = captainPoints(self.captain);
+    const lines = [...hudLines(self, null).slice(3), `Captain Lv.${captainLevel(self.captain)} · ${points} skill point${points === 1 ? '' : 's'}`];
     const inSafeZone = this.zones.some((zone) => Math.hypot(self.x - zone.x, self.y - zone.y) <= zone.radius);
     const abilities = abilityStates(self, inSafeZone);
     const key = JSON.stringify([lines, prompt, self.hull, self.maxHull, self.shieldEnergy, self.maxShield, self.rockets, self.maxRockets, abilities]);

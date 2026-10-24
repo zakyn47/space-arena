@@ -5,7 +5,8 @@ import { selfState } from './support/self';
 
 describe('dockPrompt', () => {
   it('explains each dock state', () => {
-    expect(dockPrompt(selfState({ docked: true }), true)).toBe('Docked — press E to undock');
+    expect(dockPrompt(selfState({ docked: true }), true)).toBe('Choose your starting captain skills to undock');
+    expect(dockPrompt(selfState({ docked: true, captain: { xp: 0, skills: { gunnery: 0, engineering: 0, piloting: 3, mining: 0 } } }), true)).toBe('Docked — press E to undock');
     expect(dockPrompt(selfState({ canDock: true }), true)).toBe('Press E to dock');
     expect(dockPrompt(selfState({ dockCooldown: 12.3 }), true)).toBe('Dock available in 13s');
     expect(dockPrompt(selfState({ dockCooldown: 12.3 }), false)).toBeNull();
@@ -68,7 +69,7 @@ describe('abilityStates', () => {
   it('shows safe-zone restrictions and docking cooldown without inventing weapon cooldowns', () => {
     const safe = abilityStates(selfState(), true);
     expect(safe.slice(0, 4).every((ability) => ability.status === 'Safe zone' && ability.unavailable)).toBe(true);
-    expect(abilityStates(selfState({ docked: true }), true)[4]).toMatchObject({ status: 'Undock', unavailable: false });
+    expect(abilityStates(selfState({ docked: true }), true)[4]).toMatchObject({ status: 'Choose skills', unavailable: true });
     expect(abilityStates(selfState({ canDock: true }), true)[4]).toMatchObject({ status: 'Dock', unavailable: false });
     expect(abilityStates(selfState({ dockCooldown: 12.3 }), false)[4]).toMatchObject({ status: '13s', unavailable: true });
   });

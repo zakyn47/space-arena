@@ -26,6 +26,7 @@ describe('World docking', () => {
   it('flies again after undocking', () => {
     const world = new World({ asteroidTarget: 0 });
     const ship = world.addShip(1, 'alice', shipRecord(zone.x, zone.y, 1));
+    ship.captain = { xp: 0, skills: { gunnery: 0, engineering: 0, piloting: 3, mining: 0 } };
     world.dock(ship.id);
     world.dock(ship.id);
     world.setInput(ship.id, 1, { ...IDLE_INPUT, thrust: true });

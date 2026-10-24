@@ -1,5 +1,11 @@
 import {
   HULLS,
+  MAX_CAPTAIN_LEVEL,
+  MAX_SKILL_RANK,
+  captainLevel,
+  captainNeedsTraining,
+  captainPoints,
+  experienceForLevel,
   MAX_ROCKETS_PER_PURCHASE,
   gearAt,
   gearCost,
@@ -13,14 +19,15 @@ import {
   type ShopResultMessage,
   type SlotRef,
 } from '@arena/shared';
-import { gearLabel, gearOptions, hullCards, rocketOffer, salvageRows, slotRows, statSummary } from './buildMenuModel';
+import { captainRows, gearLabel, gearOptions, hullCards, rocketOffer, salvageRows, slotRows, statSummary } from './buildMenuModel';
 
-type Tab = 'ship' | 'hulls' | 'rockets';
+type Tab = 'ship' | 'hulls' | 'rockets' | 'captain';
 
 const TABS: readonly { readonly id: Tab; readonly label: string }[] = [
   { id: 'ship', label: 'Loadout' },
   { id: 'hulls', label: 'Hull exchange' },
   { id: 'rockets', label: 'Ammunition' },
+  { id: 'captain', label: 'Captain' },
 ];
 
 const HULL_ROLES: Readonly<Record<HullId, string>> = {
@@ -36,6 +43,8 @@ const FAILURE_TEXT: Readonly<Record<ShopFailure, string>> = {
   slot_mismatch: 'That item does not fit this slot',
   rocket_cap: 'Rocket racks are full',
   unknown_item: 'Not available',
+  no_skill_points: 'No captain skill points available',
+  skill_maxed: 'That captain skill is at maximum rank',
 };
 
 function element<K extends keyof HTMLElementTagNameMap>(tag: K, text = '', className = ''): HTMLElementTagNameMap[K] {
@@ -72,6 +81,7 @@ export class BuildMenu {
       this.selectedSlot = null;
       return;
     }
+    if (captainNeedsTraining(self.captain)) this.tab = 'captain';
     if (this.selectedSlot && !slotExists(self.build, this.selectedSlot)) this.selectedSlot = null;
     this.render();
   }
@@ -84,7 +94,7 @@ export class BuildMenu {
   private render(force = false): void {
     const self = this.self;
     if (!self) return;
-    const key = JSON.stringify([self.build, self.salvage, self.bankedCredits, self.rockets, this.tab, this.selectedSlot, this.resultText]);
+    const key = JSON.stringify([self.captain, self.build, self.salvage, self.bankedCredits, self.rockets, this.tab, this.selectedSlot, this.resultText]);
     if (!force && key === this.renderedKey) return;
     this.renderedKey = key;
     const focusKey = document.activeElement instanceof HTMLElement ? document.activeElement.dataset.focus : undefined;
@@ -92,10 +102,10 @@ export class BuildMenu {
     const title = element('div');
     title.append(element('div', 'STATION SERVICES / DOCKED', 'eyebrow'), element('h2', 'Ship hangar'));
     const actions = element('div', '', 'hangar-actions');
-    actions.append(element('strong', `${self.bankedCredits.toLocaleString()} cr`, 'credits'), button('Undock [E] →', true, () => this.send({ type: 'dock' })));
+    actions.append(element('strong', `${self.bankedCredits.toLocaleString()} cr`, 'credits'), button('Undock [E] →', !captainNeedsTraining(self.captain), () => this.send({ type: 'dock' })));
     heading.append(title, actions);
     const summary = element('div', '', 'stat-strip');
-    for (const stat of statSummary(statsFor(self.build))) summary.append(element('span', stat));
+    for (const stat of statSummary(statsFor(self.build, self.captain))) summary.append(element('span', stat));
     const result = element('div', this.resultText, 'result');
     result.setAttribute('role', 'status');
     this.root.replaceChildren(heading, this.tabBar(), summary, this.tabBody(self), result);
@@ -113,7 +123,9 @@ export class BuildMenu {
   private tabBar(): HTMLElement {
     const bar = element('div', '', 'tabs');
     for (const tab of TABS) {
-      const node = button(tab.label, true, () => this.select(tab.id));
+      const label = tab.id === 'captain' ? `Captain (${this.self ? captainPoints(this.self.captain) : 0})` : tab.label;
+      const enabled = tab.id === 'captain' || !this.self || !captainNeedsTraining(this.self.captain);
+      const node = button(label, enabled, () => this.select(tab.id));
       node.setAttribute('aria-pressed', String(tab.id === this.tab));
       node.dataset.focus = `tab-${tab.id}`;
       bar.append(node);
@@ -122,6 +134,7 @@ export class BuildMenu {
   }
 
   private tabBody(self: SelfState): HTMLElement {
+    if (this.tab === 'captain') return this.captainTab(self);
     if (this.tab === 'hulls') return this.hullsTab(self);
     if (this.tab === 'rockets') return this.rocketsTab(self);
     return this.shipTab(self);
@@ -205,7 +218,7 @@ export class BuildMenu {
       header.append(button(`Sell ${gearLabel(installed)} · ${resaleValue(gearCost(installed))} cr`, true, () => this.send({ type: 'sellGear', slot })));
     }
     list.append(header, element('p', 'Your installed module trades in for 50% of its value toward the listed price. Stat changes compare against your current build.', 'muted'));
-    for (const option of gearOptions(self.build, slot, self.bankedCredits)) {
+    for (const option of gearOptions(self.build, slot, self.bankedCredits, self.captain)) {
       const line = element('div', '', 'row');
       line.append(
         element('span', option.label),
@@ -245,6 +258,43 @@ export class BuildMenu {
     }
     const note = element('p', 'W = weapons · S = shields · E = engine · U = utility. Base hull properties shown; installed gear modifies your final stats. Hull and overflow equipment trade in for 50%; compatible modules transfer automatically.', 'muted hull-note');
     body.append(note);
+    return body;
+  }
+
+  private captainTab(self: SelfState): HTMLElement {
+    const body = element('div', '', 'captain-panel');
+    const level = captainLevel(self.captain);
+    const points = captainPoints(self.captain);
+    const header = element('div', '', 'captain-header');
+    const identity = element('div');
+    identity.append(element('div', 'PERSISTENT CAPTAIN', 'eyebrow'), element('h3', `Captain · Level ${level}`), element('p', 'Your experience and skills survive ship destruction.', 'muted'));
+    const profile = element('div', '', 'captain-identity');
+    const avatar = element('img', '', 'captain-avatar');
+    avatar.src = '/ui/captain_avatar.png';
+    avatar.alt = 'Captain avatar';
+    avatar.addEventListener('error', () => { avatar.hidden = true; });
+    profile.append(avatar, identity);
+    header.append(profile, element('strong', `${points} skill point${points === 1 ? '' : 's'} available`, 'captain-points'));
+    const progress = element('progress');
+    progress.max = level === MAX_CAPTAIN_LEVEL ? 1 : experienceForLevel(level + 1) - experienceForLevel(level);
+    progress.value = level === MAX_CAPTAIN_LEVEL ? 1 : self.captain.xp - experienceForLevel(level);
+    progress.setAttribute('aria-label', 'Captain experience toward next level');
+    const progressText = level === MAX_CAPTAIN_LEVEL ? 'Maximum level reached' : `${progress.value} / ${progress.max} XP toward level ${level + 1}`;
+    body.append(header, progress, element('p', `${progressText} · ${self.captain.xp.toLocaleString()} total XP`, 'muted'));
+    if (captainNeedsTraining(self.captain)) body.append(element('p', 'Choose your starting skills: spend 3 points before your first launch. You can spread them across skills or specialize.', 'captain-onboarding'));
+    const skills = element('div', '', 'captain-skills');
+    for (const row of captainRows(self)) {
+      const card = element('section', '', 'captain-skill');
+      const icon = element('img');
+      icon.src = `/ui/${row.icon}.png`;
+      icon.alt = '';
+      const train = button(row.rank === MAX_SKILL_RANK ? 'Maximum rank' : 'Train · 1 point', row.canTrain, () => this.send({ type: 'trainCaptain', skill: row.skill }));
+      train.dataset.focus = `train-${row.skill}`;
+      card.append(icon, element('h3', row.name), element('span', `Rank ${row.rank} / ${MAX_SKILL_RANK}`, 'captain-rank'), element('p', row.description, 'muted'), element('p', `Next rank on this ship: ${row.delta}`, 'delta'), train);
+      skills.append(card);
+    }
+    const stats = statsFor(self.build, self.captain);
+    body.append(skills, element('p', `Current handling: thrust ${Math.round(stats.thrust)} · turn ${stats.turnRate.toFixed(2)} rad/s · shield regeneration ${stats.shieldRegen.toFixed(1)}/s`, 'muted'), element('p', 'Earn 10 XP per ore banked; pirate kills give 50 / 100 / 250 XP by tier; player kills give 100 XP. Each level grants 1 point, up to level 20. Training is available only while docked.', 'muted'));
     return body;
   }
 

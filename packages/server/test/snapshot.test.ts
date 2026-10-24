@@ -1,7 +1,7 @@
 import { STARTER_BUILD } from '@arena/shared';
 import { describe, expect, it } from 'vitest';
 import { buildSnapshot, toEntityState } from '../src/net/snapshot';
-import { createPirateShip, createShip, type WorldEntity } from '../src/world/entities';
+import { createLeviathan, createPirateShip, createShip, type WorldEntity } from '../src/world/entities';
 import { shipRecord } from './support/fixtures';
 
 describe('snapshot', () => {
@@ -49,6 +49,13 @@ describe('snapshot', () => {
   it('does not leak private fields of other ships', () => {
     const other = createShip(2, 2, 'bob', shipRecord(30, 40, 2));
     expect(Object.keys(toEntityState(other))).not.toContain('rockets');
+  });
+
+  it('sends health only for the leviathan', () => {
+    const boss = createLeviathan(3, 50, 60);
+    boss.hull = 1_000;
+    expect(toEntityState(boss)).toMatchObject({ npc: 'leviathan', health: 0.33 });
+    expect(toEntityState(createShip(2, 2, 'bob', shipRecord(30, 40, 2)))).not.toHaveProperty('health');
   });
 
   it('marks pirates, mining targets, salvage and crate gear', () => {

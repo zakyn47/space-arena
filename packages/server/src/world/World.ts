@@ -13,6 +13,7 @@ import {
   stepMotion,
   zoneAt,
   type ShipInput,
+  type ShopAction,
 } from '@arena/shared';
 import type { ShipRecord } from '../db/PlayerRepository';
 import { randomAsteroid, scatterOre, type AsteroidFields } from './AsteroidField';
@@ -31,6 +32,7 @@ import {
   type WorldEntity,
 } from './entities';
 import { distanceToSegment } from './geometry';
+import { applyShopAction, type ShopOutcome } from './Shop';
 import { acquireTarget, launchRocket, steerRocket, tryLaunch } from './Rockets';
 import { SpatialGrid } from './SpatialGrid';
 
@@ -144,6 +146,12 @@ export class World {
     const ship = this.ships.get(shipId);
     if (!ship) return { ok: false, reason: 'out_of_range' };
     return toggleDock(ship, this.elapsed);
+  }
+
+  shop(shipId: number, action: ShopAction): ShopOutcome {
+    const ship = this.ships.get(shipId);
+    if (!ship) return { ok: false, reason: 'not_docked' };
+    return applyShopAction(ship, action);
   }
 
   entitiesNear(x: number, y: number, radius: number): WorldEntity[] {

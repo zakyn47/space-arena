@@ -234,6 +234,19 @@ describe('server integration', () => {
     repo.close();
     expect(saved?.x).toBeCloseTo(zone.x);
   });
+
+  it('sends the leviathan and its orbs to a nearby player', async () => {
+    const alice = await TestClient.connect(port, await register('alice'));
+    const ship = app.world.shipById((await pump(alice, 'welcome')).shipId);
+    if (!ship) throw new Error('ship missing');
+    Object.assign(ship, { x: OPEN_SPACE.x, y: OPEN_SPACE.y + 600, vx: 0, vy: 0 });
+    const boss = app.world.addLeviathan(OPEN_SPACE.x, OPEN_SPACE.y);
+    app.world.fireOrb(boss, Math.PI);
+    alice.clear();
+    const seen = await pump(alice, 'snapshot', (s) => s.entities.some((e) => e.kind === 'orb'));
+    const leviathan = seen.entities.find((e) => e.kind === 'ship' && e.npc === 'leviathan');
+    expect(leviathan).toMatchObject({ health: 1 });
+  });
 });
 
 describe('with pirates', () => {

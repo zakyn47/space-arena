@@ -128,3 +128,5 @@ The sprites were generated with AI (OpenAI Codex) following [`assets/STYLE.md`](
 ## 📄 License
 
 [MIT](LICENSE) © 2026 zakyn47
+
+The MIT license covers the code and game assets. The ZalcikGames name and logo in [`assets/brand/`](assets/brand) are not licensed: forks must remove them or replace them with their own branding (see [`assets/brand/LICENSE`](assets/brand/LICENSE)).

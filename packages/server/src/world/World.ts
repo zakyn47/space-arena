@@ -467,7 +467,8 @@ export class World {
   }
 
   private collectBooster(ship: ShipEntity, booster: BoosterEntity): void {
-    if (!this.boosters.has(booster.id) || ship.docked || !applyBooster(ship, booster.boost, this.elapsed)) return;
+    if (!this.boosters.has(booster.id) || ship.docked) return;
+    applyBooster(ship, booster.boost, this.elapsed);
     this.boosters.delete(booster.id);
     this.boosterSpawns.push(this.elapsed + BOOSTER_RESPAWN);
   }

@@ -10,21 +10,22 @@ describe('applyBooster', () => {
   it('repairs half of max hull, capped at full', () => {
     const ship = pilot();
     ship.hull = 10;
-    expect(applyBooster(ship, 'repair', 0)).toBe(true);
+    applyBooster(ship, 'repair', 0);
     expect(ship.hull).toBe(10 + ship.stats.maxHull / 2);
     ship.hull = ship.stats.maxHull - 5;
-    expect(applyBooster(ship, 'repair', 0)).toBe(true);
+    applyBooster(ship, 'repair', 0);
     expect(ship.hull).toBe(ship.stats.maxHull);
   });
 
-  it('is not used up by a ship at full hull', () => {
+  it('heals nothing past max hull at full health', () => {
     const ship = pilot();
-    expect(applyBooster(ship, 'repair', 0)).toBe(false);
+    applyBooster(ship, 'repair', 0);
+    expect(ship.hull).toBe(ship.stats.maxHull);
   });
 
   it('starts or restarts a ten second speed boost', () => {
     const ship = pilot();
-    expect(applyBooster(ship, 'speed', 5)).toBe(true);
+    applyBooster(ship, 'speed', 5);
     expect(ship.speedBoostUntil).toBe(5 + SPEED_BOOST_DURATION);
     applyBooster(ship, 'speed', 8);
     expect(ship.speedBoostUntil).toBe(8 + SPEED_BOOST_DURATION);

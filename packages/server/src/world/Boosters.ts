@@ -12,13 +12,10 @@ export function randomBoosterKind(rng: () => number): BoosterKind {
   return rng() < 0.5 ? 'repair' : 'speed';
 }
 
-// A repair booster is left in place for someone who needs it when the ship is already at full hull.
-export function applyBooster(ship: ShipEntity, kind: BoosterKind, time: number): boolean {
+export function applyBooster(ship: ShipEntity, kind: BoosterKind, time: number): void {
   if (kind === 'speed') {
     ship.speedBoostUntil = time + SPEED_BOOST_DURATION;
-    return true;
+    return;
   }
-  if (ship.hull >= ship.stats.maxHull) return false;
   ship.hull = Math.min(ship.stats.maxHull, ship.hull + ship.stats.maxHull * BOOSTER_REPAIR_SHARE);
-  return true;
 }

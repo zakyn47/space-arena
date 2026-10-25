@@ -39,6 +39,18 @@ describe('World boosters', () => {
     expect(boosters(world)).toHaveLength(BOOSTER_COUNT);
   });
 
+  it('is collected by a pilot at full hull without overhealing', () => {
+    const world = new World({ asteroidTarget: 0, boosters: true, rng: seeded(5) });
+    world.tick(TICK_DT);
+    const [target] = boosters(world);
+    if (!target) throw new Error('no booster');
+    const ship = world.addShip(1, 'alice', shipRecord(target.x, target.y, 1));
+    world.tick(TICK_DT);
+    world.tick(TICK_DT);
+    expect(boosters(world)).toHaveLength(BOOSTER_COUNT - 1);
+    expect(ship.hull).toBe(ship.stats.maxHull);
+  });
+
   it('is ignored by pirates', () => {
     const world = new World({ asteroidTarget: 0, boosters: true, rng: seeded(3), pirates: [{ band: 'raider', composition: () => ['raider'] }] });
     world.tick(TICK_DT);

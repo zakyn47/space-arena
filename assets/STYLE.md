@@ -59,3 +59,10 @@
 
 - `plasma_bolt` (horizontal spritesheet, 2 frames of 32×32, pointing UP): an elongated electric plasma bolt (~10×24 px) with a white-hot core and crackling cyan `#5EC8FF` / electric-blue arcs around it, soft glow halo. Frame 2 shifts the arcs so the pair flickers like live electricity. Must read clearly different from the Leviathan's round violet `plasma_orb`.
 - `icon_plasma` (48×48): UI glyph in the same flat style as the other icons (white with cyan accent): a blaster emitter firing a jagged lightning-plasma bolt.
+
+## Boosters update
+
+Both are collectible power-ups floating in space, seen from above, centered, ~30 px across with a soft glow, transparent background. Horizontal spritesheets of 4 frames of 40×40 that loop smoothly (frame 4 flows back into frame 1): the capsule slowly rotates/bobs and its glow pulses bright → dim → bright.
+- `booster_repair`: rounded energy capsule with a glowing green `#3CFFB0` core showing a white medical/repair cross, thin steel rim.
+- `booster_speed`: rounded energy capsule with a glowing amber `#FFB23C` core showing two white forward chevrons (»), thin steel rim.
+The two must be instantly distinguishable by color and symbol.

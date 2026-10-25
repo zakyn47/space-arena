@@ -54,3 +54,8 @@
 - `leviathan` (horizontal spritesheet, 4 frames of 192×192, seen from above, head facing UP): a huge alien space monster, NOT a ship — organic, no metal or panels. A broad armored carapace body with a beaked or mandibled head at the top, and long trailing tentacles toward the bottom. Dark violet / deep purple skin `#3A1D5C` with darker plates, glowing cyan-green `#3CFFB0` bio-luminescent spots along the body and a glowing maw. Fill about 85% of the frame. The frames are a slow breathing pulse: the bio-lights brighten and dim and the tentacles sway slightly; the silhouette stays aligned between frames.
 - `plasma_orb` (horizontal spritesheet, 2 frames of 32×32): round violet/magenta `#C04BFF` energy ball (~20 px) with a white-hot core and a soft glow halo; frame 2 slightly larger and brighter so the pair flickers.
 - `leviathan_death` (horizontal spritesheet, 8 frames of 192×192): the monster's death burst: bright violet-white flash → expanding organic burst of glowing violet ichor and cyan-green spores → drifting fragments and spores fading to transparent. No gore, no red blood. Centered and round.
+
+## Plasma blaster update
+
+- `plasma_bolt` (horizontal spritesheet, 2 frames of 32×32, pointing UP): an elongated electric plasma bolt (~10×24 px) with a white-hot core and crackling cyan `#5EC8FF` / electric-blue arcs around it, soft glow halo. Frame 2 shifts the arcs so the pair flickers like live electricity. Must read clearly different from the Leviathan's round violet `plasma_orb`.
+- `icon_plasma` (48×48): UI glyph in the same flat style as the other icons (white with cyan accent): a blaster emitter firing a jagged lightning-plasma bolt.

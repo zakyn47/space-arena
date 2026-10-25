@@ -103,6 +103,10 @@ kbd { color: #c0d8e9; font-family: inherit; }
 .hangar-header, .hangar-actions, .equipment-header { display: flex; gap: 18px; justify-content: space-between; align-items: center; }
 .hangar-header h2 { margin-top: 4px; font-size: 30px; letter-spacing: -.03em; }
 .credits { color: #ffc83c; white-space: nowrap; font-size: 18px; }
+#shop .hangar-actions button.guide { background: var(--cyan); border-color: #bdeeff; color: #061320; font-weight: 700; animation: undock-pulse 1.2s ease-in-out infinite; }
+.undock-hint { color: #9ee4ff; font-size: 13px; font-weight: 600; white-space: nowrap; animation: undock-nudge 1.2s ease-in-out infinite; }
+@keyframes undock-pulse { 0%, 100% { box-shadow: 0 0 0 0 #5ec8ff80; } 50% { box-shadow: 0 0 0 8px #5ec8ff00; } }
+@keyframes undock-nudge { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(6px); } }
 #shop .tabs { display: flex; gap: 24px; overflow-x: auto; margin-top: 24px; border-bottom: 1px solid var(--line); }
 #shop .tabs button { flex-shrink: 0; white-space: nowrap; background: none; border: 0; border-radius: 0; border-bottom: 2px solid transparent; padding: 12px 0; color: var(--muted); }
 #shop .tabs button[aria-pressed='true'] { border-color: var(--cyan); color: var(--cyan); }
@@ -208,6 +212,7 @@ kbd { color: #c0d8e9; font-family: inherit; }
   #shop { width: calc(100vw - 16px); max-height: calc(100dvh - 16px); padding: 16px; }
   .hangar-header { align-items: flex-start; gap: 10px; }
   .hangar-actions { flex-direction: column; align-items: flex-end; gap: 6px; }
+  .undock-hint { white-space: normal; text-align: right; font-size: 12px; }
   .credits { font-size: 14px; }
   #shop .tabs { gap: 20px; margin-top: 12px; font-size: 12px; }
   .loadout-layout { grid-template-columns: 1fr; }
@@ -219,7 +224,7 @@ kbd { color: #c0d8e9; font-family: inherit; }
   #shop .hull-card > img { width: 96px; height: 96px; }
   .hull-card .muted { min-height: 80px; }
 }
-@media (prefers-reduced-motion: reduce) { button { transition: none; } .loader-ship, #loader progress:indeterminate { animation: none; } }
+@media (prefers-reduced-motion: reduce) { button { transition: none; } #shop .hangar-actions button.guide, .undock-hint { animation: none; } .loader-ship, #loader progress:indeterminate { animation: none; } }
 
 
 .touch-controls, .touch-help { display: none; }

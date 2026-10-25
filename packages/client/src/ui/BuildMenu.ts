@@ -19,6 +19,7 @@ import {
   type ShopResultMessage,
   type SlotRef,
 } from '@arena/shared';
+import { hasUndockedBefore, markUndocked, showUndockGuide } from './firstFlight';
 import { ORDNANCE_ICONS } from './Hud';
 import { captainRows, gearLabel, gearOptions, hullCards, ordnanceOffers, salvageRows, slotRows, statSummary } from './buildMenuModel';
 
@@ -79,6 +80,7 @@ export class BuildMenu {
     this.root.hidden = !self.docked;
     this.self = self;
     if (!self.docked) {
+      markUndocked(localStorage);
       this.selectedSlot = null;
       return;
     }
@@ -103,7 +105,13 @@ export class BuildMenu {
     const title = element('div');
     title.append(element('div', 'STATION SERVICES / DOCKED', 'eyebrow'), element('h2', 'Ship hangar'));
     const actions = element('div', '', 'hangar-actions');
-    actions.append(element('strong', `${self.bankedCredits.toLocaleString()} cr`, 'credits'), button('Undock [E] →', !captainNeedsTraining(self.captain), () => this.send({ type: 'dock' })));
+    const undock = button('Undock [E] →', !captainNeedsTraining(self.captain), () => this.send({ type: 'dock' }));
+    actions.append(element('strong', `${self.bankedCredits.toLocaleString()} cr`, 'credits'));
+    if (showUndockGuide(self, hasUndockedBefore(localStorage))) {
+      undock.classList.add('guide');
+      actions.append(element('span', 'Ready! Undock to start flying ➜', 'undock-hint'));
+    }
+    actions.append(undock);
     heading.append(title, actions);
     const summary = element('div', '', 'stat-strip');
     for (const stat of statSummary(statsFor(self.build, self.captain))) summary.append(element('span', stat));

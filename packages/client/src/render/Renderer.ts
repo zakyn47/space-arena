@@ -114,7 +114,7 @@ export class Renderer {
   showHits(hits: readonly HitEvent[], delaySeconds: number): void {
     for (const hit of hits) {
       const view = this.views.get(hit.shipId);
-      if (view) this.effects.hit({ ship: view.container, angle: hit.angle, shield: hit.shield, offset: view.spriteId === 'leviathan' ? 70 : 18, delaySeconds });
+      if (view) this.effects.hit({ ship: view.container, angle: hit.angle, block: hit.block, offset: view.spriteId === 'leviathan' ? 70 : 18, delaySeconds });
     }
   }
 

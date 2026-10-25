@@ -9,6 +9,7 @@ import {
   buildValue,
   forward,
   type Build,
+  type HitBlock,
 } from '@arena/shared';
 import type { BulletEntity, ShipEntity } from './entities';
 
@@ -73,12 +74,16 @@ export function fireWeapons(
   return bullets;
 }
 
-export function applyDamage(ship: ShipEntity, damage: number, attackerId: number, time: number): boolean {
-  if (ship.shieldUp) return true;
-  ship.hull -= damage;
+export function applyDamage(ship: ShipEntity, damage: number, attackerId: number, time: number): HitBlock {
+  if (ship.shieldUp) return 'shield';
   ship.lastDamagedAt = time;
   ship.lastHitBy = attackerId;
-  return false;
+  if (ship.darkMatter > 0) {
+    ship.darkMatter = Math.max(0, ship.darkMatter - damage);
+    return 'dark_matter';
+  }
+  ship.hull -= damage;
+  return 'hull';
 }
 
 export function bountyFor(build: Build): number {

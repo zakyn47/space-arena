@@ -51,6 +51,7 @@ export interface ShipEntity {
   shieldUp: boolean;
   shieldLockout: number;
   shieldDisruptedUntil: number;
+  darkMatter: number;
   speedBoostUntil: number;
   weaponCooldowns: number[];
   ore: number;
@@ -187,6 +188,7 @@ export interface CrateEntity {
   readonly ore: number;
   readonly credits: number;
   readonly gear: InstalledGear | null;
+  readonly darkMatter: boolean;
   readonly expiresAt: number;
 }
 
@@ -214,6 +216,7 @@ export function createShip(id: number, accountId: number, name: string, record: 
     shieldUp: false,
     shieldLockout: 0,
     shieldDisruptedUntil: -Infinity,
+    darkMatter: 0,
     speedBoostUntil: -Infinity,
     weaponCooldowns: stats.weapons.map(() => 0),
     ore: 0,
@@ -272,6 +275,7 @@ export function respawnShip(ship: ShipEntity, x: number, y: number): void {
     shieldUp: false,
     shieldLockout: 0,
     shieldDisruptedUntil: -Infinity,
+    darkMatter: 0,
     speedBoostUntil: -Infinity,
     weaponCooldowns: stats.weapons.map(() => 0),
     ore: 0,

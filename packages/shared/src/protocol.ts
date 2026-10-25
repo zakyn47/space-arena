@@ -225,10 +225,12 @@ export interface RadarBlip {
   readonly kind: 'player' | 'pirate' | 'boss' | BoosterKind;
 }
 
+export type HitBlock = 'hull' | 'shield' | 'dark_matter';
+
 export interface HitEvent {
   readonly shipId: number;
   readonly angle: number;
-  readonly shield: boolean;
+  readonly block: HitBlock;
 }
 
 export interface SnapshotMessage {

@@ -1,4 +1,4 @@
-import { BOUNTY_BASE, IDLE_INPUT, SHIELD_DISRUPTION, SHIELD_LOCKOUT, SHIP_RADIUS, STARTER_BUILD, type Build } from '@arena/shared';
+import { BOUNTY_BASE, DARK_MATTER_SHIELD, IDLE_INPUT, SHIELD_DISRUPTION, SHIELD_LOCKOUT, SHIP_RADIUS, STARTER_BUILD, type Build } from '@arena/shared';
 import { describe, expect, it } from 'vitest';
 import { applyDamage, bountyFor, disruptShield, fireWeapons, updateShield } from '../src/world/Combat';
 import { createShip } from '../src/world/entities';
@@ -60,6 +60,13 @@ describe('updateShield', () => {
 });
 
 describe('fireWeapons', () => {
+  it('fires while the dark matter barrier is active', () => {
+    const ship = newShip();
+    ship.darkMatter = DARK_MATTER_SHIELD;
+    ship.input = { ...IDLE_INPUT, fire: true };
+    expect(fireWeapons(ship, 0.1, false, 0, ids)).toHaveLength(1);
+  });
+
   it('fires the starter laser from the nose with its own cooldown', () => {
     const ship = newShip();
     ship.input = { ...IDLE_INPUT, fire: true };
@@ -92,14 +99,35 @@ describe('fireWeapons', () => {
 });
 
 describe('applyDamage', () => {
-  it('damages hull unless shielded and reports a shield block', () => {
+  it('damages hull unless shielded and reports which layer took the hit', () => {
     const ship = newShip();
-    expect(applyDamage(ship, 30, 7, 3)).toBe(false);
+    expect(applyDamage(ship, 30, 7, 3)).toBe('hull');
     expect(ship.hull).toBe(150);
     expect(ship.lastHitBy).toBe(7);
     ship.shieldUp = true;
-    expect(applyDamage(ship, 30, 7, 4)).toBe(true);
+    expect(applyDamage(ship, 30, 7, 4)).toBe('shield');
     expect(ship.hull).toBe(150);
+  });
+
+  it('drains the dark matter barrier before the hull and loses overflow when it breaks', () => {
+    const ship = newShip();
+    ship.darkMatter = 50;
+    expect(applyDamage(ship, 30, 7, 3)).toBe('dark_matter');
+    expect(ship.darkMatter).toBe(20);
+    expect(applyDamage(ship, 30, 8, 4)).toBe('dark_matter');
+    expect(ship.darkMatter).toBe(0);
+    expect(ship.hull).toBe(ship.stats.maxHull);
+    expect(ship.lastHitBy).toBe(8);
+    expect(ship.lastDamagedAt).toBe(4);
+    expect(applyDamage(ship, 30, 7, 5)).toBe('hull');
+  });
+
+  it('lets a raised normal shield block without draining the barrier', () => {
+    const ship = newShip();
+    ship.darkMatter = 100;
+    ship.shieldUp = true;
+    expect(applyDamage(ship, 30, 7, 3)).toBe('shield');
+    expect(ship.darkMatter).toBe(100);
   });
 });
 

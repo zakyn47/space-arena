@@ -1,4 +1,4 @@
-import { IDLE_INPUT, LEVIATHAN_MAX_HULL, LEVIATHAN_RADIUS, ORB_DAMAGE, ORB_LIFETIME, TICK_DT } from '@arena/shared';
+import { DARK_MATTER_SHIELD, IDLE_INPUT, LEVIATHAN_MAX_HULL, LEVIATHAN_RADIUS, ORB_DAMAGE, ORB_LIFETIME, TICK_DT } from '@arena/shared';
 import { describe, expect, it } from 'vitest';
 import { createLeviathan } from '../src/world/entities';
 import { World } from '../src/world/World';
@@ -48,7 +48,7 @@ describe('plasma orbs', () => {
     const events = Array.from({ length: Math.ceil(2 / TICK_DT) }, () => world.tick(TICK_DT));
     expect(target.hull).toBe(target.stats.maxHull - ORB_DAMAGE);
     expect(target.lastHitBy).toBe(boss.id);
-    expect(events.flatMap((tick) => tick.hits)).toContainEqual(expect.objectContaining({ shipId: target.id, shield: false }));
+    expect(events.flatMap((tick) => tick.hits)).toContainEqual(expect.objectContaining({ shipId: target.id, block: 'hull' }));
   });
 
   it('hit pilots hugging the boss inside its radius', () => {
@@ -108,5 +108,16 @@ describe('Leviathan in the world', () => {
     expect(hunter.captain.xp).toBe(500);
     world.tick(TICK_DT);
     expect(world.entitiesNear(boss.x, boss.y, 200).some((entity) => entity.kind === 'crate' && entity.credits === 1_500)).toBe(true);
+  });
+
+  it('drops a crate that grants the dark matter barrier', () => {
+    const world = new World({ asteroidTarget: 0, boss: true, rng: seeded(8) });
+    world.tick(TICK_DT);
+    const boss = world.npcShips().find((ship) => ship.npc === 'leviathan');
+    if (!boss) throw new Error('no boss');
+    const looter = world.addShip(1, 'alice', shipRecord(boss.x, boss.y, 1));
+    boss.hull = 0;
+    for (let i = 0; i < 3; i += 1) world.tick(TICK_DT);
+    expect(looter.darkMatter).toBe(DARK_MATTER_SHIELD);
   });
 });

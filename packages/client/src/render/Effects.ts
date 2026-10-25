@@ -1,5 +1,7 @@
+import type { HitBlock } from '@arena/shared';
 import { AnimatedSprite, type Container } from 'pixi.js';
 import type { SpriteFactory } from './SpriteFactory';
+import { hitEffectFor } from './spriteIds';
 
 const EXPLOSION_SECONDS = 0.6;
 const HIT_SECONDS = 0.3;
@@ -15,7 +17,7 @@ interface ActiveEffect {
 export interface HitEffect {
   readonly ship: Container;
   readonly angle: number;
-  readonly shield: boolean;
+  readonly block: HitBlock;
   readonly offset: number;
   readonly delaySeconds: number;
 }
@@ -37,12 +39,12 @@ export class Effects {
 
   // Hits ride on the ship's container so they stay on the hull while it flies; the delay lines
   // them up with the interpolated bullets, which are drawn slightly in the past.
-  hit({ ship, angle, shield, offset: hullOffset, delaySeconds }: HitEffect): void {
-    const view = this.sprites.animate(shield ? 'shield_impact' : 'hull_hit', HIT_SECONDS, false);
+  hit({ ship, angle, block, offset: hullOffset, delaySeconds }: HitEffect): void {
+    const view = this.sprites.animate(hitEffectFor(block), HIT_SECONDS, false);
     const attach = (): void => {
       if (ship.destroyed) return;
       const local = angle - ship.rotation;
-      const offset = shield ? 0 : hullOffset;
+      const offset = block === 'hull' ? hullOffset : 0;
       view.rotation = local;
       view.position.set(Math.sin(local) * offset, -Math.cos(local) * offset);
       ship.addChild(view);

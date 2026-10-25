@@ -1,4 +1,4 @@
-import { IDLE_INPUT, PLASMA_DAMAGE, SHIELD_DISRUPTION, TICK_DT } from '@arena/shared';
+import { DARK_MATTER_SHIELD, IDLE_INPUT, PLASMA_DAMAGE, SHIELD_DISRUPTION, TICK_DT, type HitEvent } from '@arena/shared';
 import { describe, expect, it } from 'vitest';
 import type { WorldEntity } from '../src/world/entities';
 import { World } from '../src/world/World';
@@ -21,8 +21,8 @@ function fireOnce(world: World, shooterId: number): void {
   world.setInput(shooterId, 2, IDLE_INPUT);
 }
 
-function ticks(world: World, seconds: number): void {
-  for (let i = 0; i < Math.ceil(seconds / TICK_DT); i += 1) world.tick(TICK_DT);
+function ticks(world: World, seconds: number): HitEvent[] {
+  return Array.from({ length: Math.ceil(seconds / TICK_DT) }, () => world.tick(TICK_DT)).flatMap((tick) => tick.hits);
 }
 
 describe('World plasma blaster', () => {
@@ -56,5 +56,15 @@ describe('World plasma blaster', () => {
     expect(bob.shieldUp).toBe(false);
     ticks(world, SHIELD_DISRUPTION - 2);
     expect(bob.shieldUp).toBe(true);
+  });
+
+  it('drains the dark matter barrier instead of the hull', () => {
+    const { world, alice, bob } = duel();
+    bob.darkMatter = DARK_MATTER_SHIELD;
+    fireOnce(world, alice.id);
+    const hits = ticks(world, 1.5);
+    expect(bob.darkMatter).toBe(DARK_MATTER_SHIELD - PLASMA_DAMAGE);
+    expect(bob.hull).toBe(bob.stats.maxHull);
+    expect(hits).toContainEqual(expect.objectContaining({ shipId: bob.id, block: 'dark_matter' }));
   });
 });

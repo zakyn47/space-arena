@@ -73,7 +73,7 @@ export class PirateDirector {
   pirateLoot(tier: PirateTier): CrateDrop {
     const spec = PIRATE_SPECS[tier];
     const gear = this.rng() < spec.dropChance ? randomGear(this.rng, spec.dropMks) : null;
-    return { credits: spec.credits, ore: spec.ore, gear };
+    return { credits: spec.credits, ore: spec.ore, gear, darkMatter: false };
   }
 
   private stepPatrol(host: PirateHost, patrol: Patrol, time: number): void {

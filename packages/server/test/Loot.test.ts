@@ -1,4 +1,4 @@
-import { GEAR_IDS, SALVAGE_CAPACITY } from '@arena/shared';
+import { DARK_MATTER_SHIELD, GEAR_IDS, SALVAGE_CAPACITY } from '@arena/shared';
 import { describe, expect, it } from 'vitest';
 import { createShip } from '../src/world/entities';
 import { playerDeathCrates, randomGear, takeCrate } from '../src/world/Loot';
@@ -24,8 +24,8 @@ describe('playerDeathCrates', () => {
     victim.carriedCredits = 101;
     victim.salvage = [{ gearId: 'armor', mk: 1 }, { gearId: 'thruster', mk: 2 }];
     expect(playerDeathCrates(victim)).toEqual([
-      { ore: 4, credits: 50, gear: { gearId: 'armor', mk: 1 } },
-      { ore: 0, credits: 0, gear: { gearId: 'thruster', mk: 2 } },
+      { ore: 4, credits: 50, gear: { gearId: 'armor', mk: 1 }, darkMatter: false },
+      { ore: 0, credits: 0, gear: { gearId: 'thruster', mk: 2 }, darkMatter: false },
     ]);
   });
 
@@ -37,7 +37,7 @@ describe('playerDeathCrates', () => {
 describe('takeCrate', () => {
   it('takes everything when the hold has room', () => {
     const looter = ship();
-    expect(takeCrate(looter, { ore: 2, credits: 40, gear: { gearId: 'armor', mk: 1 } })).toBeNull();
+    expect(takeCrate(looter, { ore: 2, credits: 40, gear: { gearId: 'armor', mk: 1 }, darkMatter: false })).toBeNull();
     expect(looter.salvage).toEqual([{ gearId: 'armor', mk: 1 }]);
     expect(looter.carriedCredits).toBe(40);
     expect(looter.ore).toBe(2);
@@ -46,7 +46,33 @@ describe('takeCrate', () => {
   it('leaves the gear behind when the hold is full', () => {
     const looter = ship();
     looter.salvage = Array.from({ length: SALVAGE_CAPACITY }, () => ({ gearId: 'armor' as const, mk: 1 as const }));
-    expect(takeCrate(looter, { ore: 0, credits: 10, gear: { gearId: 'thruster', mk: 1 } })).toEqual({ ore: 0, credits: 0, gear: { gearId: 'thruster', mk: 1 } });
+    expect(takeCrate(looter, { ore: 0, credits: 10, gear: { gearId: 'thruster', mk: 1 }, darkMatter: false })).toEqual({ ore: 0, credits: 0, gear: { gearId: 'thruster', mk: 1 }, darkMatter: false });
     expect(looter.carriedCredits).toBe(10);
+  });
+});
+
+describe('takeCrate dark matter', () => {
+  it('grants a full barrier and refills a partial one', () => {
+    const pilot = ship();
+    expect(takeCrate(pilot, { ore: 0, credits: 0, gear: null, darkMatter: true })).toBeNull();
+    expect(pilot.darkMatter).toBe(DARK_MATTER_SHIELD);
+    pilot.darkMatter = 120;
+    takeCrate(pilot, { ore: 0, credits: 0, gear: null, darkMatter: true });
+    expect(pilot.darkMatter).toBe(DARK_MATTER_SHIELD);
+  });
+
+  it('grants the barrier even with a full salvage hold and leaves only the gear behind', () => {
+    const pilot = ship();
+    pilot.salvage = Array.from({ length: SALVAGE_CAPACITY }, () => ({ gearId: 'armor' as const, mk: 1 as const }));
+    const leftover = takeCrate(pilot, { ore: 0, credits: 10, gear: { gearId: 'thruster', mk: 3 }, darkMatter: true });
+    expect(pilot.darkMatter).toBe(DARK_MATTER_SHIELD);
+    expect(leftover).toEqual({ ore: 0, credits: 0, gear: { gearId: 'thruster', mk: 3 }, darkMatter: false });
+  });
+
+  it('leaves the barrier alone for ordinary crates', () => {
+    const pilot = ship();
+    pilot.darkMatter = 80;
+    takeCrate(pilot, { ore: 1, credits: 0, gear: null, darkMatter: false });
+    expect(pilot.darkMatter).toBe(80);
   });
 });

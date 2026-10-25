@@ -1,4 +1,4 @@
-import { STARTER_BUILD } from '@arena/shared';
+import { STARTER_BUILD, type HitEvent } from '@arena/shared';
 import { describe, expect, it } from 'vitest';
 import { buildSnapshot, toEntityState } from '../src/net/snapshot';
 import { createLeviathan, createPirateShip, createShip, type WorldEntity } from '../src/world/entities';
@@ -34,14 +34,14 @@ describe('snapshot', () => {
   it('sends hits only for ships in view with rounded angles', () => {
     const self = createShip(1, 1, 'alice', shipRecord(10, 20, 1));
     const other = createShip(2, 2, 'bob', shipRecord(30, 40, 2));
-    const hits = [
-      { shipId: 1, angle: 1.23456, shield: false },
-      { shipId: 2, angle: -3.14159, shield: true },
-      { shipId: 9, angle: 0, shield: false },
+    const hits: HitEvent[] = [
+      { shipId: 1, angle: 1.23456, block: 'hull' },
+      { shipId: 2, angle: -3.14159, block: 'shield' },
+      { shipId: 9, angle: 0, block: 'hull' },
     ];
     expect(buildSnapshot(self, [self, other], 1, 100, undefined, hits).hits).toEqual([
-      { shipId: 1, angle: 1.23, shield: false },
-      { shipId: 2, angle: -3.14, shield: true },
+      { shipId: 1, angle: 1.23, block: 'hull' },
+      { shipId: 2, angle: -3.14, block: 'shield' },
     ]);
     expect(buildSnapshot(self, [self, other], 1, 100).hits).toBeUndefined();
   });
@@ -78,7 +78,7 @@ describe('snapshot', () => {
     const self = createShip(1, 1, 'alice', { ...shipRecord(10, 20, 1), salvage: [{ gearId: 'armor', mk: 1 }] });
     self.miningTargetId = 7;
     const pirate = createPirateShip(5, 'marauder', 30, 40);
-    const crate: WorldEntity = { kind: 'crate', id: 6, x: 0, y: 0, ore: 0, credits: 0, gear: { gearId: 'armor', mk: 1 }, expiresAt: 9 };
+    const crate: WorldEntity = { kind: 'crate', id: 6, x: 0, y: 0, ore: 0, credits: 0, gear: { gearId: 'armor', mk: 1 }, darkMatter: false, expiresAt: 9 };
     const snapshot = buildSnapshot(self, [pirate, crate], 1, 0);
     expect(snapshot.self).toMatchObject({ salvage: [{ gearId: 'armor', mk: 1 }], miningTargetId: 7 });
     expect(snapshot.entities[0]).toMatchObject({ kind: 'ship', npc: 'marauder', name: 'Marauder', hullId: 'fighter' });

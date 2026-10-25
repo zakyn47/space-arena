@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { spriteIdFor, vanishEffectFor } from '../src/render/spriteIds';
+import { hitEffectFor, spriteIdFor, vanishEffectFor } from '../src/render/spriteIds';
 
 const bullet = (weaponId: 'pulse_laser' | 'heavy_cannon', mk: 1 | 2 | 3) =>
   spriteIdFor({ kind: 'bullet', id: 1, x: 0, y: 0, vx: 0, vy: 0, weaponId, mk });
@@ -45,5 +45,13 @@ describe('vanishEffectFor', () => {
     expect(vanishEffectFor('space_mine')).toBe('mine_explosion');
     expect(vanishEffectFor('rocket')).toBeNull();
     expect(vanishEffectFor('asteroid_1')).toBeNull();
+  });
+});
+
+describe('hitEffectFor', () => {
+  it('picks the impact animation for the layer that took the hit', () => {
+    expect(hitEffectFor('hull')).toBe('hull_hit');
+    expect(hitEffectFor('shield')).toBe('shield_impact');
+    expect(hitEffectFor('dark_matter')).toBe('dark_matter_impact');
   });
 });

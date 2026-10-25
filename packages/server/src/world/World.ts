@@ -317,8 +317,8 @@ export class World {
       if (!nearby.some((ship) => triggeredBy(mine, ship, this.elapsed))) continue;
       this.mines.delete(mine.id);
       for (const ship of blastVictims(mine, nearby)) {
-        const shield = applyDamage(ship, MINE_DAMAGE, mine.ownerId, this.elapsed);
-        hits.push({ shipId: ship.id, angle: Math.atan2(mine.x - ship.x, ship.y - mine.y), shield });
+        const block = applyDamage(ship, MINE_DAMAGE, mine.ownerId, this.elapsed);
+        hits.push({ shipId: ship.id, angle: Math.atan2(mine.x - ship.x, ship.y - mine.y), block });
       }
     }
   }
@@ -426,10 +426,10 @@ export class World {
   }
 
   private hitShip(ship: ShipEntity, projectile: Projectile): HitEvent {
-    const shield = applyDamage(ship, projectile.damage, projectile.ownerId, this.elapsed);
+    const block = applyDamage(ship, projectile.damage, projectile.ownerId, this.elapsed);
     if (projectile.kind === 'plasma') disruptShield(ship, this.elapsed);
     const angle = Math.atan2(projectile.prevX - ship.x, ship.y - projectile.prevY);
-    return { shipId: ship.id, angle, shield };
+    return { shipId: ship.id, angle, block };
   }
 
   private damageAsteroid(asteroid: AsteroidEntity, damage: number): void {
@@ -526,7 +526,7 @@ export class World {
   }
 
   private npcLoot(kind: NpcKind): CrateDrop {
-    const empty: CrateDrop = { credits: 0, ore: 0, gear: null };
+    const empty: CrateDrop = { credits: 0, ore: 0, gear: null, darkMatter: false };
     if (kind === 'leviathan') return this.boss?.loot() ?? empty;
     return this.director?.pirateLoot(kind) ?? empty;
   }

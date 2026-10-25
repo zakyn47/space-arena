@@ -68,7 +68,7 @@ describe('World combat', () => {
     const { world, alice, bob } = duel();
     world.setInput(alice.id, 1, { ...IDLE_INPUT, fire: true });
     const hit = firstHit(world);
-    expect(hit).toMatchObject({ shipId: bob.id, shield: false });
+    expect(hit).toMatchObject({ shipId: bob.id, block: 'hull' });
     expect(Math.abs(hit?.angle ?? 0)).toBeCloseTo(Math.PI);
   });
 
@@ -76,7 +76,7 @@ describe('World combat', () => {
     const { world, alice, bob } = duel();
     world.setInput(alice.id, 1, { ...IDLE_INPUT, fire: true });
     world.setInput(bob.id, 1, { ...IDLE_INPUT, shield: true });
-    expect(firstHit(world)).toMatchObject({ shipId: bob.id, shield: true });
+    expect(firstHit(world)).toMatchObject({ shipId: bob.id, block: 'shield' });
   });
 
   it('drops a crate with carried ore and half the carried credits', () => {

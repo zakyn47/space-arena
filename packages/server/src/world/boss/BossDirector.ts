@@ -64,7 +64,7 @@ export class BossDirector {
   }
 
   loot(): CrateDrop {
-    return { credits: LEVIATHAN_CREDITS, ore: LEVIATHAN_ORE, gear: randomGear(this.rng, [3]) };
+    return { credits: LEVIATHAN_CREDITS, ore: LEVIATHAN_ORE, gear: randomGear(this.rng, [3]), darkMatter: true };
   }
 
   private handleMissing(host: BossHost, time: number): void {

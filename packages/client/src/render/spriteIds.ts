@@ -1,9 +1,15 @@
-import type { EntityState, GearId, Mk } from '@arena/shared';
+import type { EntityState, GearId, HitBlock, Mk } from '@arena/shared';
 
 const PULSE_SPRITES: Readonly<Record<Mk, string>> = { 1: 'bullet_t0', 2: 'bullet_t2', 3: 'bullet_t4' };
 
 function bulletSprite(weaponId: GearId, mk: Mk): string {
   return weaponId === 'heavy_cannon' ? 'bullet_cannon' : PULSE_SPRITES[mk];
+}
+
+const HIT_EFFECTS: Readonly<Record<HitBlock, string>> = { hull: 'hull_hit', shield: 'shield_impact', dark_matter: 'dark_matter_impact' };
+
+export function hitEffectFor(block: HitBlock): string {
+  return HIT_EFFECTS[block];
 }
 
 export function vanishEffectFor(spriteId: string): string | null {

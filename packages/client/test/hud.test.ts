@@ -1,7 +1,16 @@
 import { STARTER_BUILD } from '@arena/shared';
 import { describe, expect, it } from 'vitest';
-import { abilityStates, dockPrompt, hudLines, minimapDots } from '../src/ui/Hud';
+import { abilityStates, dockPrompt, edgeWarning, hudLines, minimapDots } from '../src/ui/Hud';
 import { selfState } from './support/self';
+
+describe('edgeWarning', () => {
+  it('warns when the ship nears the arena edge', () => {
+    expect(edgeWarning(selfState({ x: 10_000, y: 10_000 }), 20_000)).toBeNull();
+    expect(edgeWarning(selfState({ x: 600, y: 10_000 }), 20_000)).toBe('⚠ Arena edge ahead — 600 px');
+    expect(edgeWarning(selfState({ x: 10_000, y: 19_700 }), 20_000)).toBe('⚠ Arena edge ahead — 300 px');
+    expect(edgeWarning(selfState({ x: 0, y: 5_000 }), 20_000)).toBe("⚠ Arena edge — you can't fly further");
+  });
+});
 
 describe('dockPrompt', () => {
   it('explains each dock state', () => {

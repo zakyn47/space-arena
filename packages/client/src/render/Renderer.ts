@@ -80,7 +80,7 @@ export class Renderer {
     app.ticker.add((ticker) => this.effects.update(ticker.deltaMS / 1_000));
   }
 
-  static async create(host: HTMLElement, sprites: SpriteFactory, zones: readonly SafeZone[]): Promise<Renderer> {
+  static async create(host: HTMLElement, sprites: SpriteFactory, zones: readonly SafeZone[], worldSize: number): Promise<Renderer> {
     const app = new Application();
     await app.init({ resizeTo: host, background: 0x05060d, antialias: true });
     host.prepend(app.canvas);
@@ -90,6 +90,7 @@ export class Renderer {
       height: app.screen.height,
     });
     const renderer = new Renderer(app, sprites, starfield);
+    renderer.drawBounds(worldSize);
     renderer.drawZones(zones);
     return renderer;
   }
@@ -130,6 +131,37 @@ export class Renderer {
     this.starfield.width = width;
     this.starfield.height = height;
     this.starfield.tilePosition.set(-this.camera.x * STARFIELD_PARALLAX * scale, -this.camera.y * STARFIELD_PARALLAX * scale);
+  }
+
+  // Ships stop dead at the arena edge, so the wall and the void beyond it must be obvious before pilots reach it.
+  private drawBounds(size: number): void {
+    const margin = VIEW_RADIUS * 2;
+    const outside = new Graphics()
+      .rect(-margin, -margin, size + margin * 2, margin)
+      .rect(-margin, size, size + margin * 2, margin)
+      .rect(-margin, 0, margin, size)
+      .rect(size, 0, margin, size)
+      .fill({ color: 0x1a0606, alpha: 0.65 });
+    this.layers.zones.addChild(outside);
+    const texture = this.sprites.texture('arena_barrier');
+    if (!texture) {
+      const glow = new Graphics().rect(0, 0, size, size).stroke({ color: 0xff5a3c, alpha: 0.18, width: 40 }).rect(0, 0, size, size).stroke({ color: 0xff5a3c, alpha: 0.9, width: 6 });
+      this.layers.zones.addChild(glow);
+      return;
+    }
+    const edges = [
+      { x: 0, y: size / 2, rotation: 0 },
+      { x: size, y: size / 2, rotation: 0 },
+      { x: size / 2, y: 0, rotation: Math.PI / 2 },
+      { x: size / 2, y: size, rotation: Math.PI / 2 },
+    ];
+    for (const edge of edges) {
+      const wall = new TilingSprite({ texture, width: texture.width, height: size + texture.width });
+      wall.anchor.set(0.5);
+      wall.position.set(edge.x, edge.y);
+      wall.rotation = edge.rotation;
+      this.layers.zones.addChild(wall);
+    }
   }
 
   private drawZones(zones: readonly SafeZone[]): void {

@@ -42,7 +42,7 @@ class ActiveGame {
 
   static async start(welcome: WelcomeMessage, connection: Connection, sprites: SpriteFactory, dom: GameDom): Promise<ActiveGame> {
     dom.gameRoot.hidden = false;
-    const renderer = await Renderer.create(dom.gameRoot, sprites, welcome.safeZones);
+    const renderer = await Renderer.create(dom.gameRoot, sprites, welcome.safeZones, welcome.worldSize);
     const game = new ActiveGame(
       connection,
       renderer,

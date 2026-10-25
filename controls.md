@@ -54,6 +54,7 @@ Keys use physical positions, so they work the same on any keyboard layout.
 - **Pirates:** red ships roam open space — Raiders near the stations, Marauders farther out, Warlords in the deep. They attack pilots who come within ~800 px. Destroyed pirates drop a crate with credits, ore and sometimes a gear item.
 - **Void Leviathan:** a huge alien monster patrols the center of the map (purple dot on the minimap). It fires slow plasma orbs (40 damage each, blocked by shields) at pilots within ~1 400 px, has 3 000 hull and regenerates when nobody is near. It drops a crate with 1 500 cr, 15 ore and a Mk3 item, and respawns 10 minutes later.
 - **Salvage:** gear from crates goes into your salvage hold (3 items, lost on death). While docked, install it for free or sell it for 50% in the build menu's Ship tab.
+- **Arena edge:** the arena is a 20 000 × 20 000 square bounded by a red energy barrier; the void beyond is darkened and the minimap has a red border. Within 900 px of the edge the HUD shows a red warning with the distance. You cannot fly through the barrier — your ship stops against it.
 - **Minimap:** you are the cyan square, stations are green circles, other pilots within 4 000 px are white dots, and every pirate on the map is a red dot.
 - **Mining:** shoot asteroids, then fly over the ore they drop to collect it (up to your cargo capacity).
 - **Death** costs all installed upgrades, carried ore, and unbanked credits. Banked credits are safe.

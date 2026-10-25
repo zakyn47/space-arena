@@ -27,16 +27,6 @@ export function minimapDots(blips: readonly RadarBlip[], scale: number): Minimap
   return blips.map((blip) => ({ x: blip.x * scale, y: blip.y * scale, color: RADAR_COLORS[blip.kind], size: RADAR_DOT_SIZES[blip.kind] }));
 }
 
-const EDGE_WARNING_DISTANCE = 900;
-const EDGE_CONTACT = 30;
-
-export function edgeWarning(self: SelfState, worldSize: number): string | null {
-  const gap = Math.min(self.x, self.y, worldSize - self.x, worldSize - self.y);
-  if (gap > EDGE_WARNING_DISTANCE) return null;
-  if (gap <= EDGE_CONTACT) return "⚠ Arena edge — you can't fly further";
-  return `⚠ Arena edge ahead — ${Math.round(gap)} px`;
-}
-
 export function dockPrompt(self: SelfState, inRange: boolean): string | null {
   if (self.docked && captainNeedsTraining(self.captain)) return 'Choose your starting captain skills to undock';
   if (self.docked) return 'Docked — press E to undock';
@@ -163,8 +153,7 @@ export class Hud {
 
   update(self: SelfState): void {
     const inRange = this.zones.some((zone) => Math.hypot(self.x - zone.x, self.y - zone.y) <= DOCK_RANGE);
-    const edge = self.docked ? null : edgeWarning(self, this.worldSize);
-    const prompt = dockPrompt(self, inRange) ?? edge;
+    const prompt = dockPrompt(self, inRange);
     const points = captainPoints(self.captain);
     const lines = [...hudLines(self, null).slice(3), `Captain Lv.${captainLevel(self.captain)} · ${points} skill point${points === 1 ? '' : 's'}`];
     const inSafeZone = this.zones.some((zone) => Math.hypot(self.x - zone.x, self.y - zone.y) <= zone.radius);
@@ -186,7 +175,6 @@ export class Hud {
       bar.append(resources, tiles);
       const promptNode = textNode('div', 'hud-dock-prompt', prompt ?? '');
       promptNode.hidden = prompt === null;
-      promptNode.classList.toggle('danger', prompt !== null && prompt === edge);
       this.root.replaceChildren(info, promptNode, bar);
     }
     this.drawMinimap(self);

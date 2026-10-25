@@ -96,7 +96,6 @@ kbd { color: #c0d8e9; font-family: inherit; }
 .hud-ability.unavailable img { opacity: .4; }
 .hud-ability.active { background: #143b4b; border-color: #5ec8ff; box-shadow: inset 0 0 14px #5ec8ff15; }
 .hud-ability.active .hud-ability-status { color: #73e7bd; }
-.hud-dock-prompt.danger { border-color: #ff5a3c; background: #2a0d0be8; color: #ffb4a6; font-weight: 600; }
 .hud-dock-prompt { position: absolute; bottom: 154px; left: 50%; transform: translateX(-50%); padding: 7px 16px; border: 1px solid #4c897c; border-radius: 5px; background: #091e21e8; color: #98ecc9; text-align: center; font-size: 12px; white-space: nowrap; }
 #minimap { position: absolute; top: 12px; right: 12px; background: #05060db3; border: 1px solid #1f2a4a; }
 #shop { position: absolute; z-index: 1; top: 50%; left: 50%; transform: translate(-50%, -50%); width: min(1100px, calc(100vw - 40px)); max-height: calc(100dvh - 48px); overflow-y: auto; padding: 26px; border: 1px solid #34536c; border-top: 2px solid var(--cyan); border-radius: 8px; background: #091320f7; box-shadow: 0 24px 120px #000c; scrollbar-color: #34536c #091320; }

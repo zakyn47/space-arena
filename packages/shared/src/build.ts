@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { NEW_CAPTAIN, captainStats, type Captain } from './captain';
 import { GEAR, GEAR_IDS, gearTier, type GearId, type Mk } from './catalog/gear';
 import { HULLS, HULL_IDS, SLOT_TYPES, type HullId, type SlotType } from './catalog/hulls';
-import { BASE_MAX_ROCKETS, EMPTY_ENGINE_FACTOR, SALVAGE_CAPACITY, SELL_BACK_SHARE, SHIELD_DRAIN } from './constants';
+import { BASE_MAX_ROCKETS, EMPTY_ENGINE_FACTOR, PLAYER_HULL_BONUS, SALVAGE_CAPACITY, SELL_BACK_SHARE, SHIELD_DRAIN } from './constants';
 
 export interface InstalledGear {
   readonly gearId: GearId;
@@ -108,10 +108,10 @@ export function resaleValue(cost: number): number {
   return Math.floor(cost * SELL_BACK_SHARE);
 }
 
-export function statsFor(build: Build, captain: Captain = NEW_CAPTAIN): ShipStats {
+export function statsFor(build: Build, captain: Captain = NEW_CAPTAIN, hullBonus = PLAYER_HULL_BONUS): ShipStats {
   const hull = HULLS[build.hullId];
   const weapons: WeaponMount[] = [];
-  let maxHull = hull.maxHull;
+  let maxHull = hull.maxHull + hullBonus;
   let cargoCapacity = hull.cargoCapacity;
   let maxRockets = BASE_MAX_ROCKETS;
   let miningRate = 0;

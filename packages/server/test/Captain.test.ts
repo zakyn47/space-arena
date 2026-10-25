@@ -16,7 +16,7 @@ describe('captain training', () => {
     expect(ship).toEqual(before);
     ship.docked = true;
     expect(applyShopAction(ship, { type: 'trainCaptain', skill: 'engineering' })).toEqual({ ok: true });
-    expect(ship.stats.maxHull).toBe(84);
+    expect(ship.stats.maxHull).toBe(189);
     expect(ship.stats.maxShield).toBe(105);
     expect(captainPoints(ship.captain)).toBe(2);
     applyShopAction(ship, { type: 'trainCaptain', skill: 'engineering' });
@@ -44,12 +44,12 @@ describe('captain training', () => {
     applyShopAction(ship, { type: 'trainCaptain', skill: 'engineering' });
     const captain = ship.captain;
     applyShopAction(ship, { type: 'buyHull', hullId: 'fighter' });
-    expect(ship.stats.maxHull).toBe(126);
+    expect(ship.stats.maxHull).toBe(231);
     applyShopAction(ship, { type: 'buyGear', gearId: 'armor', mk: 1, slot: { type: 'utility', index: 0 } });
-    expect(ship.stats.maxHull).toBe(158);
+    expect(ship.stats.maxHull).toBe(263);
     respawnShip(ship, 0, 0);
     expect(ship.captain).toEqual(captain);
-    expect(ship.stats.maxHull).toBe(84);
+    expect(ship.stats.maxHull).toBe(189);
     expect(toShipRecord(ship).captain).toEqual(captain);
   });
 });

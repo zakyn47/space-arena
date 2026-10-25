@@ -222,7 +222,9 @@ export function createPirateShip(id: number, tier: PirateTier, x: number, y: num
     x,
     y,
   });
-  ship.npc = tier;
+  // Pirates share the player hull catalog but not the player hull bonus.
+  const stats = statsFor(spec.build, NEW_CAPTAIN, 0);
+  Object.assign(ship, { npc: tier, stats, hull: stats.maxHull } satisfies Partial<ShipEntity>);
   return ship;
 }
 

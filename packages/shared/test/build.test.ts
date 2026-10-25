@@ -26,7 +26,7 @@ describe('statsFor', () => {
   it('computes the starter build', () => {
     const stats = statsFor(STARTER_BUILD);
     expect(stats).toMatchObject({
-      maxHull: 80,
+      maxHull: 180,
       thrust: 168,
       maxSpeed: 322,
       turnRate: 3.6,

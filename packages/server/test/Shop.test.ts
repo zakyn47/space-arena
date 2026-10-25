@@ -34,8 +34,8 @@ describe('buyGear', () => {
   it('fills an empty utility slot and raises max hull', () => {
     const ship = dockedShip(200);
     applyShopAction(ship, buy({ type: 'buyGear', gearId: 'armor', mk: 1, slot: { type: 'utility', index: 0 } }));
-    expect(ship.stats.maxHull).toBe(110);
-    expect(ship.hull).toBe(110);
+    expect(ship.stats.maxHull).toBe(210);
+    expect(ship.hull).toBe(210);
     expect(ship.bankedCredits).toBe(150);
   });
 
@@ -71,7 +71,7 @@ describe('buyHull', () => {
     expect(ship.build.hullId).toBe('fighter');
     expect(ship.build.slots.weapon).toEqual([{ gearId: 'pulse_laser', mk: 1 }, null]);
     expect(ship.bankedCredits).toBe(0);
-    expect(ship.hull).toBe(120);
+    expect(ship.hull).toBe(220);
   });
 
   it('sells gear that does not fit a smaller hull', () => {

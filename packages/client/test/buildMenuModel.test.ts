@@ -6,7 +6,7 @@ import { selfState } from './support/self';
 describe('statSummary', () => {
   it('summarises the starter build', () => {
     expect(statSummary(statsFor(STARTER_BUILD))).toEqual([
-      'Hull 80',
+      'Hull 180',
       'Speed 322',
       'Damage/s 40',
       'Shield 100',
@@ -139,7 +139,7 @@ describe('captainRows', () => {
     const rows = captainRows(selfState({ docked: true }));
     expect(rows.map((row) => row.skill)).toEqual(['gunnery', 'engineering', 'piloting', 'mining']);
     expect(rows.every((row) => row.canTrain)).toBe(true);
-    expect(rows[1]?.delta).toBe('Hull +4, Shield +5');
+    expect(rows[1]?.delta).toBe('Hull +9, Shield +5');
     expect(rows[2]?.delta).toBe('Speed +10');
     expect(rows[3]?.delta).toBe('Mining +0.1/s');
     expect(captainRows(selfState()).every((row) => !row.canTrain)).toBe(true);

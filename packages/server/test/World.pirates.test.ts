@@ -1,9 +1,29 @@
-import { IDLE_INPUT, TICK_DT, type PirateTier } from '@arena/shared';
+import { HULLS, IDLE_INPUT, PLAYER_HULL_BONUS, TICK_DT, type PirateTier } from '@arena/shared';
 import { describe, expect, it } from 'vitest';
+import { createPirateShip, createShip } from '../src/world/entities';
+import { DEFAULT_PATROLS } from '../src/world/pirates/PirateDirector';
 import { World } from '../src/world/World';
 import { seeded, shipRecord } from './support/fixtures';
 
 const patrolOf = (...tiers: PirateTier[]) => [{ band: 'raider' as const, composition: (): PirateTier[] => tiers }];
+
+describe('pirate hull', () => {
+  it('pirates keep their catalog hull without the player bonus', () => {
+    const raider = createPirateShip(9, 'raider', 0, 0);
+    expect(raider.stats.maxHull).toBe(HULLS.scout.maxHull);
+    expect(raider.hull).toBe(HULLS.scout.maxHull);
+  });
+
+  it('players get the bonus on top of the same hull', () => {
+    expect(createShip(1, 1, 'alice', shipRecord(0, 0, 1)).stats.maxHull).toBe(HULLS.scout.maxHull + PLAYER_HULL_BONUS);
+  });
+});
+
+describe('default patrols', () => {
+  it('fields half the original pirate patrols', () => {
+    expect(DEFAULT_PATROLS.map((patrol) => patrol.band)).toEqual(['raider', 'raider', 'raider', 'raider', 'marauder', 'marauder', 'marauder', 'warlord']);
+  });
+});
 
 describe('World pirates', () => {
   it('kills a pirate without a death event or bounty and drops its loot crate', () => {

@@ -74,11 +74,11 @@ describe('applyDamage', () => {
   it('damages hull unless shielded and reports a shield block', () => {
     const ship = newShip();
     expect(applyDamage(ship, 30, 7, 3)).toBe(false);
-    expect(ship.hull).toBe(50);
+    expect(ship.hull).toBe(150);
     expect(ship.lastHitBy).toBe(7);
     ship.shieldUp = true;
     expect(applyDamage(ship, 30, 7, 4)).toBe(true);
-    expect(ship.hull).toBe(50);
+    expect(ship.hull).toBe(150);
   });
 });
 

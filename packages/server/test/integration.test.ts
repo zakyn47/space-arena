@@ -285,7 +285,7 @@ it('onboards, levels and trains a persistent captain through real sockets', asyn
   }
   client.clear();
   const commissioned = await pump(client, 'snapshot', (s) => captainPoints(s.self.captain) === 0);
-  expect(commissioned.self.maxHull).toBe(84);
+  expect(commissioned.self.maxHull).toBe(189);
   client.clear();
   client.send({ type: 'dock' });
   await pump(client, 'snapshot', (s) => !s.self.docked);
@@ -310,7 +310,7 @@ it('onboards, levels and trains a persistent captain through real sockets', asyn
   ship.hull = 0;
   await pump(client, 'died');
   expect(ship.captain).toEqual(upgraded.self.captain);
-  expect(ship.stats.maxHull).toBe(88);
+  expect(ship.stats.maxHull).toBe(198);
   app.saveAll();
   await app.close();
   app = createApp({ dbPath, staticDir: tmpdir(), asteroidTarget: 0, pirates: false, boss: false });
@@ -320,5 +320,5 @@ it('onboards, levels and trains a persistent captain through real sockets', asyn
   const reconnected = await TestClient.connect(address.port, token);
   const restored = await pump(reconnected, 'snapshot');
   expect(restored.self.captain).toEqual(upgraded.self.captain);
-  expect(restored.self.maxHull).toBe(88);
+  expect(restored.self.maxHull).toBe(198);
 });

@@ -45,10 +45,10 @@ describe('PirateDirector', () => {
     const host = new FakeHost();
     new PirateDirector(seeded(1)).step(host, 0);
     const tiers = [...host.ships.values()].map((s) => s.npc);
-    expect(tiers.filter((t) => t === 'raider')).toHaveLength(16);
-    expect(tiers.filter((t) => t === 'warlord')).toHaveLength(2);
-    expect(tiers.filter((t) => t === 'marauder').length).toBeGreaterThanOrEqual(14);
-    expect(tiers.filter((t) => t === 'marauder').length).toBeLessThanOrEqual(19);
+    expect(tiers.filter((t) => t === 'raider')).toHaveLength(8);
+    expect(tiers.filter((t) => t === 'warlord')).toHaveLength(1);
+    expect(tiers.filter((t) => t === 'marauder').length).toBeGreaterThanOrEqual(8);
+    expect(tiers.filter((t) => t === 'marauder').length).toBeLessThanOrEqual(11);
   });
 
   it('respawns a wiped patrol after 60 s', () => {

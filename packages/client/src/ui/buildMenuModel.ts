@@ -13,6 +13,7 @@ import {
   HULL_IDS,
   MK_LEVELS,
   ORDNANCE_NAMES,
+  PLAYER_HULL_BONUS,
   ORDNANCE_PRICE,
   ORDNANCE_TYPES,
   SLOT_TYPES,
@@ -172,7 +173,7 @@ export function hullCards(build: Build, banked: number): HullCard[] {
       current,
       affordable: !current && banked + refund + overflowRefund >= hull.cost,
       slots: SLOT_TYPES.map((type) => `${SLOT_LETTERS[type]}${hull.slots[type]}`).join(' '),
-      stats: [`Hull ${hull.maxHull}`, `Speed ${hull.maxSpeed}`, `Thrust ${hull.thrust}`, `Turn ${hull.turnRate} rad/s`, `Cargo ${hull.cargoCapacity}`],
+      stats: [`Hull ${hull.maxHull + PLAYER_HULL_BONUS}`, `Speed ${hull.maxSpeed}`, `Thrust ${hull.thrust}`, `Turn ${hull.turnRate} rad/s`, `Cargo ${hull.cargoCapacity}`],
     };
   });
 }

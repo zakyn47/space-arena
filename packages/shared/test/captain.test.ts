@@ -43,7 +43,7 @@ describe('captains', () => {
   it('applies shared skill bonuses after equipment without granting missing equipment', () => {
     const captain = { xp: 600, skills: { gunnery: 1, engineering: 1, piloting: 1, mining: 1 } };
     const stats = statsFor(STARTER_BUILD, captain);
-    expect(stats.maxHull).toBe(84);
+    expect(stats.maxHull).toBe(189);
     expect(stats.maxShield).toBe(105);
     expect(stats.weapons[0]?.damage).toBeCloseTo(10.5);
     expect(stats.maxSpeed).toBeCloseTo(322 * 1.03);

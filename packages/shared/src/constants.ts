@@ -48,6 +48,7 @@ export const SELL_BACK_SHARE = 0.5;
 export const WEAPON_SPACING = 20;
 export const EMPTY_ENGINE_FACTOR = 0.6;
 export const SHIELD_DRAIN = 30;
+export const PLAYER_HULL_BONUS = 100;
 
 export const SALVAGE_CAPACITY = 3;
 export const MINING_CONE = Math.PI / 4;

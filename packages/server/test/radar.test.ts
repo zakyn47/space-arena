@@ -18,6 +18,11 @@ describe('buildRadar', () => {
     ]);
   });
 
+  it('shows every booster by kind', () => {
+    const self = createShip(1, 1, 'alice', shipRecord(0, 0, 1));
+    expect(buildRadar(self, [self], [{ kind: 'booster', id: 5, x: 100.4, y: 200.6, boost: 'repair' }])).toEqual([{ x: 100, y: 201, kind: 'repair' }]);
+  });
+
   it('marks the leviathan as a boss blip', () => {
     const self = player(1, 1, 1);
     const boss = createLeviathan(2, 10_000, 10_000);

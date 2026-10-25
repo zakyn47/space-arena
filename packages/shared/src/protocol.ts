@@ -163,6 +163,16 @@ export interface PlasmaState {
   readonly angle: number;
 }
 
+export type BoosterKind = 'repair' | 'speed';
+
+export interface BoosterState {
+  readonly kind: 'booster';
+  readonly id: number;
+  readonly x: number;
+  readonly y: number;
+  readonly boost: BoosterKind;
+}
+
 export interface SpaceMineState {
   readonly kind: 'spaceMine';
   readonly id: number;
@@ -170,7 +180,7 @@ export interface SpaceMineState {
   readonly y: number;
 }
 
-export type EntityState = ShipState | BulletState | RocketState | OrbState | PlasmaState | SpaceMineState | AsteroidState | OreState | CrateState;
+export type EntityState = ShipState | BulletState | RocketState | OrbState | PlasmaState | SpaceMineState | AsteroidState | OreState | CrateState | BoosterState;
 
 export interface SelfState {
   readonly id: number;
@@ -185,6 +195,7 @@ export interface SelfState {
   readonly maxShield: number;
   readonly shieldUp: boolean;
   readonly shieldDisrupted: number;
+  readonly speedBoost: number;
   readonly ore: number;
   readonly cargoCapacity: number;
   readonly carriedCredits: number;
@@ -211,7 +222,7 @@ export interface WelcomeMessage {
 export interface RadarBlip {
   readonly x: number;
   readonly y: number;
-  readonly kind: 'player' | 'pirate' | 'boss';
+  readonly kind: 'player' | 'pirate' | 'boss' | BoosterKind;
 }
 
 export interface HitEvent {

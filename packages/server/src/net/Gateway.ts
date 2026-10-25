@@ -67,7 +67,7 @@ export class Gateway implements LoopOutput {
       const ship = world.shipById(session.shipId);
       if (!ship) continue;
       const nearby = world.entitiesNear(ship.x, ship.y, VIEW_RADIUS);
-      const radar = radarShips ? buildRadar(ship, radarShips) : undefined;
+      const radar = radarShips ? buildRadar(ship, radarShips, world.boosterList()) : undefined;
       send(session.socket, buildSnapshot(ship, nearby, world.tickCount, world.time, radar, hits));
     }
   }

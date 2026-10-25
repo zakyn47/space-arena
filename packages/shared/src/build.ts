@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { NEW_CAPTAIN, captainStats, type Captain } from './captain';
 import { GEAR, GEAR_IDS, gearTier, type GearId, type Mk } from './catalog/gear';
 import { HULLS, HULL_IDS, SLOT_TYPES, type HullId, type SlotType } from './catalog/hulls';
-import { BASE_MAX_ROCKETS, EMPTY_ENGINE_FACTOR, PLAYER_HULL_BONUS, SALVAGE_CAPACITY, SELL_BACK_SHARE, SHIELD_DRAIN } from './constants';
+import { BASE_MAX_ROCKETS, EMPTY_ENGINE_FACTOR, PLAYER_HULL_BONUS, SPEED_BOOST_FACTOR, SALVAGE_CAPACITY, SELL_BACK_SHARE, SHIELD_DRAIN } from './constants';
 
 export interface InstalledGear {
   readonly gearId: GearId;
@@ -159,6 +159,10 @@ export function statsFor(build: Build, captain: Captain = NEW_CAPTAIN, hullBonus
     miningRange,
     weapons,
   }, captain);
+}
+
+export function boostStats(stats: ShipStats): ShipStats {
+  return { ...stats, thrust: stats.thrust * SPEED_BOOST_FACTOR, maxSpeed: stats.maxSpeed * SPEED_BOOST_FACTOR };
 }
 
 export function slotExists(build: Build, slot: SlotRef): boolean {

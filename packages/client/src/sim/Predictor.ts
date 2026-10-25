@@ -2,6 +2,7 @@ import {
   STARTER_BUILD,
   IDLE_INPUT,
   TICK_DT,
+  boostStats,
   statsFor,
   stepMotion,
   type SelfState,
@@ -52,7 +53,8 @@ export class Predictor {
   }
 
   reconcile(self: SelfState, lastSeq: number): void {
-    this.stats = statsFor(self.build, self.captain);
+    const stats = statsFor(self.build, self.captain);
+    this.stats = self.speedBoost > 0 ? boostStats(stats) : stats;
     this.frozen = self.docked;
     this.pending = this.frozen ? [] : this.pending.filter((entry) => entry.seq > lastSeq);
     const authoritative: ShipMotion = { x: self.x, y: self.y, vx: self.vx, vy: self.vy, angle: self.angle };

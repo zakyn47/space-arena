@@ -58,6 +58,18 @@ describe('abilityStates', () => {
     expect(abilityStates(selfState({ miningTargetId: 42 }), false)[3]).toMatchObject({ status: 'Mining', active: true });
   });
 
+  it('shows the remaining speed boost', () => {
+    expect(hudLines(selfState({ speedBoost: 6.2 }), null)).toContain('Speed boost 7s');
+    expect(hudLines(selfState(), null).some((line) => line.startsWith('Speed boost'))).toBe(false);
+  });
+
+  it('draws boosters on the minimap by kind', () => {
+    expect(minimapDots([{ x: 0, y: 0, kind: 'repair' }, { x: 0, y: 0, kind: 'speed' }], 1)).toEqual([
+      { x: 0, y: 0, color: '#3cffb0', size: 4 },
+      { x: 0, y: 0, color: '#ffb23c', size: 4 },
+    ]);
+  });
+
   it('shows a disrupted shield with its remaining time', () => {
     const self = selfState({ shieldDisrupted: 3.2, ordnance: 'plasma' });
     expect(hudLines(self, null)).toContain('Shield 100 / 100 (DISABLED 4s)');

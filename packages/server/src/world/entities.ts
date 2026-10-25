@@ -12,6 +12,7 @@ import {
   type Captain,
   STARTER_BUILD,
   statsFor,
+  type BoosterKind,
   type Build,
   type GearId,
   type Mk,
@@ -50,6 +51,7 @@ export interface ShipEntity {
   shieldUp: boolean;
   shieldLockout: number;
   shieldDisruptedUntil: number;
+  speedBoostUntil: number;
   weaponCooldowns: number[];
   ore: number;
   carriedCredits: number;
@@ -169,6 +171,14 @@ export interface OreEntity {
   readonly expiresAt: number;
 }
 
+export interface BoosterEntity {
+  readonly kind: 'booster';
+  readonly id: number;
+  readonly x: number;
+  readonly y: number;
+  readonly boost: BoosterKind;
+}
+
 export interface CrateEntity {
   readonly kind: 'crate';
   readonly id: number;
@@ -180,7 +190,7 @@ export interface CrateEntity {
   readonly expiresAt: number;
 }
 
-export type WorldEntity = ShipEntity | BulletEntity | RocketEntity | OrbEntity | PlasmaEntity | SpaceMineEntity | AsteroidEntity | OreEntity | CrateEntity;
+export type WorldEntity = ShipEntity | BulletEntity | RocketEntity | OrbEntity | PlasmaEntity | SpaceMineEntity | AsteroidEntity | OreEntity | CrateEntity | BoosterEntity;
 
 export function createShip(id: number, accountId: number, name: string, record: ShipRecord): ShipEntity {
   const stats = statsFor(record.build, record.captain);
@@ -204,6 +214,7 @@ export function createShip(id: number, accountId: number, name: string, record: 
     shieldUp: false,
     shieldLockout: 0,
     shieldDisruptedUntil: -Infinity,
+    speedBoostUntil: -Infinity,
     weaponCooldowns: stats.weapons.map(() => 0),
     ore: 0,
     carriedCredits: 0,
@@ -261,6 +272,7 @@ export function respawnShip(ship: ShipEntity, x: number, y: number): void {
     shieldUp: false,
     shieldLockout: 0,
     shieldDisruptedUntil: -Infinity,
+    speedBoostUntil: -Infinity,
     weaponCooldowns: stats.weapons.map(() => 0),
     ore: 0,
     carriedCredits: 0,

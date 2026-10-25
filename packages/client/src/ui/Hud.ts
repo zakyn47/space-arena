@@ -1,7 +1,7 @@
 import { DOCK_RANGE, ORDNANCE_NAMES, SALVAGE_CAPACITY, captainLevel, captainPoints, captainNeedsTraining, statsFor, type Ordnance, type RadarBlip, type SafeZone, type SelfState } from '@arena/shared';
 
-const RADAR_COLORS: Readonly<Record<RadarBlip['kind'], string>> = { player: '#ffffff', pirate: '#ff4d4d', boss: '#c04bff' };
-const RADAR_DOT_SIZES: Readonly<Record<RadarBlip['kind'], number>> = { player: 2, pirate: 2, boss: 6 };
+const RADAR_COLORS: Readonly<Record<RadarBlip['kind'], string>> = { player: '#ffffff', pirate: '#ff4d4d', boss: '#c04bff', repair: '#3cffb0', speed: '#ffb23c' };
+const RADAR_DOT_SIZES: Readonly<Record<RadarBlip['kind'], number>> = { player: 2, pirate: 2, boss: 6, repair: 4, speed: 4 };
 
 export const ORDNANCE_ICONS: Readonly<Record<Ordnance, string>> = { rockets: '/ui/icon_rocket.png', mines: '/ui/icon_mine.png', plasma: '/ui/icon_plasma.png' };
 const ORDNANCE_HINTS: Readonly<Record<Ordnance, string>> = { rockets: 'Hold to fire', mines: 'Hold to drop', plasma: 'Hold to fire' };
@@ -44,6 +44,7 @@ export function hudLines(self: SelfState, prompt: string | null): string[] {
     `Salvage ${self.salvage.length} / ${SALVAGE_CAPACITY}`,
     `Carried ${self.carriedCredits} cr (at risk)`,
     `Banked ${self.bankedCredits} cr`,
+    ...(self.speedBoost > 0 ? [`Speed boost ${Math.ceil(self.speedBoost)}s`] : []),
   ];
   return prompt ? [...lines, prompt] : lines;
 }

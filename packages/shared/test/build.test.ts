@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   STARTER_BUILD,
+  boostStats,
   buildValue,
   fitsHull,
   parseBuild,
@@ -37,6 +38,11 @@ describe('statsFor', () => {
       maxRockets: 10,
     });
     expect(stats.weapons).toEqual([{ gearId: 'pulse_laser', mk: 1, damage: 10, fireRate: 4, bulletSpeed: 800 }]);
+  });
+
+  it('boosts top speed and thrust by half', () => {
+    const boosted = boostStats(statsFor(STARTER_BUILD));
+    expect(boosted).toMatchObject({ thrust: 168 * 1.5, maxSpeed: 322 * 1.5, turnRate: 3.6, maxHull: 180 });
   });
 
   it('slows a ship with an empty engine slot', () => {

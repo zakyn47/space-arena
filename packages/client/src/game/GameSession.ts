@@ -1,4 +1,4 @@
-import { TICK_RATE, type ServerMessage, type ShipState, type SnapshotMessage, type WelcomeMessage } from '@arena/shared';
+import { TICK_RATE, type SelfState, type ServerMessage, type ShipState, type SnapshotMessage, type WelcomeMessage } from '@arena/shared';
 import { InputSampler } from '../input/InputSampler';
 import { TouchControls } from '../input/TouchControls';
 import { Connection } from '../net/Connection';
@@ -24,6 +24,7 @@ class ActiveGame {
   private readonly input: InputSampler;
   private readonly touch: TouchControls;
   private latest: SnapshotMessage | null = null;
+  private respawned = false;
   private inputTimer: ReturnType<typeof setInterval> | undefined;
 
   private constructor(
@@ -60,6 +61,7 @@ class ActiveGame {
         this.onSnapshot(message);
         return;
       case 'died':
+        this.respawned = true;
         this.toast.show(message.killer ? `Destroyed by ${message.killer}` : 'Ship destroyed');
         return;
       case 'shopResult':
@@ -91,9 +93,7 @@ class ActiveGame {
   }
 
   private onSnapshot(snapshot: SnapshotMessage): void {
-    if (snapshot.self.shieldDisrupted > 0 && !(this.latest && this.latest.self.shieldDisrupted > 0)) {
-      this.toast.show(`Shields disabled for ${Math.ceil(snapshot.self.shieldDisrupted)}s`);
-    }
+    this.announceChanges(snapshot.self);
     this.latest = snapshot;
     this.interpolator.push(snapshot.entities, performance.now());
     this.predictor.reconcile(snapshot.self, snapshot.lastSeq);
@@ -102,6 +102,18 @@ class ActiveGame {
     this.hud.update(snapshot.self);
     this.menu.update(snapshot.self);
     this.touch.update(snapshot.self);
+  }
+
+  private announceChanges(self: SelfState): void {
+    const previous = this.latest?.self;
+    const respawned = this.respawned;
+    this.respawned = false;
+    if (!previous) return;
+    if (self.shieldDisrupted > 0 && previous.shieldDisrupted <= 0) this.toast.show(`Shields disabled for ${Math.ceil(self.shieldDisrupted)}s`);
+    if (self.speedBoost > 0 && previous.speedBoost <= 0) this.toast.show(`Speed boost ${Math.ceil(self.speedBoost)}s`);
+    // Hull only rises in flight from a repair booster; docking and respawning also refill it.
+    const repaired = Math.round(self.hull - previous.hull);
+    if (!respawned && !self.docked && !previous.docked && repaired > 0) this.toast.show(`Hull repaired +${repaired}`);
   }
 
   private draw(): void {

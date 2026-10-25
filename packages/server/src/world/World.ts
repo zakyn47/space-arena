@@ -1,5 +1,8 @@
 import {
   ASTEROID_MAX_RADIUS,
+  BOOSTER_COUNT,
+  BOOSTER_RESPAWN,
+  boostStats,
   NPC_EXPERIENCE,
   type NpcKind,
   PLAYER_KILL_EXPERIENCE,
@@ -31,6 +34,7 @@ import type { ShipRecord } from '../db/PlayerRepository';
 import { randomAsteroid, scatterOre, type AsteroidFields } from './AsteroidField';
 import { applyDamage, bountyFor, disruptShield, fireWeapons, updateShield } from './Combat';
 import { firePlasma } from './Plasma';
+import { applyBooster, randomBoosterKind, randomBoosterSpot } from './Boosters';
 import { toggleDock, type DockOutcome } from './Docking';
 import {
   createLeviathan,
@@ -39,6 +43,7 @@ import {
   respawnShip,
   type AsteroidEntity,
   type BulletEntity,
+  type BoosterEntity,
   type CrateEntity,
   type OreEntity,
   type OrbEntity,
@@ -63,6 +68,7 @@ export interface WorldOptions {
   readonly rng?: () => number;
   readonly asteroidTarget?: number;
   readonly pirates?: boolean | readonly PatrolSpec[];
+  readonly boosters?: boolean;
   readonly boss?: boolean;
 }
 
@@ -102,6 +108,8 @@ export class World {
   private readonly asteroids = new Map<number, AsteroidEntity>();
   private readonly orePickups = new Map<number, OreEntity>();
   private readonly crates = new Map<number, CrateEntity>();
+  private readonly boosters = new Map<number, BoosterEntity>();
+  private readonly boosterSpawns: number[];
   private readonly grid = new SpatialGrid<WorldEntity>(GRID_CELL_SIZE);
   private readonly rng: () => number;
   private readonly asteroidTarget: number;
@@ -129,6 +137,7 @@ export class World {
   constructor(options: WorldOptions = {}) {
     this.rng = options.rng ?? Math.random;
     this.asteroidTarget = options.asteroidTarget ?? ASTEROID_TARGET_COUNT;
+    this.boosterSpawns = options.boosters ? Array.from({ length: BOOSTER_COUNT }, () => 0) : [];
     const patrols = patrolSpecs(options.pirates);
     this.director = patrols && new PirateDirector(this.rng, patrols);
     this.boss = options.boss ? new BossDirector(this.rng) : null;
@@ -241,6 +250,7 @@ export class World {
     this.resolveDeaths(events.died);
     this.expirePickups();
     this.maintainAsteroids();
+    this.maintainBoosters();
     this.expireLingering(events.departed);
     return events;
   }
@@ -267,7 +277,8 @@ export class World {
       }
       const inSafeZone = zoneAt(ship.x, ship.y) !== undefined;
       updateShield(ship, dt, inSafeZone, this.elapsed);
-      Object.assign(ship, stepMotion(ship, ship.input, ship.stats, dt));
+      const stats = this.elapsed < ship.speedBoostUntil ? boostStats(ship.stats) : ship.stats;
+      Object.assign(ship, stepMotion(ship, ship.input, stats, dt));
       for (const bullet of fireWeapons(ship, dt, inSafeZone, this.elapsed, () => this.allocateId())) {
         this.bullets.set(bullet.id, bullet);
       }
@@ -381,7 +392,7 @@ export class World {
 
   private rebuildGrid(): void {
     this.grid.clear();
-    for (const collection of [this.ships, this.bullets, this.rockets, this.orbs, this.plasma, this.mines, this.asteroids, this.orePickups, this.crates]) {
+    for (const collection of [this.ships, this.bullets, this.rockets, this.orbs, this.plasma, this.mines, this.asteroids, this.orePickups, this.crates, this.boosters]) {
       for (const entity of collection.values()) this.grid.insert(entity);
     }
   }
@@ -437,6 +448,7 @@ export class World {
       for (const entity of this.grid.queryRadius(ship.x, ship.y, PICKUP_RADIUS)) {
         if (entity.kind === 'ore') this.collectOre(ship, entity);
         if (entity.kind === 'crate') this.collectCrate(ship, entity);
+        if (entity.kind === 'booster') this.collectBooster(ship, entity);
       }
     }
   }
@@ -452,6 +464,26 @@ export class World {
     const leftover = takeCrate(ship, crate);
     if (leftover === null) this.crates.delete(crate.id);
     else this.crates.set(crate.id, { ...crate, ...leftover });
+  }
+
+  private collectBooster(ship: ShipEntity, booster: BoosterEntity): void {
+    if (!this.boosters.has(booster.id) || ship.docked || !applyBooster(ship, booster.boost, this.elapsed)) return;
+    this.boosters.delete(booster.id);
+    this.boosterSpawns.push(this.elapsed + BOOSTER_RESPAWN);
+  }
+
+  private maintainBoosters(): void {
+    const due = this.boosterSpawns.filter((time) => time <= this.elapsed);
+    if (due.length === 0) return;
+    this.boosterSpawns.splice(0, this.boosterSpawns.length, ...this.boosterSpawns.filter((time) => time > this.elapsed));
+    for (let i = 0; i < due.length; i += 1) {
+      const booster: BoosterEntity = { kind: 'booster', id: this.allocateId(), ...randomBoosterSpot(this.rng), boost: randomBoosterKind(this.rng) };
+      this.boosters.set(booster.id, booster);
+    }
+  }
+
+  boosterList(): BoosterEntity[] {
+    return [...this.boosters.values()];
   }
 
   private expirePickups(): void {

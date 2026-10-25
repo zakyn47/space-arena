@@ -28,7 +28,7 @@ describe('snapshot', () => {
     const self = createShip(1, 1, 'alice', shipRecord(4_000, 4_000, 1));
     self.dockCooldownUntil = 112;
     const state = buildSnapshot(self, [], 1, 100).self;
-    expect(state).toMatchObject({ build: STARTER_BUILD, ordnance: 'rockets', shieldDisrupted: 0, rockets: 10, maxRockets: 10, canDock: false, dockCooldown: 12, docked: false });
+    expect(state).toMatchObject({ build: STARTER_BUILD, ordnance: 'rockets', shieldDisrupted: 0, speedBoost: 0, rockets: 10, maxRockets: 10, canDock: false, dockCooldown: 12, docked: false });
   });
 
   it('sends hits only for ships in view with rounded angles', () => {
@@ -57,6 +57,14 @@ describe('snapshot', () => {
     expect(buildSnapshot(self, [], 1, 100).self.shieldDisrupted).toBe(3.3);
     const bolt: WorldEntity = { kind: 'plasma', id: 7, ownerId: 2, x: 1, y: 2, prevX: 1, prevY: 2, vx: 0, vy: -380, angle: 0, damage: 30, fromNpc: false, expiresAt: 9 };
     expect(toEntityState(bolt)).toEqual({ kind: 'plasma', id: 7, x: 1, y: 2, vx: 0, vy: -380, angle: 0 });
+  });
+
+  it('reports the remaining speed boost and maps boosters', () => {
+    const self = createShip(1, 1, 'alice', shipRecord(10, 20, 1));
+    self.speedBoostUntil = 107.04;
+    expect(buildSnapshot(self, [], 1, 100).self.speedBoost).toBe(7);
+    const booster: WorldEntity = { kind: 'booster', id: 8, x: 3, y: 4, boost: 'speed' };
+    expect(toEntityState(booster)).toEqual({ kind: 'booster', id: 8, x: 3, y: 4, boost: 'speed' });
   });
 
   it('sends health only for the leviathan', () => {

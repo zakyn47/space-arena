@@ -19,6 +19,7 @@ export interface AppConfig {
   readonly staticDir: string;
   readonly asteroidTarget?: number;
   readonly pirates?: boolean;
+  readonly boosters?: boolean;
   readonly boss?: boolean;
   readonly trustProxy?: boolean;
 }
@@ -34,7 +35,7 @@ export interface App {
 export function createApp(config: AppConfig): App {
   const repo = PlayerRepository.open(config.dbPath);
   const auth = new AuthService(repo);
-  const world = new World({ asteroidTarget: config.asteroidTarget, pirates: config.pirates ?? true, boss: config.boss ?? true });
+  const world = new World({ asteroidTarget: config.asteroidTarget, pirates: config.pirates ?? true, boosters: config.boosters ?? true, boss: config.boss ?? true });
   const server = createHttpServer({
     auth,
     limiter: new RateLimiter(AUTH_BURST, AUTH_REFILL_PER_MS),

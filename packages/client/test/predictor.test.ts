@@ -81,3 +81,15 @@ it('predicts with the same captain motion bonuses as the server', () => {
   skilled.predict(thrust);
   expect(skilled.current?.vy).toBeCloseTo((baseline.current?.vy ?? 0) * 1.09);
 });
+
+it('predicts boosted speed while a speed boost is active', () => {
+  const normal = new Predictor();
+  const boosted = new Predictor();
+  normal.reconcile(selfState(), 0);
+  boosted.reconcile(selfState({ speedBoost: 5 }), 0);
+  for (let i = 0; i < 60; i += 1) {
+    normal.predict(thrust);
+    boosted.predict(thrust);
+  }
+  expect(Math.abs(boosted.current?.vy ?? 0)).toBeCloseTo(Math.abs(normal.current?.vy ?? 0) * 1.5, 0);
+});

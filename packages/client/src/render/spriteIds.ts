@@ -31,6 +31,8 @@ export function spriteIdFor(entity: EntityState): string {
       return `asteroid_${entity.variant}`;
     case 'ore':
       return 'ore_pickup';
+    case 'booster':
+      return `booster_${entity.boost}`;
     case 'crate':
       return 'loot_crate';
   }

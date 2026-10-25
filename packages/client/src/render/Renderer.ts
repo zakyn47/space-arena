@@ -7,7 +7,7 @@ import { spriteIdFor, vanishEffectFor } from './spriteIds';
 const STARFIELD_PARALLAX = 0.3;
 const EXPLOSION_VISIBLE_FRACTION = 0.8;
 const LABEL_OFFSET_Y = -44;
-const ANIMATIONS: Readonly<Record<string, number>> = { space_mine: 0.8, leviathan: 1.6, plasma_orb: 0.3, plasma_bolt: 0.2, booster_repair: 1.2, booster_speed: 1.2 };
+const ANIMATIONS: Readonly<Record<string, number>> = { space_mine: 0.8, leviathan: 1.6, plasma_orb: 0.3, plasma_bolt: 0.2, booster_repair: 1.2, booster_speed: 1.2, dark_matter_shield: 1.2 };
 
 type LayerName = 'zones' | 'ground' | 'beams' | 'ships' | 'bullets' | 'effects' | 'labels';
 
@@ -27,6 +27,7 @@ const LAYER_FOR: Readonly<Record<EntityState['kind'], LayerName>> = {
 interface EntityView {
   readonly spriteId: string;
   readonly container: Container;
+  readonly darkMatter: Container | null;
   readonly shield: Container | null;
   readonly label: Text | null;
   readonly health: Graphics | null;
@@ -181,6 +182,7 @@ export class Renderer {
     view.y = entity.y;
     view.container.position.set(entity.x, entity.y);
     if ('angle' in entity) view.container.rotation = entity.angle;
+    if (view.darkMatter && entity.kind === 'ship') view.darkMatter.visible = entity.darkMatter === true;
     if (view.shield && entity.kind === 'ship') view.shield.visible = entity.shieldUp;
     view.label?.position.set(entity.x, entity.y + view.labelOffset);
     if (view.health && entity.kind === 'ship') this.drawHealth(view.health, entity.x, entity.y + view.labelOffset + 12, entity.health ?? 1);
@@ -227,6 +229,8 @@ export class Renderer {
     if (entity.kind === 'asteroid') body.scale.set((entity.radius * 2) / this.sprites.size(spriteId).width);
     container.addChild(body);
     const isLeviathan = entity.kind === 'ship' && entity.npc === 'leviathan';
+    const darkMatter = entity.kind === 'ship' && !isLeviathan ? this.sprites.animate('dark_matter_shield', ANIMATIONS.dark_matter_shield ?? 1.2, true) : null;
+    if (darkMatter) container.addChild(darkMatter);
     const shield = entity.kind === 'ship' && !isLeviathan ? this.sprites.create('shield_bubble') : null;
     if (shield) container.addChild(shield);
     if (entity.kind === 'crate' && entity.hasGear) {
@@ -240,7 +244,7 @@ export class Renderer {
     const health = isLeviathan ? new Graphics() : null;
     if (health) this.layers.labels.addChild(health);
     const labelOffset = isLeviathan ? -(this.sprites.size(spriteId).height / 2 + 14) : LABEL_OFFSET_Y;
-    const view: EntityView = { spriteId, container, shield, label, health, labelOffset, x: entity.x, y: entity.y };
+    const view: EntityView = { spriteId, container, darkMatter, shield, label, health, labelOffset, x: entity.x, y: entity.y };
     this.views.set(entity.id, view);
     return view;
   }

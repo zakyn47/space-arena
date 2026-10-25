@@ -30,6 +30,7 @@
     {"id": "icon_plasma", "file": "ui/icon_plasma.png", "width": 48, "height": 48, "anchor": [0.5, 0.5], "frames": 1},
     {"id": "booster_repair", "file": "world/booster_repair.png", "width": 160, "height": 40, "anchor": [0.5, 0.5], "frames": 4},
     {"id": "booster_speed", "file": "world/booster_speed.png", "width": 160, "height": 40, "anchor": [0.5, 0.5], "frames": 4},
+    {"id": "arena_barrier", "file": "world/arena_barrier.png", "width": 64, "height": 64, "anchor": [0.5, 0.5], "frames": 1},
     {"id": "leviathan", "file": "world/leviathan.png", "width": 768, "height": 192, "anchor": [0.5, 0.5], "frames": 4},
     {"id": "plasma_orb", "file": "bullets/plasma_orb.png", "width": 64, "height": 32, "anchor": [0.5, 0.5], "frames": 2},
     {"id": "leviathan_death", "file": "fx/leviathan_death.png", "width": 1536, "height": 192, "anchor": [0.5, 0.5], "frames": 8},

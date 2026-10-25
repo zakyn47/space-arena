@@ -66,3 +66,7 @@ Both are collectible power-ups floating in space, seen from above, centered, ~30
 - `booster_repair`: rounded energy capsule with a glowing green `#3CFFB0` core showing a white medical/repair cross, thin steel rim.
 - `booster_speed`: rounded energy capsule with a glowing amber `#FFB23C` core showing two white forward chevrons (»), thin steel rim.
 The two must be instantly distinguishable by color and symbol.
+
+## Arena barrier update
+
+- `arena_barrier` (64×64, tiled): one tile of the energy wall at the edge of the arena. It is repeated top-to-bottom along a vertical edge (and rotated 90° for horizontal edges), so it MUST tile seamlessly top-to-bottom; left and right edges fade to transparent. A vertical force-field band ~40 px wide centered in the tile: bright hot red-orange `#FF5A3C` core line, a faint hexagonal energy mesh around it, glowing falloff to transparent on both sides. Reads clearly as "danger / do not cross" against the dark navy starfield.

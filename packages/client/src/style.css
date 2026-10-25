@@ -238,14 +238,13 @@ kbd { color: #c0d8e9; font-family: inherit; }
 .touch-stick-down { bottom: 11px; }
 .touch-stick-turn { display: flex; justify-content: space-between; width: 100%; padding: 0 10px; font-size: 18px; }
 .touch-actions { right: max(16px, env(safe-area-inset-right, 0px)); display: grid; grid-template-columns: repeat(2, 68px); gap: 8px; }
-.touch-action { display: grid; grid-template-columns: 20px 1fr; align-content: center; align-items: center; gap: 1px 4px; min-height: 60px; padding: 7px; border: 1px solid #5ec8ff75; border-radius: 10px; background: #112e43e8; color: #e5f5ff; touch-action: none; text-align: center; }
-.touch-action-icon { width: 20px; height: 24px; object-fit: contain; }
+.touch-action { display: grid; grid-template-columns: minmax(0, 1fr); align-content: center; justify-items: center; gap: 1px; min-height: 60px; padding: 5px 4px; border: 1px solid #5ec8ff75; border-radius: 10px; background: #112e43e8; color: #e5f5ff; touch-action: none; text-align: center; }
+.touch-action-icon { width: 20px; height: 20px; object-fit: contain; }
+.touch-action-label, .touch-action-status { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .touch-action-label { font-size: 11px; font-weight: 700; }
-.touch-action-status { grid-column: 1 / -1; font-size: 8px; color: #afc9dc; }
+.touch-action-status { font-size: 8px; color: #afc9dc; }
 .touch-action.held, .touch-action.active { background: #236783ee; border-color: #a3e6ff; box-shadow: 0 0 18px #5ec8ff35; }
 .touch-action:disabled { opacity: .55; background: #0d1c2be8; }
-.touch-dock { min-height: 60px; }
-.touch-dock .touch-action-status { grid-column: 1 / -1; }
 .touch-controls[hidden] { display: none; }
 @media (any-pointer: coarse) {
   .touch-controls { display: block; }
@@ -263,8 +262,6 @@ kbd { color: #c0d8e9; font-family: inherit; }
   .touch-stick-knob { width: 46px; height: 46px; }
   .touch-actions { grid-template-columns: repeat(3, 64px); bottom: calc(84px + env(safe-area-inset-bottom, 0px)); gap: 6px; }
   .touch-action { min-height: 52px; }
-  .touch-dock { grid-column: auto; grid-template-columns: 20px 1fr; }
-  .touch-dock .touch-action-status { grid-column: 1 / -1; }
   .combat-bar { padding: 6px 12px; width: min(480px, calc(100% - 32px)); }
   .hud-label { font-size: 8px; }
   .hud-value { font-size: 14px; }

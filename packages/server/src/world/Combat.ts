@@ -2,6 +2,7 @@ import {
   BOUNTY_BASE,
   BOUNTY_SHARE,
   BULLET_LIFETIME,
+  SHIELD_DISRUPTION,
   SHIELD_LOCKOUT,
   SHIP_RADIUS,
   WEAPON_SPACING,
@@ -11,12 +12,18 @@ import {
 } from '@arena/shared';
 import type { BulletEntity, ShipEntity } from './entities';
 
-export function updateShield(ship: ShipEntity, dt: number, inSafeZone: boolean): void {
+export function disruptShield(ship: ShipEntity, time: number): void {
+  ship.shieldUp = false;
+  ship.shieldDisruptedUntil = time + SHIELD_DISRUPTION;
+}
+
+export function updateShield(ship: ShipEntity, dt: number, inSafeZone: boolean, time: number): void {
   ship.shieldLockout = Math.max(0, ship.shieldLockout - dt);
-  const raising = ship.input.shield && !inSafeZone && ship.shieldLockout === 0 && ship.shieldEnergy > 0;
+  const disrupted = time < ship.shieldDisruptedUntil;
+  const raising = ship.input.shield && !inSafeZone && !disrupted && ship.shieldLockout === 0 && ship.shieldEnergy > 0;
   if (!raising) {
     ship.shieldUp = false;
-    ship.shieldEnergy = Math.min(ship.stats.maxShield, ship.shieldEnergy + ship.stats.shieldRegen * dt);
+    if (!disrupted) ship.shieldEnergy = Math.min(ship.stats.maxShield, ship.shieldEnergy + ship.stats.shieldRegen * dt);
     return;
   }
   ship.shieldUp = true;

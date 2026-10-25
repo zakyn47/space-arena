@@ -49,6 +49,7 @@ export interface ShipEntity {
   shieldEnergy: number;
   shieldUp: boolean;
   shieldLockout: number;
+  shieldDisruptedUntil: number;
   weaponCooldowns: number[];
   ore: number;
   carriedCredits: number;
@@ -120,7 +121,23 @@ export interface OrbEntity {
   readonly expiresAt: number;
 }
 
-export type Projectile = BulletEntity | RocketEntity | OrbEntity;
+export interface PlasmaEntity {
+  readonly kind: 'plasma';
+  readonly id: number;
+  readonly ownerId: number;
+  x: number;
+  y: number;
+  prevX: number;
+  prevY: number;
+  readonly vx: number;
+  readonly vy: number;
+  readonly angle: number;
+  readonly damage: number;
+  readonly fromNpc: boolean;
+  readonly expiresAt: number;
+}
+
+export type Projectile = BulletEntity | RocketEntity | OrbEntity | PlasmaEntity;
 
 export interface SpaceMineEntity {
   readonly kind: 'spaceMine';
@@ -163,7 +180,7 @@ export interface CrateEntity {
   readonly expiresAt: number;
 }
 
-export type WorldEntity = ShipEntity | BulletEntity | RocketEntity | OrbEntity | SpaceMineEntity | AsteroidEntity | OreEntity | CrateEntity;
+export type WorldEntity = ShipEntity | BulletEntity | RocketEntity | OrbEntity | PlasmaEntity | SpaceMineEntity | AsteroidEntity | OreEntity | CrateEntity;
 
 export function createShip(id: number, accountId: number, name: string, record: ShipRecord): ShipEntity {
   const stats = statsFor(record.build, record.captain);
@@ -186,6 +203,7 @@ export function createShip(id: number, accountId: number, name: string, record: 
     shieldEnergy: stats.maxShield,
     shieldUp: false,
     shieldLockout: 0,
+    shieldDisruptedUntil: -Infinity,
     weaponCooldowns: stats.weapons.map(() => 0),
     ore: 0,
     carriedCredits: 0,
@@ -242,6 +260,7 @@ export function respawnShip(ship: ShipEntity, x: number, y: number): void {
     shieldEnergy: stats.maxShield,
     shieldUp: false,
     shieldLockout: 0,
+    shieldDisruptedUntil: -Infinity,
     weaponCooldowns: stats.weapons.map(() => 0),
     ore: 0,
     carriedCredits: 0,

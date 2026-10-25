@@ -28,7 +28,7 @@ describe('snapshot', () => {
     const self = createShip(1, 1, 'alice', shipRecord(4_000, 4_000, 1));
     self.dockCooldownUntil = 112;
     const state = buildSnapshot(self, [], 1, 100).self;
-    expect(state).toMatchObject({ build: STARTER_BUILD, ordnance: 'rockets', rockets: 10, maxRockets: 10, canDock: false, dockCooldown: 12, docked: false });
+    expect(state).toMatchObject({ build: STARTER_BUILD, ordnance: 'rockets', shieldDisrupted: 0, rockets: 10, maxRockets: 10, canDock: false, dockCooldown: 12, docked: false });
   });
 
   it('sends hits only for ships in view with rounded angles', () => {
@@ -49,6 +49,14 @@ describe('snapshot', () => {
   it('does not leak private fields of other ships', () => {
     const other = createShip(2, 2, 'bob', shipRecord(30, 40, 2));
     expect(Object.keys(toEntityState(other))).not.toContain('rockets');
+  });
+
+  it('reports remaining shield disruption and maps plasma bolts', () => {
+    const self = createShip(1, 1, 'alice', shipRecord(10, 20, 1));
+    self.shieldDisruptedUntil = 103.26;
+    expect(buildSnapshot(self, [], 1, 100).self.shieldDisrupted).toBe(3.3);
+    const bolt: WorldEntity = { kind: 'plasma', id: 7, ownerId: 2, x: 1, y: 2, prevX: 1, prevY: 2, vx: 0, vy: -380, angle: 0, damage: 30, fromNpc: false, expiresAt: 9 };
+    expect(toEntityState(bolt)).toEqual({ kind: 'plasma', id: 7, x: 1, y: 2, vx: 0, vy: -380, angle: 0 });
   });
 
   it('sends health only for the leviathan', () => {

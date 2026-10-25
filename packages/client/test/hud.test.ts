@@ -58,6 +58,13 @@ describe('abilityStates', () => {
     expect(abilityStates(selfState({ miningTargetId: 42 }), false)[3]).toMatchObject({ status: 'Mining', active: true });
   });
 
+  it('shows a disrupted shield with its remaining time', () => {
+    const self = selfState({ shieldDisrupted: 3.2, ordnance: 'plasma' });
+    expect(hudLines(self, null)).toContain('Shield 100 / 100 (DISABLED 4s)');
+    expect(abilityStates(self, false)[1]).toMatchObject({ status: 'Disabled 4s', unavailable: true });
+    expect(abilityStates(self, false)[2]).toMatchObject({ label: 'Plasma', icon: '/ui/icon_plasma.png', status: 'Hold to fire' });
+  });
+
   it('names the carried ordnance', () => {
     const self = selfState({ ordnance: 'mines', rockets: 3 });
     expect(hudLines(self, null)).toContain('Mines 3 / 10');

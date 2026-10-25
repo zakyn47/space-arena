@@ -1,4 +1,4 @@
-import { HULLS, MINE_PRICE, ROCKET_PRICE, SAFE_ZONES, STARTER_BUILD, type ShopAction } from '@arena/shared';
+import { HULLS, MINE_PRICE, PLASMA_PRICE, ROCKET_PRICE, SAFE_ZONES, STARTER_BUILD, type ShopAction } from '@arena/shared';
 import { describe, expect, it } from 'vitest';
 import { createShip } from '../src/world/entities';
 import { applyShopAction } from '../src/world/Shop';
@@ -101,6 +101,13 @@ describe('buyOrdnance', () => {
     expect(ship.rockets).toBe(10);
     expect(ship.bankedCredits).toBe(1_000 - 3 * ROCKET_PRICE);
     expect(applyShopAction(ship, buy({ type: 'buyOrdnance', ordnance: 'rockets', count: 1 }))).toEqual({ ok: false, reason: 'ammo_cap' });
+  });
+
+  it('sells plasma bolts like any other ordnance', () => {
+    const ship = dockedShip(1_000);
+    ship.rockets = 0;
+    expect(applyShopAction(ship, buy({ type: 'buyOrdnance', ordnance: 'plasma', count: 2 }))).toEqual({ ok: true });
+    expect(ship).toMatchObject({ ordnance: 'plasma', rockets: 2, bankedCredits: 1_000 - 2 * PLASMA_PRICE });
   });
 
   it('swaps ordnance type and refunds leftover ammo at 50%', () => {

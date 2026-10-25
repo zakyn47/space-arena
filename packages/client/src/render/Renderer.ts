@@ -7,7 +7,7 @@ import { spriteIdFor, vanishEffectFor } from './spriteIds';
 const STARFIELD_PARALLAX = 0.3;
 const EXPLOSION_VISIBLE_FRACTION = 0.8;
 const LABEL_OFFSET_Y = -44;
-const ANIMATIONS: Readonly<Record<string, number>> = { space_mine: 0.8, leviathan: 1.6, plasma_orb: 0.3 };
+const ANIMATIONS: Readonly<Record<string, number>> = { space_mine: 0.8, leviathan: 1.6, plasma_orb: 0.3, plasma_bolt: 0.2 };
 
 type LayerName = 'zones' | 'ground' | 'beams' | 'ships' | 'bullets' | 'effects' | 'labels';
 
@@ -16,6 +16,7 @@ const LAYER_FOR: Readonly<Record<EntityState['kind'], LayerName>> = {
   bullet: 'bullets',
   rocket: 'bullets',
   orb: 'bullets',
+  plasma: 'bullets',
   spaceMine: 'ground',
   asteroid: 'ground',
   ore: 'ground',

@@ -29,7 +29,8 @@ import {
 } from '@arena/shared';
 import type { ShipRecord } from '../db/PlayerRepository';
 import { randomAsteroid, scatterOre, type AsteroidFields } from './AsteroidField';
-import { applyDamage, bountyFor, fireWeapons, updateShield } from './Combat';
+import { applyDamage, bountyFor, disruptShield, fireWeapons, updateShield } from './Combat';
+import { firePlasma } from './Plasma';
 import { toggleDock, type DockOutcome } from './Docking';
 import {
   createLeviathan,
@@ -41,6 +42,7 @@ import {
   type CrateEntity,
   type OreEntity,
   type OrbEntity,
+  type PlasmaEntity,
   type Projectile,
   type RocketEntity,
   type ShipEntity,
@@ -95,6 +97,7 @@ export class World {
   private readonly bullets = new Map<number, BulletEntity>();
   private readonly rockets = new Map<number, RocketEntity>();
   private readonly orbs = new Map<number, OrbEntity>();
+  private readonly plasma = new Map<number, PlasmaEntity>();
   private readonly mines = new Map<number, SpaceMineEntity>();
   private readonly asteroids = new Map<number, AsteroidEntity>();
   private readonly orePickups = new Map<number, OreEntity>();
@@ -232,6 +235,7 @@ export class World {
     this.resolveProjectileHits(this.bullets, events.hits);
     this.resolveProjectileHits(this.rockets, events.hits);
     this.resolveProjectileHits(this.orbs, events.hits);
+    this.resolveProjectileHits(this.plasma, events.hits);
     this.resolveMines(events.hits);
     this.collectPickups();
     this.resolveDeaths(events.died);
@@ -262,7 +266,7 @@ export class World {
         continue;
       }
       const inSafeZone = zoneAt(ship.x, ship.y) !== undefined;
-      updateShield(ship, dt, inSafeZone);
+      updateShield(ship, dt, inSafeZone, this.elapsed);
       Object.assign(ship, stepMotion(ship, ship.input, ship.stats, dt));
       for (const bullet of fireWeapons(ship, dt, inSafeZone, this.elapsed, () => this.allocateId())) {
         this.bullets.set(bullet.id, bullet);
@@ -275,6 +279,11 @@ export class World {
   private releaseOrdnance(ship: ShipEntity): void {
     if (ship.ordnance === 'mines') {
       this.layMine(ship);
+      return;
+    }
+    if (ship.ordnance === 'plasma') {
+      const bolt = firePlasma(ship, this.allocateId(), this.elapsed);
+      this.plasma.set(bolt.id, bolt);
       return;
     }
     const rocket = launchRocket(ship, this.allocateId(), this.elapsed, acquireTarget(ship, this.ships.values()));
@@ -343,7 +352,7 @@ export class World {
   }
 
   private stepProjectiles(dt: number): void {
-    for (const bullet of [...this.bullets.values(), ...this.orbs.values()]) {
+    for (const bullet of [...this.bullets.values(), ...this.orbs.values(), ...this.plasma.values()]) {
       bullet.prevX = bullet.x;
       bullet.prevY = bullet.y;
       bullet.x += bullet.vx * dt;
@@ -352,7 +361,7 @@ export class World {
     for (const rocket of this.rockets.values()) {
       steerRocket(rocket, rocket.targetId === null ? undefined : this.ships.get(rocket.targetId), dt);
     }
-    for (const collection of [this.bullets, this.rockets, this.orbs]) {
+    for (const collection of [this.bullets, this.rockets, this.orbs, this.plasma]) {
       for (const projectile of collection.values()) {
         if (this.isExpired(projectile)) collection.delete(projectile.id);
       }
@@ -372,7 +381,7 @@ export class World {
 
   private rebuildGrid(): void {
     this.grid.clear();
-    for (const collection of [this.ships, this.bullets, this.rockets, this.orbs, this.mines, this.asteroids, this.orePickups, this.crates]) {
+    for (const collection of [this.ships, this.bullets, this.rockets, this.orbs, this.plasma, this.mines, this.asteroids, this.orePickups, this.crates]) {
       for (const entity of collection.values()) this.grid.insert(entity);
     }
   }
@@ -407,6 +416,7 @@ export class World {
 
   private hitShip(ship: ShipEntity, projectile: Projectile): HitEvent {
     const shield = applyDamage(ship, projectile.damage, projectile.ownerId, this.elapsed);
+    if (projectile.kind === 'plasma') disruptShield(ship, this.elapsed);
     const angle = Math.atan2(projectile.prevX - ship.x, ship.y - projectile.prevY);
     return { shipId: ship.id, angle, shield };
   }

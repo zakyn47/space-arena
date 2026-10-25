@@ -11,7 +11,7 @@
 | `Space` (hold) | Fire forward |
 | `Shift` (hold, left or right) | Raise shield |
 | `E` | Dock / undock at a station |
-| `R` (hold) | Fire homing rockets, or drop space mines behind you when carrying mines |
+| `R` (hold) | Fire homing rockets, drop space mines behind you, or fire plasma bolts — whichever ammunition you carry |
 | `F` (hold) | Mining laser: drill the asteroid in front of you |
 
 Keys use physical positions, so they work the same on any keyboard layout.
@@ -47,6 +47,7 @@ Keys use physical positions, so they work the same on any keyboard layout.
 - **Docking:** fly within 200 px of a station, slow down (≤ 60 px/s), avoid damage for 5 s, press `E`. The ship snaps to the station and is frozen; ore is sold, carried credits are banked, hull is repaired and the build menu opens. Press `E` again to undock; docking is then unavailable for 30 s.
 - **Rockets:** lock the nearest enemy within 1 200 px in front of you and home in; 30 damage each. New pilots get 10. Death loses all carried rockets or mines and you respawn with none. Buy more in the build menu (25 cr each).
 - **Space mines:** an alternative to rockets. You carry one ammunition type at a time; buying the other type in the build menu's Ammunition tab sells your current ammo back at 50%. Mines cost 40 cr and share the rocket capacity. Hold `R` to drop one behind you (every 0.5 s). A mine arms after 1.5 s, explodes when an enemy ship comes within 60 px and deals 60 damage to every ship within 100 px except you. A raised shield blocks the blast. Up to 5 of your mines stay active (the oldest disappears), each for 60 s. Respawning resets you to rockets.
+- **Plasma blaster:** a third ammunition type (35 cr per bolt, same capacity). Hold `R` to fire a straight bolt (570 px/s, reaching about 2 850 px, every 1.2 s) that deals 30 damage. Any hit disrupts the target's shield for 5 s: it drops, cannot be raised and does not recharge. A raised shield still absorbs that bolt's damage before it collapses. The hit pilot sees "Shields disabled" and a countdown on the shield meter. Another hit restarts the 5 s.
 - **Builds:** buy hulls (Scout, Fighter, Freighter, Gunship) and install Mk1–Mk3 gear into weapon, shield, engine and utility slots. Replaced or sold gear refunds 50%. Death resets you to a Scout with starter gear.
 - **Mining laser:** hold `F` facing an asteroid within range; ore flows straight into cargo. Every new pilot has a Mining Laser Mk1; better lasers are in the build menu. You cannot mine while firing, shielded, docked or in a safe zone.
 - **Pirates:** red ships roam open space — Raiders near the stations, Marauders farther out, Warlords in the deep. They attack pilots who come within ~800 px. Destroyed pirates drop a crate with credits, ore and sometimes a gear item.

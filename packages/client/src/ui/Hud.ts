@@ -3,8 +3,18 @@ import { DOCK_RANGE, ORDNANCE_NAMES, SALVAGE_CAPACITY, captainLevel, captainPoin
 const RADAR_COLORS: Readonly<Record<RadarBlip['kind'], string>> = { player: '#ffffff', pirate: '#ff4d4d', boss: '#c04bff' };
 const RADAR_DOT_SIZES: Readonly<Record<RadarBlip['kind'], number>> = { player: 2, pirate: 2, boss: 6 };
 
-export const ORDNANCE_ICONS: Readonly<Record<Ordnance, string>> = { rockets: '/ui/icon_rocket.png', mines: '/ui/icon_mine.png' };
-const ORDNANCE_HINTS: Readonly<Record<Ordnance, string>> = { rockets: 'Hold to fire', mines: 'Hold to drop' };
+export const ORDNANCE_ICONS: Readonly<Record<Ordnance, string>> = { rockets: '/ui/icon_rocket.png', mines: '/ui/icon_mine.png', plasma: '/ui/icon_plasma.png' };
+const ORDNANCE_HINTS: Readonly<Record<Ordnance, string>> = { rockets: 'Hold to fire', mines: 'Hold to drop', plasma: 'Hold to fire' };
+
+function disabledSeconds(self: SelfState): number | null {
+  return self.shieldDisrupted > 0 ? Math.ceil(self.shieldDisrupted) : null;
+}
+
+function shieldSuffix(self: SelfState): string {
+  const disabled = disabledSeconds(self);
+  if (disabled !== null) return ` (DISABLED ${disabled}s)`;
+  return self.shieldUp ? ' (UP)' : '';
+}
 
 export interface MinimapDot {
   readonly x: number;
@@ -28,7 +38,7 @@ export function dockPrompt(self: SelfState, inRange: boolean): string | null {
 export function hudLines(self: SelfState, prompt: string | null): string[] {
   const lines = [
     `Hull ${Math.ceil(self.hull)} / ${Math.round(self.maxHull)}`,
-    `Shield ${Math.floor(self.shieldEnergy)} / ${Math.round(self.maxShield)}${self.shieldUp ? ' (UP)' : ''}`,
+    `Shield ${Math.floor(self.shieldEnergy)} / ${Math.round(self.maxShield)}${shieldSuffix(self)}`,
     `${ORDNANCE_NAMES[self.ordnance]} ${self.rockets} / ${self.maxRockets}`,
     `Cargo ${self.ore} / ${self.cargoCapacity} ore`,
     `Salvage ${self.salvage.length} / ${SALVAGE_CAPACITY}`,
@@ -53,6 +63,7 @@ export function abilityStates(self: SelfState, inSafeZone: boolean): AbilityStat
   const attackBlocked = blocked ?? (self.shieldUp ? 'Shield up' : null);
   const noWeapon = stats.weapons.length === 0;
   const noShield = self.maxShield === 0;
+  const disabled = disabledSeconds(self);
   const noMining = stats.miningRate === 0;
   const cargoFull = self.ore >= self.cargoCapacity;
   return [
@@ -63,8 +74,8 @@ export function abilityStates(self: SelfState, inSafeZone: boolean): AbilityStat
     },
     {
       label: 'Shield', key: 'Shift', icon: '/ui/gear_shield_gen.png',
-      status: noShield ? 'No generator' : blocked ?? (self.shieldUp ? 'Active' : self.shieldEnergy <= 0 ? 'Depleted' : 'Hold to raise'),
-      active: self.shieldUp && blocked === null, unavailable: noShield || blocked !== null || self.shieldEnergy <= 0,
+      status: noShield ? 'No generator' : blocked ?? (disabled !== null ? `Disabled ${disabled}s` : self.shieldUp ? 'Active' : self.shieldEnergy <= 0 ? 'Depleted' : 'Hold to raise'),
+      active: self.shieldUp && blocked === null, unavailable: noShield || blocked !== null || disabled !== null || self.shieldEnergy <= 0,
     },
     {
       label: ORDNANCE_NAMES[self.ordnance], key: 'R', icon: ORDNANCE_ICONS[self.ordnance],
@@ -92,7 +103,7 @@ function textNode(tag: 'div' | 'span' | 'kbd', className: string, text: string):
   return node;
 }
 
-function resourceMeter(label: string, current: number, maximum: number, className: 'hull' | 'shield'): HTMLElement {
+function resourceMeter(label: string, current: number, maximum: number, className: 'hull' | 'shield', alert = false): HTMLElement {
   const panel = textNode('div', `hud-resource ${className}`, '');
   const displayed = className === 'shield' ? Math.floor(current) : Math.ceil(current);
   panel.append(textNode('span', 'hud-label', label), textNode('span', 'hud-value', `${displayed} / ${Math.round(maximum)}`));
@@ -101,9 +112,15 @@ function resourceMeter(label: string, current: number, maximum: number, classNam
   meter.max = Math.max(1, maximum);
   meter.value = Math.max(0, Math.min(current, maximum));
   meter.setAttribute('aria-label', label);
-  if (maximum > 0 && current / maximum <= 0.25) panel.classList.add('low');
+  if (alert || (maximum > 0 && current / maximum <= 0.25)) panel.classList.add('low');
   panel.append(meter);
   return panel;
+}
+
+function shieldMeter(self: SelfState): HTMLElement {
+  const disabled = disabledSeconds(self);
+  const label = disabled === null ? 'Shield energy' : `Shield disabled ${disabled}s`;
+  return resourceMeter(label, self.shieldEnergy, self.maxShield, 'shield', disabled !== null);
 }
 
 function abilityTile(ability: AbilityState): HTMLElement {
@@ -151,7 +168,7 @@ export class Hud {
       const resources = textNode('div', 'hud-resources', '');
       const ammo = textNode('div', `hud-resource ammo${self.rockets === 0 ? ' low' : ''}`, '');
       ammo.append(textNode('span', 'hud-label', `${ORDNANCE_NAMES[self.ordnance]} ammo`), textNode('span', 'hud-value', `${self.rockets} / ${self.maxRockets}`));
-      resources.append(resourceMeter('Hull integrity', self.hull, self.maxHull, 'hull'), resourceMeter('Shield energy', self.shieldEnergy, self.maxShield, 'shield'), ammo);
+      resources.append(resourceMeter('Hull integrity', self.hull, self.maxHull, 'hull'), shieldMeter(self), ammo);
       const tiles = textNode('div', 'hud-abilities', '');
       tiles.append(...abilities.map(abilityTile));
       bar.append(resources, tiles);

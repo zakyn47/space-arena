@@ -29,6 +29,7 @@ describe('spriteIdFor', () => {
   it('maps rockets and world objects', () => {
     expect(spriteIdFor({ kind: 'rocket', id: 1, x: 0, y: 0, vx: 0, vy: 0, angle: 0 })).toBe('rocket');
     expect(spriteIdFor({ kind: 'spaceMine', id: 1, x: 0, y: 0 })).toBe('space_mine');
+    expect(spriteIdFor({ kind: 'plasma', id: 1, x: 0, y: 0, vx: 0, vy: 0, angle: 0 })).toBe('plasma_bolt');
     expect(spriteIdFor({ kind: 'asteroid', id: 1, x: 0, y: 0, radius: 40, variant: 4 })).toBe('asteroid_4');
     expect(spriteIdFor({ kind: 'ore', id: 1, x: 0, y: 0 })).toBe('ore_pickup');
     expect(spriteIdFor({ kind: 'crate', id: 1, x: 0, y: 0, hasGear: false })).toBe('loot_crate');

@@ -23,6 +23,8 @@ export function spriteIdFor(entity: EntityState): string {
       return 'plasma_orb';
     case 'rocket':
       return 'rocket';
+    case 'plasma':
+      return 'plasma_bolt';
     case 'spaceMine':
       return 'space_mine';
     case 'asteroid':

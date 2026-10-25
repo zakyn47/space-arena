@@ -1,5 +1,6 @@
 import {
   MINE_COOLDOWN,
+  PLASMA_COOLDOWN,
   ROCKET_ACCELERATION,
   ROCKET_COOLDOWN,
   ROCKET_DAMAGE,
@@ -15,7 +16,7 @@ import {
 } from '@arena/shared';
 import type { RocketEntity, ShipEntity } from './entities';
 
-const COOLDOWN: Readonly<Record<Ordnance, number>> = { rockets: ROCKET_COOLDOWN, mines: MINE_COOLDOWN };
+const COOLDOWN: Readonly<Record<Ordnance, number>> = { rockets: ROCKET_COOLDOWN, mines: MINE_COOLDOWN, plasma: PLASMA_COOLDOWN };
 
 function headingTo(fromX: number, fromY: number, toX: number, toY: number): number {
   return Math.atan2(toX - fromX, fromY - toY);

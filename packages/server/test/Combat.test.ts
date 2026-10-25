@@ -1,6 +1,6 @@
-import { BOUNTY_BASE, IDLE_INPUT, SHIELD_LOCKOUT, SHIP_RADIUS, STARTER_BUILD, type Build } from '@arena/shared';
+import { BOUNTY_BASE, IDLE_INPUT, SHIELD_DISRUPTION, SHIELD_LOCKOUT, SHIP_RADIUS, STARTER_BUILD, type Build } from '@arena/shared';
 import { describe, expect, it } from 'vitest';
-import { applyDamage, bountyFor, fireWeapons, updateShield } from '../src/world/Combat';
+import { applyDamage, bountyFor, disruptShield, fireWeapons, updateShield } from '../src/world/Combat';
 import { createShip } from '../src/world/entities';
 import { shipRecord } from './support/fixtures';
 
@@ -22,18 +22,39 @@ describe('updateShield', () => {
   it('drains while held and locks out when empty', () => {
     const ship = newShip();
     ship.input = { ...IDLE_INPUT, shield: true };
-    updateShield(ship, 1, false);
+    updateShield(ship, 1, false, 0);
     expect(ship.shieldEnergy).toBeCloseTo(70);
     ship.shieldEnergy = 10;
-    updateShield(ship, 1, false);
+    updateShield(ship, 1, false, 0);
     expect(ship.shieldUp).toBe(false);
     expect(ship.shieldLockout).toBe(SHIELD_LOCKOUT);
+  });
+
+  it('cannot be raised or regenerate while disrupted', () => {
+    const ship = newShip();
+    ship.shieldUp = true;
+    ship.shieldEnergy = 50;
+    disruptShield(ship, 10);
+    expect(ship.shieldUp).toBe(false);
+    ship.input = { ...IDLE_INPUT, shield: true };
+    updateShield(ship, 1, false, 10 + SHIELD_DISRUPTION - 1);
+    expect(ship.shieldUp).toBe(false);
+    expect(ship.shieldEnergy).toBe(50);
+    updateShield(ship, 0.1, false, 10 + SHIELD_DISRUPTION);
+    expect(ship.shieldUp).toBe(true);
+  });
+
+  it('restarts the disruption timer on a new hit', () => {
+    const ship = newShip();
+    disruptShield(ship, 10);
+    disruptShield(ship, 13);
+    expect(ship.shieldDisruptedUntil).toBe(13 + SHIELD_DISRUPTION);
   });
 
   it('cannot be raised without a shield generator', () => {
     const ship = newShip({ ...STARTER_BUILD, slots: { ...STARTER_BUILD.slots, shield: [null] } });
     ship.input = { ...IDLE_INPUT, shield: true };
-    updateShield(ship, 0.1, false);
+    updateShield(ship, 0.1, false, 0);
     expect(ship.shieldUp).toBe(false);
   });
 });

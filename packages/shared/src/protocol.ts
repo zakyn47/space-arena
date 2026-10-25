@@ -153,6 +153,16 @@ export interface OrbState {
   readonly vy: number;
 }
 
+export interface PlasmaState {
+  readonly kind: 'plasma';
+  readonly id: number;
+  readonly x: number;
+  readonly y: number;
+  readonly vx: number;
+  readonly vy: number;
+  readonly angle: number;
+}
+
 export interface SpaceMineState {
   readonly kind: 'spaceMine';
   readonly id: number;
@@ -160,7 +170,7 @@ export interface SpaceMineState {
   readonly y: number;
 }
 
-export type EntityState = ShipState | BulletState | RocketState | OrbState | SpaceMineState | AsteroidState | OreState | CrateState;
+export type EntityState = ShipState | BulletState | RocketState | OrbState | PlasmaState | SpaceMineState | AsteroidState | OreState | CrateState;
 
 export interface SelfState {
   readonly id: number;
@@ -174,6 +184,7 @@ export interface SelfState {
   readonly shieldEnergy: number;
   readonly maxShield: number;
   readonly shieldUp: boolean;
+  readonly shieldDisrupted: number;
   readonly ore: number;
   readonly cargoCapacity: number;
   readonly carriedCredits: number;

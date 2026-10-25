@@ -26,6 +26,8 @@ export function toEntityState(entity: WorldEntity): EntityState {
       return { kind: 'rocket', id: entity.id, x: entity.x, y: entity.y, vx: entity.vx, vy: entity.vy, angle: entity.angle };
     case 'orb':
       return { kind: 'orb', id: entity.id, x: entity.x, y: entity.y, vx: entity.vx, vy: entity.vy };
+    case 'plasma':
+      return { kind: 'plasma', id: entity.id, x: entity.x, y: entity.y, vx: entity.vx, vy: entity.vy, angle: entity.angle };
     case 'spaceMine':
       return { kind: 'spaceMine', id: entity.id, x: entity.x, y: entity.y };
     case 'asteroid':
@@ -50,6 +52,7 @@ export function toSelfState(ship: ShipEntity, time: number): SelfState {
     shieldEnergy: ship.shieldEnergy,
     maxShield: ship.stats.maxShield,
     shieldUp: ship.shieldUp,
+    shieldDisrupted: Math.max(0, Math.round((ship.shieldDisruptedUntil - time) * 10) / 10),
     ore: ship.ore,
     cargoCapacity: ship.stats.cargoCapacity,
     carriedCredits: ship.carriedCredits,

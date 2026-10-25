@@ -91,6 +91,9 @@ class ActiveGame {
   }
 
   private onSnapshot(snapshot: SnapshotMessage): void {
+    if (snapshot.self.shieldDisrupted > 0 && !(this.latest && this.latest.self.shieldDisrupted > 0)) {
+      this.toast.show(`Shields disabled for ${Math.ceil(snapshot.self.shieldDisrupted)}s`);
+    }
     this.latest = snapshot;
     this.interpolator.push(snapshot.entities, performance.now());
     this.predictor.reconcile(snapshot.self, snapshot.lastSeq);

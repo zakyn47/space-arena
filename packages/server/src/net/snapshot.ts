@@ -19,6 +19,7 @@ export function toEntityState(entity: WorldEntity): EntityState {
         npc: entity.npc,
         miningTargetId: entity.miningTargetId,
         ...(entity.npc === 'leviathan' ? { health: Math.round((entity.hull / entity.stats.maxHull) * 100) / 100 } : {}),
+        ...(entity.darkMatter > 0 ? { darkMatter: true as const } : {}),
       };
     case 'bullet':
       return { kind: 'bullet', id: entity.id, x: entity.x, y: entity.y, vx: entity.vx, vy: entity.vy, weaponId: entity.weaponId, mk: entity.mk };
@@ -55,6 +56,7 @@ export function toSelfState(ship: ShipEntity, time: number): SelfState {
     maxShield: ship.stats.maxShield,
     shieldUp: ship.shieldUp,
     shieldDisrupted: Math.max(0, Math.round((ship.shieldDisruptedUntil - time) * 10) / 10),
+    darkMatter: Math.round(ship.darkMatter),
     speedBoost: Math.max(0, Math.round((ship.speedBoostUntil - time) * 10) / 10),
     ore: ship.ore,
     cargoCapacity: ship.stats.cargoCapacity,

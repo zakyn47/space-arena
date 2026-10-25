@@ -5,6 +5,7 @@ import {
   captainPoints,
   captainLevel,
   BOUNTY_SHARE,
+  DARK_MATTER_SHIELD,
   IDLE_INPUT,
   SAFE_ZONES,
   STARTER_BUILD,
@@ -103,14 +104,18 @@ async function register(username: string, trained = true): Promise<string> {
   return body.token;
 }
 
-beforeEach(async () => {
+async function start(boss: boolean): Promise<void> {
   const dir = await mkdtemp(join(tmpdir(), 'arena-'));
   dbPath = join(dir, 'arena.db');
-  app = createApp({ dbPath, staticDir: dir, asteroidTarget: 0, pirates: false, boosters: false, boss: false });
+  app = createApp({ dbPath, staticDir: dir, asteroidTarget: 0, pirates: false, boosters: false, boss });
   await new Promise<void>((resolve) => app.server.listen(0, resolve));
   const address = app.server.address();
   if (address === null || typeof address === 'string') throw new Error('no port');
   port = address.port;
+}
+
+beforeEach(async () => {
+  await start(false);
 });
 
 afterEach(async () => {
@@ -246,6 +251,19 @@ describe('server integration', () => {
     const seen = await pump(alice, 'snapshot', (s) => s.entities.some((e) => e.kind === 'orb'));
     const leviathan = seen.entities.find((e) => e.kind === 'ship' && e.npc === 'leviathan');
     expect(leviathan).toMatchObject({ health: 1 });
+  });
+
+  it('gives the dark matter barrier to a player who takes the leviathan crate', async () => {
+    await app.close();
+    await start(true);
+    const alice = await TestClient.connect(port, await register('alice'));
+    const ship = app.world.shipById((await pump(alice, 'welcome')).shipId);
+    const boss = app.world.npcShips().find((npc) => npc.npc === 'leviathan');
+    if (!ship || !boss) throw new Error('setup missing');
+    Object.assign(ship, { x: boss.x, y: boss.y, vx: 0, vy: 0 });
+    boss.hull = 0;
+    const seen = await pump(alice, 'snapshot', (s) => s.self.darkMatter > 0);
+    expect(seen.self.darkMatter).toBe(DARK_MATTER_SHIELD);
   });
 });
 

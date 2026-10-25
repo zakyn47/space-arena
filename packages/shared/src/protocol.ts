@@ -97,6 +97,7 @@ export interface ShipState {
   readonly npc: NpcKind | null;
   readonly miningTargetId: number | null;
   readonly health?: number;
+  readonly darkMatter?: true;
 }
 
 export interface BulletState {
@@ -195,6 +196,7 @@ export interface SelfState {
   readonly maxShield: number;
   readonly shieldUp: boolean;
   readonly shieldDisrupted: number;
+  readonly darkMatter: number;
   readonly speedBoost: number;
   readonly ore: number;
   readonly cargoCapacity: number;

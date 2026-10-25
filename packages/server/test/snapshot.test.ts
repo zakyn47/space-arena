@@ -46,6 +46,15 @@ describe('snapshot', () => {
     expect(buildSnapshot(self, [self, other], 1, 100).hits).toBeUndefined();
   });
 
+  it('reports the dark matter barrier to its owner and flags it for others only while active', () => {
+    const self = createShip(1, 1, 'alice', shipRecord(10, 20, 1));
+    self.darkMatter = 312.6;
+    expect(buildSnapshot(self, [self], 1, 100).self.darkMatter).toBe(313);
+    expect(toEntityState(self)).toMatchObject({ darkMatter: true });
+    self.darkMatter = 0;
+    expect(toEntityState(self)).not.toHaveProperty('darkMatter');
+  });
+
   it('does not leak private fields of other ships', () => {
     const other = createShip(2, 2, 'bob', shipRecord(30, 40, 2));
     expect(Object.keys(toEntityState(other))).not.toContain('rockets');

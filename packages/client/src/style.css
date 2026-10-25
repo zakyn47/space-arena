@@ -71,7 +71,7 @@ kbd { color: #c0d8e9; font-family: inherit; }
 #hud { position: absolute; inset: 0; font-size: 13px; line-height: 1.5; text-shadow: 0 1px 2px #000; pointer-events: none; }
 .flight-info { position: absolute; top: 16px; left: 16px; padding: 10px 14px; border-left: 2px solid #5ec8ff70; background: #07111dcc; color: #b7ccde; font-size: 12px; }
 .combat-bar { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: min(1120px, calc(100% - 32px)); display: grid; grid-template-columns: 1fr 1.3fr; align-items: center; gap: 22px; padding: 12px 16px; border: 1px solid #34536c; border-top: 2px solid #5ec8ff80; border-radius: 8px; background: #091320f2; box-shadow: 0 12px 36px #0008; }
-.hud-resources { display: grid; grid-template-columns: 1.2fr 1.2fr 1fr; gap: 18px; align-items: center; }
+.hud-resources { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 18px; align-items: center; }
 .hud-resource { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .hud-label { color: #93adc3; font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: .1em; }
 .hud-value { color: #e7f4ff; font-size: 19px; font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -81,6 +81,9 @@ kbd { color: #c0d8e9; font-family: inherit; }
 .hud-resource meter::-moz-meter-bar { background: var(--meter-color); border-radius: 3px; }
 .hud-resource.hull { --meter-color: #68d6a9; }
 .hud-resource.shield { --meter-color: #5ec8ff; }
+.hud-resource.dark_matter { --meter-color: #c04bff; position: relative; padding-left: 26px; }
+.hud-dark-matter-icon { position: absolute; left: 0; top: 50%; width: 22px; height: 22px; transform: translateY(-50%); background: url('/ui/dark_matter.png') 0 0 / 400% 100% no-repeat; animation: dark-matter-spin 0.8s steps(4) infinite; }
+@keyframes dark-matter-spin { to { background-position: -88px 0; } }
 .hud-resource.low { --meter-color: #ff7676; }
 .hud-resource.low .hud-value { color: #ff9292; }
 .hud-resource.ammo { border-left: 1px solid var(--line); padding-left: 16px; }

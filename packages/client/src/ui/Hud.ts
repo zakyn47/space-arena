@@ -1,10 +1,16 @@
-import { DOCK_RANGE, ORDNANCE_NAMES, SALVAGE_CAPACITY, captainLevel, captainPoints, captainNeedsTraining, statsFor, type Ordnance, type RadarBlip, type SafeZone, type SelfState } from '@arena/shared';
+import { DARK_MATTER_SHIELD, DOCK_RANGE, ORDNANCE_NAMES, SALVAGE_CAPACITY, captainLevel, captainPoints, captainNeedsTraining, statsFor, type Ordnance, type RadarBlip, type SafeZone, type SelfState } from '@arena/shared';
 
 const RADAR_COLORS: Readonly<Record<RadarBlip['kind'], string>> = { player: '#ffffff', pirate: '#ff4d4d', boss: '#c04bff', repair: '#3cffb0', speed: '#ffb23c' };
 const RADAR_DOT_SIZES: Readonly<Record<RadarBlip['kind'], number>> = { player: 2, pirate: 2, boss: 6, repair: 4, speed: 4 };
 
 export const ORDNANCE_ICONS: Readonly<Record<Ordnance, string>> = { rockets: '/ui/icon_rocket.png', mines: '/ui/icon_mine.png', plasma: '/ui/icon_plasma.png' };
 const ORDNANCE_HINTS: Readonly<Record<Ordnance, string>> = { rockets: 'Hold to fire', mines: 'Hold to drop', plasma: 'Hold to fire' };
+
+type HudResource = 'hull' | 'shield' | 'dark_matter' | 'ammo';
+
+export function hudResources(self: SelfState): HudResource[] {
+  return self.darkMatter > 0 ? ['hull', 'shield', 'dark_matter', 'ammo'] : ['hull', 'shield', 'ammo'];
+}
 
 function disabledSeconds(self: SelfState): number | null {
   return self.shieldDisrupted > 0 ? Math.ceil(self.shieldDisrupted) : null;
@@ -104,7 +110,7 @@ function textNode(tag: 'div' | 'span' | 'kbd', className: string, text: string):
   return node;
 }
 
-function resourceMeter(label: string, current: number, maximum: number, className: 'hull' | 'shield', alert = false): HTMLElement {
+function resourceMeter(label: string, current: number, maximum: number, className: 'hull' | 'shield' | 'dark_matter', alert = false): HTMLElement {
   const panel = textNode('div', `hud-resource ${className}`, '');
   const displayed = className === 'shield' ? Math.floor(current) : Math.ceil(current);
   panel.append(textNode('span', 'hud-label', label), textNode('span', 'hud-value', `${displayed} / ${Math.round(maximum)}`));
@@ -122,6 +128,12 @@ function shieldMeter(self: SelfState): HTMLElement {
   const disabled = disabledSeconds(self);
   const label = disabled === null ? 'Shield energy' : `Shield disabled ${disabled}s`;
   return resourceMeter(label, self.shieldEnergy, self.maxShield, 'shield', disabled !== null);
+}
+
+function darkMatterMeter(self: SelfState): HTMLElement {
+  const panel = resourceMeter('Dark matter', self.darkMatter, DARK_MATTER_SHIELD, 'dark_matter');
+  panel.prepend(textNode('span', 'hud-dark-matter-icon', ''));
+  return panel;
 }
 
 function abilityTile(ability: AbilityState): HTMLElement {
@@ -158,7 +170,7 @@ export class Hud {
     const lines = [...hudLines(self, null).slice(3), `Captain Lv.${captainLevel(self.captain)} · ${points} skill point${points === 1 ? '' : 's'}`];
     const inSafeZone = this.zones.some((zone) => Math.hypot(self.x - zone.x, self.y - zone.y) <= zone.radius);
     const abilities = abilityStates(self, inSafeZone);
-    const key = JSON.stringify([lines, prompt, self.hull, self.maxHull, self.shieldEnergy, self.maxShield, self.rockets, self.maxRockets, abilities]);
+    const key = JSON.stringify([lines, prompt, self.hull, self.maxHull, self.shieldEnergy, self.maxShield, self.darkMatter, self.rockets, self.maxRockets, abilities]);
     if (key !== this.renderedKey) {
       this.renderedKey = key;
       const info = textNode('div', 'flight-info', '');
@@ -169,7 +181,13 @@ export class Hud {
       const resources = textNode('div', 'hud-resources', '');
       const ammo = textNode('div', `hud-resource ammo${self.rockets === 0 ? ' low' : ''}`, '');
       ammo.append(textNode('span', 'hud-label', `${ORDNANCE_NAMES[self.ordnance]} ammo`), textNode('span', 'hud-value', `${self.rockets} / ${self.maxRockets}`));
-      resources.append(resourceMeter('Hull integrity', self.hull, self.maxHull, 'hull'), shieldMeter(self), ammo);
+      const meters: Readonly<Record<HudResource, () => HTMLElement>> = {
+        hull: () => resourceMeter('Hull integrity', self.hull, self.maxHull, 'hull'),
+        shield: () => shieldMeter(self),
+        dark_matter: () => darkMatterMeter(self),
+        ammo: () => ammo,
+      };
+      resources.append(...hudResources(self).map((kind) => meters[kind]()));
       const tiles = textNode('div', 'hud-abilities', '');
       tiles.append(...abilities.map(abilityTile));
       bar.append(resources, tiles);

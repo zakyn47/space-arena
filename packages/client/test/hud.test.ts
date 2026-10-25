@@ -1,6 +1,6 @@
 import { STARTER_BUILD } from '@arena/shared';
 import { describe, expect, it } from 'vitest';
-import { abilityStates, dockPrompt, hudLines, minimapDots } from '../src/ui/Hud';
+import { abilityStates, dockPrompt, hudLines, hudResources, minimapDots } from '../src/ui/Hud';
 import { selfState } from './support/self';
 
 describe('dockPrompt', () => {
@@ -100,5 +100,12 @@ describe('abilityStates', () => {
     expect(abilityStates(selfState({ docked: true }), true)[4]).toMatchObject({ status: 'Choose skills', unavailable: true });
     expect(abilityStates(selfState({ canDock: true }), true)[4]).toMatchObject({ status: 'Dock', unavailable: false });
     expect(abilityStates(selfState({ dockCooldown: 12.3 }), false)[4]).toMatchObject({ status: '13s', unavailable: true });
+  });
+});
+
+describe('hudResources', () => {
+  it('adds the dark matter meter only while the barrier is active', () => {
+    expect(hudResources(selfState())).toEqual(['hull', 'shield', 'ammo']);
+    expect(hudResources(selfState({ darkMatter: 120 }))).toEqual(['hull', 'shield', 'dark_matter', 'ammo']);
   });
 });

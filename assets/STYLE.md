@@ -70,3 +70,9 @@ The two must be instantly distinguishable by color and symbol.
 ## Arena barrier update
 
 - `arena_barrier` (64×64, tiled): one tile of the energy wall at the edge of the arena. It is repeated top-to-bottom along a vertical edge (and rotated 90° for horizontal edges), so it MUST tile seamlessly top-to-bottom; left and right edges fade to transparent. A vertical force-field band ~40 px wide centered in the tile: bright hot red-orange `#FF5A3C` core line, a faint hexagonal energy mesh around it, glowing falloff to transparent on both sides. Reads clearly as "danger / do not cross" against the dark navy starfield.
+
+## Dark matter shield update
+
+- `dark_matter_shield` (horizontal spritesheet, 4 frames of 96×96, centered on the ship like `shield_bubble`): an always-on barrier sphere of radius ~44 px. Near-black deep violet `#1A0B2E` swirling energy with faint white star specks inside, a thin glowing magenta `#C04BFF` rim and a soft outer glow. The centre ~30 px radius must be mostly transparent so the ship stays readable. Frames rotate the swirl a quarter turn each so the loop is seamless (frame 4 flows into frame 1). Must read clearly different from the cyan `shield_bubble`.
+- `dark_matter_impact` (horizontal spritesheet, 4 frames of 96×96): a hit on the barrier. Same placement rule as `shield_impact`: centered on the ship, the impact sits on the TOP edge of the rim (radius ~44 px). Frames: magenta-white flash on the rim → violet ripple arc (~70°) collapsing inward toward a black point → black core with a few magenta sparks → almost transparent. No cyan.
+- `dark_matter_icon` (horizontal spritesheet, 4 frames of 48×48): UI glyph in the same flat icon style, used in the HUD: a small dark violet orb (~28 px) with a magenta rim and a bright magenta wisp orbiting it; each frame moves the wisp a quarter orbit so the loop is seamless.

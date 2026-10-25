@@ -282,3 +282,208 @@ kbd { color: #c0d8e9; font-family: inherit; }
   .mobile-display [role="status"] { font-size: 11px; text-align: center; color: #ffc83c; background: #091320e8; border-radius: 4px; }
   .mobile-display [role="status"]:not(:empty) { padding: 6px 10px; }
 }
+
+/* Phone hangar: the whole station UI must fit one screen in portrait and landscape without scrolling. */
+@media (max-width: 600px), (max-height: 500px) {
+  body:has(#shop:not([hidden])) .mobile-display, body:has(#shop:not([hidden])) .touch-controls { display: none; }
+  #shop:not([hidden]) { inset: 0; top: 0; left: 0; transform: none; width: 100vw; max-height: none; height: 100dvh; border-radius: 0; border-left: 0; border-right: 0; display: flex; flex-direction: column; gap: 6px; overflow: hidden; padding: max(8px, env(safe-area-inset-top, 0px)) max(10px, env(safe-area-inset-right, 0px)) max(8px, env(safe-area-inset-bottom, 0px)) max(10px, env(safe-area-inset-left, 0px)); }
+  #shop > * { flex-shrink: 0; }
+  #shop > .list, #shop > .hull-grid, #shop > .captain-panel { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+  #shop > .list, #shop > .captain-panel { align-content: start; }
+  .ship-preview { align-self: start; }
+  .hangar-header { flex-direction: row; align-items: center; gap: 8px; }
+  .hangar-header .eyebrow { display: none; }
+  .hangar-header h2 { font-size: 18px; margin: 0; }
+  .hangar-actions { flex-direction: row; align-items: center; gap: 8px; }
+  .hangar-actions button { padding: 7px 10px; font-size: 12px; }
+  .credits { font-size: 13px; }
+  .undock-hint { display: none; }
+  #shop .tabs { margin-top: 0; gap: 14px; font-size: 12px; }
+  #shop .tabs button { padding: 6px 0; }
+  .stat-strip { padding: 2px 0; margin: 0; gap: 2px 10px; font-size: 10px; }
+  #shop .result { margin-top: 0; min-height: 0; font-size: 11px; }
+  #shop .result:empty { display: none; }
+  #shop .list { gap: 6px; }
+  #shop .row { padding: 6px 8px; gap: 8px; font-size: 12px; }
+  #shop .row button { padding: 6px 10px; font-size: 11px; }
+  #shop img { width: 24px; height: 24px; }
+  #shop .list > p.muted, .empty-state { display: none; }
+
+  .loadout-layout { grid-template-columns: 1fr 1.2fr; gap: 8px; }
+  .ship-preview { padding: 6px 8px; }
+  .ship-preview .eyebrow, .ship-preview > p, .diagram-caption { display: none; }
+  .ship-preview h3 { margin: 0; font-size: 15px; }
+  .ship-diagram { width: min(100%, 150px); margin-top: 2px; }
+  #shop .hardpoint { width: 26px; height: 22px; font-size: 9px; }
+  .module-list { gap: 4px; }
+  .module-list > h3, .module-list > .muted { display: none; }
+  #shop .module-card { min-height: 34px; padding: 4px 8px; grid-template-columns: 22px 22px 1fr 8px; gap: 6px; font-size: 11px; }
+  #shop .module-arrow { font-size: 16px; }
+  #shop .list:has(.options) .module-list { display: none; }
+  #shop .list:has(.options) .loadout-layout { grid-template-columns: 1fr; }
+  #shop .list:has(.options) { display: grid; grid-template-columns: minmax(110px, 0.6fr) 1.4fr; align-items: start; }
+  #shop .options { padding-top: 0; margin-top: 0; border-top: 0; gap: 4px; }
+  #shop .options .equipment-header { flex-direction: row; align-items: center; gap: 6px; }
+  #shop .options h3 { font-size: 12px; }
+  #shop .options .equipment-header button { padding: 4px 8px; font-size: 10px; }
+  #shop .options .row { display: grid; grid-template-columns: 1fr auto auto; gap: 2px 6px; padding: 4px 6px; font-size: 11px; }
+  #shop .options .row .delta { grid-column: 1 / -1; grid-row: 2; font-size: 9px; }
+  #shop .options .row button { grid-column: 3; grid-row: 1; padding: 4px 8px; }
+
+  .hull-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; align-content: start; }
+  .hull-card { padding: 6px 8px; display: grid; grid-template-columns: 44px 1fr; gap: 0 8px; align-items: center; }
+  #shop .hull-card > img { width: 44px; height: 44px; margin: 0; grid-row: span 2; }
+  .hull-card .eyebrow, .hull-card .muted, .slot-capacity, .hull-note { display: none; }
+  .hull-card h3 { margin: 0; font-size: 14px; }
+  .hull-properties { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 1px 6px; margin: 4px 0; font-size: 10px; }
+  .hull-card button { grid-column: 1 / -1; min-height: 30px; padding: 4px; font-size: 11px; }
+
+  .captain-panel { gap: 6px; }
+  .captain-header { flex-direction: row; align-items: center; gap: 8px; padding: 0; }
+  .captain-identity { gap: 8px; }
+  #shop .captain-avatar { width: 40px; height: 40px; border-radius: 8px; }
+  .captain-identity .eyebrow, .captain-identity .muted { display: none; }
+  .captain-header h3 { font-size: 15px; margin: 0; }
+  .captain-points { font-size: 12px; }
+  .captain-panel > .muted { font-size: 10px; line-height: 1.3; }
+  .captain-panel > .muted:last-child, .captain-panel > .muted:nth-last-child(2) { display: none; }
+  .captain-onboarding { padding: 6px 8px; font-size: 11px; }
+  .captain-skills { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  .captain-skill { grid-template-columns: 24px 1fr auto; gap: 2px 6px; padding: 6px 8px; }
+  #shop .captain-skill img { width: 22px; height: 22px; }
+  .captain-skill h3 { font-size: 13px; }
+  .captain-skill > p.muted { display: none; }
+  .captain-skill .delta { min-height: 0; font-size: 10px; }
+  .captain-skill button { padding: 5px; font-size: 11px; }
+}
+
+@media (max-height: 500px) and (orientation: landscape) {
+  .hull-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .captain-skills { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .captain-skill { grid-template-columns: 22px 1fr; }
+  .captain-skill .captain-rank { grid-column: 1 / -1; }
+  .ship-diagram { width: min(100%, 120px); }
+  .loadout-layout { grid-template-columns: 0.8fr 1.6fr; }
+  .module-list { display: grid !important; grid-template-columns: 1fr 1fr; }
+  #shop .list:has(.options) .module-list { display: none !important; }
+  #shop .options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  #shop .list:has(.options) { grid-template-columns: minmax(100px, 0.45fr) 2fr; }
+  #shop .options .equipment-header { grid-column: 1 / -1; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  #shop .options .row { padding: 3px 6px; gap: 0 6px; }
+  #shop .options .row > span:nth-child(2) { white-space: nowrap; }
+  #shop .options .row { grid-template-columns: minmax(0, 1fr) auto auto; }
+  #shop .options .row > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #shop .options .row button { padding: 3px 7px; }
+}
+@media (max-height: 340px) and (orientation: landscape) {
+  .stat-strip { display: none; }
+}
+@media (max-width: 600px) {
+  #shop .list:has(.options) { grid-template-columns: 1fr; }
+  #shop .list:has(.options) .ship-preview { display: flex; align-items: center; gap: 10px; padding: 4px 8px; }
+  #shop .list:has(.options) .ship-diagram { width: 92px; margin: 0; }
+  #shop .options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #shop .options .equipment-header { grid-column: 1 / -1; }
+  #shop .options .row { grid-template-columns: minmax(0, 1fr) auto auto; gap: 0 4px; padding: 3px 5px; font-size: 10px; }
+  #shop .options .row > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #shop .options .row > span:nth-child(2) { white-space: nowrap; }
+  #shop .options .row button { grid-column: 3; grid-row: 1; padding: 3px 6px; font-size: 10px; }
+  #shop .options .row .delta { grid-column: 1 / -1; grid-row: 2; }
+}
+@media (max-width: 600px), (max-height: 500px) {
+  #shop .tabs { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 4px; overflow: visible; font-size: 14px; }
+  #shop .tabs button { min-height: 40px; padding: 8px 4px; font-weight: 600; border-radius: 6px 6px 0 0; background: #0f2131; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #shop .tabs button[aria-pressed='true'] { background: #173b50; }
+}
+@media (max-width: 600px) {
+  #shop .tabs { font-size: 12px; gap: 3px; }
+  #shop .tabs button { padding: 8px 2px; }
+}
+/* Fullscreen phones have room left over: grow touch targets and text into it. */
+@media (orientation: landscape) and (min-height: 360px) and (max-height: 500px) {
+  .ship-diagram { width: min(100%, 175px); }
+  #shop .hardpoint { width: 32px; height: 26px; font-size: 10px; }
+  #shop .module-card { min-height: 56px; font-size: 13px; }
+  #shop .module-card img { width: 28px; height: 28px; }
+  .hull-card { padding: 10px 12px; gap: 2px 10px; }
+  #shop .hull-card > img { width: 60px; height: 60px; }
+  .hull-card h3 { font-size: 17px; }
+  .hull-properties { font-size: 12px; margin: 8px 0; }
+  .hull-card button { min-height: 40px; font-size: 13px; }
+  #shop > .list > .row { padding: 14px 14px; font-size: 15px; }
+  #shop > .list > .row img { width: 32px; height: 32px; }
+  #shop > .list > .row button { min-height: 40px; padding: 8px 14px; font-size: 13px; }
+  .captain-skill { padding: 10px 12px; gap: 4px 8px; }
+  .captain-skill h3 { font-size: 15px; }
+  #shop .captain-skill img { width: 28px; height: 28px; }
+  .captain-skill .delta { font-size: 11px; }
+  .captain-skill button { min-height: 38px; font-size: 13px; }
+  #shop .options .row { padding: 5px 8px; font-size: 12px; }
+}
+@media (max-width: 600px) and (min-height: 700px) {
+  .ship-diagram { width: min(100%, 180px); }
+  #shop .module-card { min-height: 52px; font-size: 13px; }
+  #shop .module-card img { width: 28px; height: 28px; }
+  .loadout-layout { grid-template-columns: 1fr; }
+  .module-list { display: grid; grid-template-columns: 1fr 1fr; }
+  .hull-card { padding: 10px; }
+  #shop .hull-card > img { width: 64px; height: 64px; }
+  .hull-card h3 { font-size: 17px; }
+  .hull-properties { font-size: 12px; margin: 8px 0; }
+  .hull-card button { min-height: 42px; font-size: 13px; }
+  #shop > .list > .row { padding: 14px 12px; font-size: 15px; }
+  #shop > .list > .row img { width: 32px; height: 32px; }
+  #shop > .list > .row button { min-height: 42px; padding: 8px 14px; font-size: 13px; }
+  .captain-skill { padding: 12px; gap: 6px 8px; }
+  .captain-skill h3 { font-size: 15px; }
+  #shop .captain-skill img { width: 30px; height: 30px; }
+  .captain-skill .delta { font-size: 12px; }
+  .captain-skill button { min-height: 42px; font-size: 13px; }
+  #shop .options .row { padding: 6px 8px; font-size: 12px; }
+}
+/* Undock is the one action a docked pilot must find instantly. */
+@media (max-width: 600px), (max-height: 500px) {
+  #shop .hangar-actions button { min-height: 52px; padding: 10px 26px; font-size: 17px; font-weight: 800; border-radius: 8px; background: var(--cyan); border-color: #bdeeff; color: #061320; letter-spacing: .02em; }
+  #shop .hangar-actions button:disabled { background: #132b3e; border-color: #34536c; color: #dceeff; }
+  .hangar-header { min-height: 56px; }
+}
+@media (max-width: 380px) {
+  #shop .hangar-actions button { padding: 10px 16px; font-size: 15px; }
+}
+
+/* Landscape phones: the whole main page fits one screen; long Controls/Rules text scrolls inside its panel only. */
+@media (orientation: landscape) and (max-height: 500px) {
+  #login { grid-template-columns: 1fr 1.25fr; gap: 20px; align-items: stretch; height: 100dvh; overflow: hidden; padding: max(10px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 10px max(16px, env(safe-area-inset-left, 0px)); }
+  .login-intro { align-self: center; text-align: left; }
+  #login h1 { font-size: clamp(30px, 9vh, 52px); margin: 6px 0; }
+  #login h1 br { display: inline; }
+  .login-tagline { font-size: 13px; }
+  .login-fleet, .login-caption { display: none; }
+  .login-panel { max-width: none; padding: 10px 16px; display: flex; flex-direction: column; min-height: 0; overflow: hidden; align-self: stretch; }
+  .info-tabs { margin-bottom: 8px; flex-shrink: 0; }
+  #login .info-tabs button { padding: 6px 0; }
+  .info-panel { min-height: 0; flex: 1 1 auto; overflow-y: auto; }
+  .info-panel[data-panel='controls'], .info-panel[data-panel='rules'], .info-panel[data-panel='highscores'] { max-height: none; min-height: 0; }
+  .info-panel .eyebrow, .info-panel > h2 { display: none; }
+  .info-panel[data-panel='play'] > .muted, .resume .muted { display: none; }
+  #login label { margin: 6px 0 3px; font-size: 11px; }
+  #login input { padding: 8px 10px; }
+  #login .actions { grid-template-columns: 1fr 1fr; margin-top: 10px; gap: 8px; }
+  #login .actions button { padding: 9px 10px; }
+  #login-error { min-height: 0; margin: 6px 0 0; font-size: 12px; }
+  #login-error:empty { display: none; }
+  .login-help { display: none !important; }
+  .info-list { margin: 6px 0; gap: 6px; font-size: 12px; }
+  .controls-table { margin-top: 4px; font-size: 12px; }
+  .controls-table th, .controls-table td { padding: 4px 0; }
+  .info-panel h3 { margin: 8px 0 4px; }
+  .highscores-table { margin-top: 4px; font-size: 12px; }
+}
+@media (max-width: 600px), (max-height: 500px) {
+  #shop .hangar-actions button { min-width: min(240px, 42vw); }
+}
+@media (any-pointer: coarse) and (orientation: landscape) and (max-height: 500px) {
+  body:has(#login:not([hidden])) .mobile-display { top: auto; bottom: max(10px, env(safe-area-inset-bottom, 0px)); left: max(16px, env(safe-area-inset-left, 0px)); transform: none; width: auto; justify-items: start; }
+}

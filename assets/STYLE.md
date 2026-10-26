@@ -110,3 +110,9 @@ The two must be instantly distinguishable by color and symbol.
 - `rock_hit` (horizontal spritesheet, 4 frames of 48×48): a gun shot striking an asteroid. Same placement rule as `hull_hit`: centered on the impact point on the rock surface, debris spraying UP (outward from the rock). Frames: small white-hot flash → burst of warm orange `#FF9A3C` sparks plus grey-brown rock chips and a dusty puff thrown upward → dust cloud spreading and thinning, chips flying apart → faint dust almost gone. Rock colors match the asteroids (grey-brown); must read clearly different from `hull_hit` (more dust and stone, fewer molten sparks) and never cyan.
 - `impact_spark` (8×8): one particle, a tiny round hot spark: white centre fading to orange `#FF9A3C` and transparent at the edge. Code moves, fades and scales it.
 - `rock_dust` (16×16): one particle, a soft round grey-brown dust puff with irregular wispy edges, about 60% alpha at the centre fading to fully transparent at the edge. Code drifts, grows and fades it.
+
+## Prestige skins update
+
+Cosmetic skins for the four player hulls, unlocked by PvP kills. Same silhouettes, size classes and nozzle positions as the standard ships (see Ship set 3); never pirate red/black, never dark matter violet.
+- `ship_<hull>_chrome` (64×64, 100 PvP kills, "Chrome Prism"): polished chrome plating with a subtle iridescent teal-to-gold sheen, crisp specular highlights and cyan canopy glass.
+- `ship_<hull>_stealth` (64×64, 1000 PvP kills, "Stealth Elite"): matte black and gunmetal armor with thin glowing gold-amber accent lines and amber canopy glow.

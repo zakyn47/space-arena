@@ -20,8 +20,13 @@ describe('pirate hull', () => {
 });
 
 describe('default patrols', () => {
-  it('fields half the original pirate patrols', () => {
-    expect(DEFAULT_PATROLS.map((patrol) => patrol.band)).toEqual(['raider', 'raider', 'raider', 'raider', 'marauder', 'marauder', 'marauder', 'warlord']);
+  it('fields solo raiders and fixed marauder and warlord wings', () => {
+    const rng = seeded(1);
+    expect(DEFAULT_PATROLS.map((patrol) => patrol.composition(rng))).toEqual([
+      ...Array.from({ length: 6 }, () => ['raider']),
+      ...Array.from({ length: 3 }, () => ['marauder', 'marauder']),
+      ['warlord', 'marauder', 'marauder'],
+    ]);
   });
 });
 

@@ -35,11 +35,8 @@ function repeat(count: number, spec: PatrolSpec): PatrolSpec[] {
 }
 
 export const DEFAULT_PATROLS: readonly PatrolSpec[] = [
-  ...repeat(4, { band: 'raider', composition: () => ['raider', 'raider'] }),
-  ...repeat(3, {
-    band: 'marauder',
-    composition: (rng) => (rng() < 0.5 ? ['marauder', 'marauder'] : ['marauder', 'marauder', 'marauder']),
-  }),
+  ...repeat(6, { band: 'raider', composition: () => ['raider'] }),
+  ...repeat(3, { band: 'marauder', composition: () => ['marauder', 'marauder'] }),
   ...repeat(1, { band: 'warlord', composition: () => ['warlord', 'marauder', 'marauder'] }),
 ];
 

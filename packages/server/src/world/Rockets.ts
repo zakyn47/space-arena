@@ -14,6 +14,7 @@ import {
   forward,
   type Ordnance,
 } from '@arena/shared';
+import { scaledDamage } from './Combat';
 import type { RocketEntity, ShipEntity } from './entities';
 
 const COOLDOWN: Readonly<Record<Ordnance, number>> = { rockets: ROCKET_COOLDOWN, mines: MINE_COOLDOWN, plasma: PLASMA_COOLDOWN };
@@ -69,7 +70,7 @@ export function launchRocket(ship: ShipEntity, id: number, time: number, target:
     vy: direction.y * speed,
     angle: ship.angle,
     speed,
-    damage: ROCKET_DAMAGE,
+    damage: scaledDamage(ship, ROCKET_DAMAGE),
     fromNpc: ship.npc !== null,
     expiresAt: time + ROCKET_LIFETIME,
   };

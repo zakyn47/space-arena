@@ -1,7 +1,7 @@
 import { BOUNTY_BASE, DARK_MATTER_SHIELD, IDLE_INPUT, SHIELD_DISRUPTION, SHIELD_LOCKOUT, SHIP_RADIUS, STARTER_BUILD, type Build } from '@arena/shared';
 import { describe, expect, it } from 'vitest';
 import { applyDamage, bountyFor, disruptShield, fireWeapons, updateShield } from '../src/world/Combat';
-import { createShip } from '../src/world/entities';
+import { createPirateShip, createShip } from '../src/world/entities';
 import { shipRecord } from './support/fixtures';
 
 const newShip = (build: Build = STARTER_BUILD) => createShip(1, 1, 'alice', { ...shipRecord(1_000, 1_000), build });
@@ -74,6 +74,14 @@ describe('fireWeapons', () => {
     expect(bullet).toMatchObject({ ownerId: 1, x: 1_000, y: 1_000 - SHIP_RADIUS, vy: -800, damage: 10, weaponId: 'pulse_laser', mk: 1, fromNpc: false });
     expect(fireWeapons(ship, 0.1, false, 0, ids)).toEqual([]);
     expect(fireWeapons(ship, 0.2, false, 0, ids)).toHaveLength(1);
+  });
+
+  it('pirate bullets deal 70% damage', () => {
+    const pirate = createPirateShip(2, 'raider', 1_000, 1_000);
+    pirate.input = { ...IDLE_INPUT, fire: true };
+    const [bullet] = fireWeapons(pirate, 0.1, false, 0, ids);
+    expect(bullet).toMatchObject({ weaponId: 'pulse_laser', mk: 1, fromNpc: true });
+    expect(bullet?.damage).toBeCloseTo(7);
   });
 
   it('fires each weapon from its own lateral offset and cooldown', () => {

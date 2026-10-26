@@ -10,8 +10,22 @@ import {
   forward,
   type Build,
   type HitBlock,
+  type NpcKind,
 } from '@arena/shared';
 import type { BulletEntity, ShipEntity } from './entities';
+
+export const PIRATE_DAMAGE_SCALE = 0.7;
+
+const DAMAGE_SCALE: Readonly<Record<NpcKind, number>> = {
+  raider: PIRATE_DAMAGE_SCALE,
+  marauder: PIRATE_DAMAGE_SCALE,
+  warlord: PIRATE_DAMAGE_SCALE,
+  leviathan: 1,
+};
+
+export function scaledDamage(ship: ShipEntity, damage: number): number {
+  return ship.npc === null ? damage : damage * DAMAGE_SCALE[ship.npc];
+}
 
 export function disruptShield(ship: ShipEntity, time: number): void {
   ship.shieldUp = false;
@@ -64,7 +78,7 @@ export function fireWeapons(
       prevY: y,
       vx: ship.vx + direction.x * weapon.bulletSpeed,
       vy: ship.vy + direction.y * weapon.bulletSpeed,
-      damage: weapon.damage,
+      damage: scaledDamage(ship, weapon.damage),
       weaponId: weapon.gearId,
       mk: weapon.mk,
       fromNpc: ship.npc !== null,

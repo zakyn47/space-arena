@@ -1,6 +1,6 @@
-import { IDLE_INPUT, MINE_COOLDOWN, ROCKET_COOLDOWN, ROCKET_MAX_SPEED, ROCKET_TURN_RATE } from '@arena/shared';
+import { IDLE_INPUT, MINE_COOLDOWN, ROCKET_DAMAGE, ROCKET_COOLDOWN, ROCKET_MAX_SPEED, ROCKET_TURN_RATE } from '@arena/shared';
 import { describe, expect, it } from 'vitest';
-import { createShip } from '../src/world/entities';
+import { createPirateShip, createShip } from '../src/world/entities';
 import { acquireTarget, launchRocket, steerRocket, tryLaunch } from '../src/world/Rockets';
 import { shipRecord } from './support/fixtures';
 
@@ -48,6 +48,13 @@ describe('acquireTarget', () => {
     const far = at(6, 1_000, -500);
     expect(acquireTarget(shooter, [shooter, ahead, closerAhead, behind, wide, far])?.id).toBe(3);
     expect(acquireTarget(shooter, [shooter, behind, wide, far])).toBeNull();
+  });
+});
+
+describe('launchRocket', () => {
+  it('pirate rockets deal 70% damage', () => {
+    expect(launchRocket(at(1, 1_000, 1_000), 50, 0, null).damage).toBe(ROCKET_DAMAGE);
+    expect(launchRocket(createPirateShip(2, 'marauder', 1_000, 1_000), 51, 0, null).damage).toBeCloseTo(ROCKET_DAMAGE * 0.7);
   });
 });
 

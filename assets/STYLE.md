@@ -104,3 +104,9 @@ The two must be instantly distinguishable by color and symbol.
 ## Heavy cannon update
 
 - `bullet_cannon` (32×32, redraw, pointing UP): a heavy kinetic slug that must look weightier than the 16×32 red pulse bolts while staying smaller than the 48×48 blue `plasma_bolt`. A thick bullet-shaped slug ~10 px wide and ~20 px long with a blunt rounded nose at the top: white-hot yellow core, molten amber-gold `#FFC23C` body and a darker orange `#FF9A3C` rim, wrapped in a warm glow ~16 px wide. Behind it a short tapering heat trail of orange sparks and shimmer, fading to transparent at least 2 px before the bottom edge. Gold/amber, not red, so it never reads as a pulse bolt; no blue. Drawn with additive blending; everything outside the glow is transparent.
+
+## Rock impact update
+
+- `rock_hit` (horizontal spritesheet, 4 frames of 48×48): a gun shot striking an asteroid. Same placement rule as `hull_hit`: centered on the impact point on the rock surface, debris spraying UP (outward from the rock). Frames: small white-hot flash → burst of warm orange `#FF9A3C` sparks plus grey-brown rock chips and a dusty puff thrown upward → dust cloud spreading and thinning, chips flying apart → faint dust almost gone. Rock colors match the asteroids (grey-brown); must read clearly different from `hull_hit` (more dust and stone, fewer molten sparks) and never cyan.
+- `impact_spark` (8×8): one particle, a tiny round hot spark: white centre fading to orange `#FF9A3C` and transparent at the edge. Code moves, fades and scales it.
+- `rock_dust` (16×16): one particle, a soft round grey-brown dust puff with irregular wispy edges, about 60% alpha at the centre fading to fully transparent at the edge. Code drifts, grows and fades it.

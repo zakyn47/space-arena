@@ -100,3 +100,7 @@ The two must be instantly distinguishable by color and symbol.
 
 - All player hulls and pirates now use the chunkier, worn military look: heavier armor plates, weathering and scuffs, same silhouettes, palette and size classes as above.
 - Engine nozzles are dark exhaust ports with a faint orange rim and no baked flames; `engine_flame` is drawn by code. Nozzle positions are fixed because the client pins flames there (offsets from the sprite centre): scout (-6,26) (6,26); fighter (-5,27) (5,27); freighter (-5,22) (0,22) (5,22); gunship (-11,22) (0,26) (11,22); raider (0,17); marauder (-5,20) (5,20); warlord (-8,24) (0,27) (8,24). Keep them when redrawing a ship.
+
+## Heavy cannon update
+
+- `bullet_cannon` (32×32, redraw, pointing UP): a heavy kinetic slug that must look weightier than the 16×32 red pulse bolts while staying smaller than the 48×48 blue `plasma_bolt`. A thick bullet-shaped slug ~10 px wide and ~20 px long with a blunt rounded nose at the top: white-hot yellow core, molten amber-gold `#FFC23C` body and a darker orange `#FF9A3C` rim, wrapped in a warm glow ~16 px wide. Behind it a short tapering heat trail of orange sparks and shimmer, fading to transparent at least 2 px before the bottom edge. Gold/amber, not red, so it never reads as a pulse bolt; no blue. Drawn with additive blending; everything outside the glow is transparent.

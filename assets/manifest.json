@@ -22,7 +22,7 @@
     {"id": "ship_fighter", "file": "ships/ship_fighter.png", "width": 64, "height": 64, "anchor": [0.5, 0.5], "frames": 1},
     {"id": "ship_freighter", "file": "ships/ship_freighter.png", "width": 64, "height": 64, "anchor": [0.5, 0.5], "frames": 1},
     {"id": "ship_gunship", "file": "ships/ship_gunship.png", "width": 64, "height": 64, "anchor": [0.5, 0.5], "frames": 1},
-    {"id": "bullet_cannon", "file": "bullets/bullet_cannon.png", "width": 16, "height": 16, "anchor": [0.5, 0.5], "frames": 1},
+    {"id": "bullet_cannon", "file": "bullets/bullet_cannon.png", "width": 32, "height": 32, "anchor": [0.5, 0.5], "frames": 1},
     {"id": "rocket", "file": "bullets/rocket.png", "width": 24, "height": 24, "anchor": [0.5, 0.5], "frames": 1},
     {"id": "rocket_trail", "file": "fx/rocket_trail.png", "width": 16, "height": 16, "anchor": [0.5, 0.5], "frames": 1},
     {"id": "engine_flame", "file": "fx/engine_flame.png", "width": 64, "height": 32, "anchor": [0.5, 0], "frames": 4},

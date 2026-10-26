@@ -90,7 +90,7 @@ export class BuildMenu {
   }
 
   showResult(message: ShopResultMessage): void {
-    this.resultText = message.ok ? 'Done' : FAILURE_TEXT[message.reason];
+    this.resultText = message.ok ? '' : FAILURE_TEXT[message.reason];
     this.render(true);
   }
 

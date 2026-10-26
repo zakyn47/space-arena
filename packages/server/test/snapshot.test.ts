@@ -55,6 +55,13 @@ describe('snapshot', () => {
     expect(toEntityState(self)).not.toHaveProperty('darkMatter');
   });
 
+  it('flags ships that are firing their main engine so others can draw the flame', () => {
+    const ship = createShip(1, 1, 'alice', shipRecord(10, 20, 1));
+    expect(toEntityState(ship)).not.toHaveProperty('thrusting');
+    ship.input = { ...ship.input, thrust: true };
+    expect(toEntityState(ship)).toMatchObject({ thrusting: true });
+  });
+
   it('does not leak private fields of other ships', () => {
     const other = createShip(2, 2, 'bob', shipRecord(30, 40, 2));
     expect(Object.keys(toEntityState(other))).not.toContain('rockets');

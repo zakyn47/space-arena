@@ -20,6 +20,7 @@ export function toEntityState(entity: WorldEntity): EntityState {
         miningTargetId: entity.miningTargetId,
         ...(entity.npc === 'leviathan' ? { health: Math.round((entity.hull / entity.stats.maxHull) * 100) / 100 } : {}),
         ...(entity.darkMatter > 0 ? { darkMatter: true as const } : {}),
+        ...(entity.input.thrust ? { thrusting: true as const } : {}),
       };
     case 'bullet':
       return { kind: 'bullet', id: entity.id, x: entity.x, y: entity.y, vx: entity.vx, vy: entity.vy, weaponId: entity.weaponId, mk: entity.mk };

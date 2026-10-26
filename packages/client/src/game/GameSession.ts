@@ -26,6 +26,7 @@ class ActiveGame {
   private latest: SnapshotMessage | null = null;
   private respawned = false;
   private inputTimer: ReturnType<typeof setInterval> | undefined;
+  private thrusting = false;
 
   private constructor(
     private readonly connection: Connection,
@@ -88,6 +89,7 @@ class ActiveGame {
 
   private sendInput(): void {
     const input = this.input.sample(this.predictor.current?.angle ?? 0, this.predictor.turnRate / TICK_RATE);
+    this.thrusting = input.thrust;
     const seq = this.predictor.predict(input);
     this.connection.send({ type: 'input', seq, ...input });
   }
@@ -134,6 +136,7 @@ class ActiveGame {
       npc: null,
       miningTargetId: self.miningTargetId,
       ...(self.darkMatter > 0 ? { darkMatter: true as const } : {}),
+      ...(this.thrusting ? { thrusting: true as const } : {}),
     };
     const others = this.interpolator.sample(performance.now() - INTERPOLATION_DELAY_MS);
     this.renderer.render({ camera: motion, entities: [ownShip, ...others] });

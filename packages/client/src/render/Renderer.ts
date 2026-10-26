@@ -1,6 +1,7 @@
 import { NPC_NAMES, VIEW_RADIUS, type EntityState, type HitEvent, type SafeZone } from '@arena/shared';
 import { Application, Container, Graphics, Rectangle, Text, TilingSprite, type Texture } from 'pixi.js';
 import { Effects } from './Effects';
+import { EngineFlames } from './EngineFlames';
 import { MiningBeams } from './MiningBeams';
 import type { SpriteFactory } from './SpriteFactory';
 import { headingFor, spriteIdFor, vanishEffectFor } from './spriteIds';
@@ -28,6 +29,7 @@ const LAYER_FOR: Readonly<Record<EntityState['kind'], LayerName>> = {
 interface EntityView {
   readonly spriteId: string;
   readonly container: Container;
+  readonly engines: EngineFlames | null;
   readonly darkMatter: Container | null;
   readonly shield: Container | null;
   readonly label: Text | null;
@@ -83,6 +85,7 @@ export class Renderer {
     app.ticker.add((ticker) => {
       this.effects.update(ticker.deltaMS / 1_000);
       this.miningBeams.update(ticker.deltaMS / 1_000);
+      for (const view of this.views.values()) view.engines?.update(ticker.deltaMS / 1_000);
     });
   }
 
@@ -188,6 +191,7 @@ export class Renderer {
     view.container.position.set(entity.x, entity.y);
     const heading = headingFor(entity);
     if (heading !== null) view.container.rotation = heading;
+    if (entity.kind === 'ship') view.engines?.setThrusting(entity.thrusting === true);
     if (view.darkMatter && entity.kind === 'ship') view.darkMatter.visible = entity.darkMatter === true;
     if (view.shield && entity.kind === 'ship') view.shield.visible = entity.shieldUp;
     view.label?.position.set(entity.x, entity.y + view.labelOffset);
@@ -207,6 +211,7 @@ export class Renderer {
     if (entity.kind === 'asteroid') body.scale.set((entity.radius * 2) / this.sprites.size(spriteId).width);
     if (entity.kind === 'bullet' || entity.kind === 'plasma') body.blendMode = 'add';
     container.addChild(body);
+    const engines = entity.kind === 'ship' ? EngineFlames.attach(container, spriteId, this.sprites) : null;
     const isLeviathan = entity.kind === 'ship' && entity.npc === 'leviathan';
     const darkMatter = entity.kind === 'ship' && !isLeviathan ? this.sprites.animate('dark_matter_shield', ANIMATIONS.dark_matter_shield ?? 1.2, true) : null;
     if (darkMatter) container.addChild(darkMatter);
@@ -223,7 +228,7 @@ export class Renderer {
     const health = isLeviathan ? new Graphics() : null;
     if (health) this.layers.labels.addChild(health);
     const labelOffset = isLeviathan ? -(this.sprites.size(spriteId).height / 2 + 14) : LABEL_OFFSET_Y;
-    const view: EntityView = { spriteId, container, darkMatter, shield, label, health, labelOffset, x: entity.x, y: entity.y };
+    const view: EntityView = { spriteId, container, engines, darkMatter, shield, label, health, labelOffset, x: entity.x, y: entity.y };
     this.views.set(entity.id, view);
     return view;
   }

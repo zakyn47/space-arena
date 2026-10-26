@@ -98,6 +98,7 @@ export interface ShipState {
   readonly miningTargetId: number | null;
   readonly health?: number;
   readonly darkMatter?: true;
+  readonly thrusting?: true;
 }
 
 export interface BulletState {

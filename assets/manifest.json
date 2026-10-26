@@ -48,6 +48,9 @@
     {"id": "pirate_marauder", "file": "ships/pirate_marauder.png", "width": 64, "height": 64, "anchor": [0.5, 0.5], "frames": 1},
     {"id": "pirate_warlord", "file": "ships/pirate_warlord.png", "width": 64, "height": 64, "anchor": [0.5, 0.5], "frames": 1},
     {"id": "mining_beam", "file": "fx/mining_beam.png", "width": 16, "height": 64, "anchor": [0.5, 1], "frames": 1},
+    {"id": "mining_impact", "file": "fx/mining_impact.png", "width": 192, "height": 48, "anchor": [0.5, 0.5], "frames": 4},
+    {"id": "mining_spark", "file": "fx/mining_spark.png", "width": 8, "height": 8, "anchor": [0.5, 0.5], "frames": 1},
+    {"id": "mining_debris", "file": "fx/mining_debris.png", "width": 8, "height": 8, "anchor": [0.5, 0.5], "frames": 1},
     {"id": "gear_mining_laser", "file": "ui/gear_mining_laser.png", "width": 48, "height": 48, "anchor": [0.5, 0.5], "frames": 1},
     {"id": "captain_avatar", "file": "ui/captain_avatar.png", "width": 256, "height": 256, "anchor": [0.5, 0.5], "frames": 1},
     {"id": "icon_salvage", "file": "ui/icon_salvage.png", "width": 48, "height": 48, "anchor": [0.5, 0.5], "frames": 1}

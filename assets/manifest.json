@@ -1,8 +1,8 @@
 {
   "sprites": [
-    {"id": "bullet_t0", "file": "bullets/bullet_t0.png", "width": 16, "height": 16, "anchor": [0.5, 0.5], "frames": 1},
-    {"id": "bullet_t2", "file": "bullets/bullet_t2.png", "width": 16, "height": 16, "anchor": [0.5, 0.5], "frames": 1},
-    {"id": "bullet_t4", "file": "bullets/bullet_t4.png", "width": 16, "height": 16, "anchor": [0.5, 0.5], "frames": 1},
+    {"id": "bullet_t0", "file": "bullets/bullet_t0.png", "width": 16, "height": 32, "anchor": [0.5, 0.5], "frames": 1},
+    {"id": "bullet_t2", "file": "bullets/bullet_t2.png", "width": 16, "height": 32, "anchor": [0.5, 0.5], "frames": 1},
+    {"id": "bullet_t4", "file": "bullets/bullet_t4.png", "width": 16, "height": 32, "anchor": [0.5, 0.5], "frames": 1},
     {"id": "shield_bubble", "file": "fx/shield_bubble.png", "width": 96, "height": 96, "anchor": [0.5, 0.5], "frames": 1},
     {"id": "shield_impact", "file": "fx/shield_impact.png", "width": 384, "height": 96, "anchor": [0.5, 0.5], "frames": 4},
     {"id": "dark_matter_shield", "file": "fx/dark_matter_shield.png", "width": 1152, "height": 96, "anchor": [0.5, 0.5], "frames": 12},
@@ -29,7 +29,7 @@
     {"id": "space_mine", "file": "world/space_mine.png", "width": 64, "height": 32, "anchor": [0.5, 0.5], "frames": 2},
     {"id": "mine_explosion", "file": "fx/mine_explosion.png", "width": 768, "height": 96, "anchor": [0.5, 0.5], "frames": 8},
     {"id": "icon_mine", "file": "ui/icon_mine.png", "width": 48, "height": 48, "anchor": [0.5, 0.5], "frames": 1},
-    {"id": "plasma_bolt", "file": "bullets/plasma_bolt.png", "width": 64, "height": 32, "anchor": [0.5, 0.5], "frames": 2},
+    {"id": "plasma_bolt", "file": "bullets/plasma_bolt.png", "width": 192, "height": 48, "anchor": [0.5, 0.5], "frames": 4},
     {"id": "icon_plasma", "file": "ui/icon_plasma.png", "width": 48, "height": 48, "anchor": [0.5, 0.5], "frames": 1},
     {"id": "booster_repair", "file": "world/booster_repair.png", "width": 160, "height": 40, "anchor": [0.5, 0.5], "frames": 4},
     {"id": "booster_speed", "file": "world/booster_speed.png", "width": 160, "height": 40, "anchor": [0.5, 0.5], "frames": 4},

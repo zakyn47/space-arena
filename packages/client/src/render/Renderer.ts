@@ -1,6 +1,7 @@
 import { NPC_NAMES, VIEW_RADIUS, type EntityState, type HitEvent, type SafeZone } from '@arena/shared';
 import { Application, Container, Graphics, Rectangle, Text, TilingSprite, type Texture } from 'pixi.js';
 import { Effects } from './Effects';
+import { MiningBeams } from './MiningBeams';
 import type { SpriteFactory } from './SpriteFactory';
 import { spriteIdFor, vanishEffectFor } from './spriteIds';
 
@@ -65,8 +66,8 @@ export class Renderer {
     labels: new Container(),
   };
   private readonly views = new Map<number, EntityView>();
-  private readonly beams = new Map<number, Container>();
   private readonly effects: Effects;
+  private readonly miningBeams: MiningBeams;
   private camera = { x: 0, y: 0 };
   private readonly touch = matchMedia('(any-pointer: coarse)');
 
@@ -76,9 +77,13 @@ export class Renderer {
     private readonly starfield: TilingSprite,
   ) {
     this.effects = new Effects(this.layers.effects, sprites);
+    this.miningBeams = new MiningBeams(this.layers.beams, sprites);
     for (const layer of Object.values(this.layers)) this.world.addChild(layer);
     app.stage.addChild(starfield, this.world);
-    app.ticker.add((ticker) => this.effects.update(ticker.deltaMS / 1_000));
+    app.ticker.add((ticker) => {
+      this.effects.update(ticker.deltaMS / 1_000);
+      this.miningBeams.update(ticker.deltaMS / 1_000);
+    });
   }
 
   static async create(host: HTMLElement, sprites: SpriteFactory, zones: readonly SafeZone[], worldSize: number): Promise<Renderer> {
@@ -108,7 +113,7 @@ export class Renderer {
       seen.add(entity.id);
       this.syncEntity(entity);
     }
-    this.syncBeams(view.entities);
+    this.miningBeams.sync(view.entities);
     this.removeMissing(seen);
   }
 
@@ -186,34 +191,6 @@ export class Renderer {
     if (view.shield && entity.kind === 'ship') view.shield.visible = entity.shieldUp;
     view.label?.position.set(entity.x, entity.y + view.labelOffset);
     if (view.health && entity.kind === 'ship') this.drawHealth(view.health, entity.x, entity.y + view.labelOffset + 12, entity.health ?? 1);
-  }
-
-  private syncBeams(entities: readonly EntityState[]): void {
-    const byId = new Map(entities.map((entity) => [entity.id, entity]));
-    const active = new Set<number>();
-    for (const entity of entities) {
-      if (entity.kind !== 'ship' || entity.miningTargetId === null) continue;
-      const target = byId.get(entity.miningTargetId);
-      if (!target) continue;
-      active.add(entity.id);
-      const beam = this.beams.get(entity.id) ?? this.createBeam(entity.id);
-      const length = Math.hypot(target.x - entity.x, target.y - entity.y);
-      beam.position.set(entity.x, entity.y);
-      beam.rotation = Math.atan2(target.x - entity.x, entity.y - target.y);
-      beam.scale.set(1, length / this.sprites.size('mining_beam').height);
-    }
-    for (const [id, beam] of this.beams) {
-      if (active.has(id)) continue;
-      beam.destroy({ children: true });
-      this.beams.delete(id);
-    }
-  }
-
-  private createBeam(id: number): Container {
-    const beam = this.sprites.create('mining_beam');
-    this.layers.beams.addChild(beam);
-    this.beams.set(id, beam);
-    return beam;
   }
 
   private replaceView(entity: EntityState, spriteId: string): EntityView {

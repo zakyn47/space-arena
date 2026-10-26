@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { headingFor, hitEffectFor, spriteIdFor, vanishEffectFor } from '../src/render/spriteIds';
+import { headingFor, hitEffectFor, nameTagFor, spriteIdFor, vanishEffectFor } from '../src/render/spriteIds';
 
 const bullet = (weaponId: 'pulse_laser' | 'heavy_cannon', mk: 1 | 2 | 3) =>
   spriteIdFor({ kind: 'bullet', id: 1, x: 0, y: 0, vx: 0, vy: 0, weaponId, mk });
@@ -66,5 +66,27 @@ describe('headingFor', () => {
   it('uses the angle of entities that carry one and leaves round ones alone', () => {
     expect(headingFor({ kind: 'rocket', id: 1, x: 0, y: 0, vx: 0, vy: 0, angle: 1.2 })).toBe(1.2);
     expect(headingFor({ kind: 'orb', id: 2, x: 0, y: 0, vx: 1, vy: 1 })).toBeNull();
+  });
+});
+
+describe('nameTagFor', () => {
+  const ship = (id: number, name: string, npc: 'raider' | 'leviathan' | null) =>
+    ({ kind: 'ship', id, name, x: 0, y: 0, vx: 0, vy: 0, angle: 0, shieldUp: false, hullId: 'scout', npc, miningTargetId: null }) as const;
+
+  it('names other pilots in the player accent colour', () => {
+    expect(nameTagFor(ship(2, 'alice', null), 1)).toEqual({ text: 'alice', color: 0x5ec8ff });
+  });
+
+  it('leaves your own ship unlabelled', () => {
+    expect(nameTagFor(ship(1, 'you', null), 1)).toBeNull();
+  });
+
+  it('labels pirates and the leviathan by their kind', () => {
+    expect(nameTagFor(ship(3, 'Raider', 'raider'), 1)).toEqual({ text: 'Raider', color: 0xff5a4f });
+    expect(nameTagFor(ship(4, 'Void Leviathan', 'leviathan'), 1)?.color).toBe(0xc04bff);
+  });
+
+  it('labels nothing but ships', () => {
+    expect(nameTagFor({ kind: 'ore', id: 5, x: 0, y: 0 }, 1)).toBeNull();
   });
 });

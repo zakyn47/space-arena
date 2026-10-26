@@ -1,4 +1,4 @@
-import type { EntityState, GearId, HitBlock, Mk } from '@arena/shared';
+import { NPC_NAMES, type EntityState, type GearId, type HitBlock, type Mk } from '@arena/shared';
 
 const PULSE_SPRITES: Readonly<Record<Mk, string>> = { 1: 'bullet_t0', 2: 'bullet_t2', 3: 'bullet_t4' };
 
@@ -48,4 +48,15 @@ export function spriteIdFor(entity: EntityState): string {
 export function headingFor(entity: EntityState): number | null {
   if ('angle' in entity) return entity.angle;
   return entity.kind === 'bullet' ? Math.atan2(entity.vx, -entity.vy) : null;
+}
+
+export interface NameTag {
+  readonly text: string;
+  readonly color: number;
+}
+
+export function nameTagFor(entity: EntityState, selfId: number): NameTag | null {
+  if (entity.kind !== 'ship' || entity.id === selfId) return null;
+  if (entity.npc === null) return { text: entity.name, color: 0x5ec8ff };
+  return { text: NPC_NAMES[entity.npc], color: entity.npc === 'leviathan' ? 0xc04bff : 0xff5a4f };
 }

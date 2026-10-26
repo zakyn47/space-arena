@@ -139,7 +139,7 @@ class ActiveGame {
       ...(this.thrusting ? { thrusting: true as const } : {}),
     };
     const others = this.interpolator.sample(performance.now() - INTERPOLATION_DELAY_MS);
-    this.renderer.render({ camera: motion, entities: [ownShip, ...others] });
+    this.renderer.render({ camera: motion, entities: [ownShip, ...others], selfId: self.id });
   }
 }
 

@@ -1,4 +1,4 @@
-import { NPC_NAMES, VIEW_RADIUS, type EntityState, type HitEvent, type SafeZone } from '@arena/shared';
+import { VIEW_RADIUS, type EntityState, type HitEvent, type SafeZone } from '@arena/shared';
 import { Application, Container, Graphics, Rectangle, Text, TilingSprite, type Texture } from 'pixi.js';
 import { Effects } from './Effects';
 import { EngineFlames } from './EngineFlames';
@@ -6,11 +6,13 @@ import { MiningBeams } from './MiningBeams';
 import { Particles } from './Particles';
 import { rockImpactBursts } from './rockImpact';
 import type { SpriteFactory } from './SpriteFactory';
-import { headingFor, spriteIdFor, vanishEffectFor } from './spriteIds';
+import { headingFor, nameTagFor, spriteIdFor, vanishEffectFor } from './spriteIds';
 
 const STARFIELD_PARALLAX = 0.3;
 const EXPLOSION_VISIBLE_FRACTION = 0.8;
-const LABEL_OFFSET_Y = -44;
+const LABEL_OFFSET_Y = -36;
+const LABEL_RESOLUTION = 4;
+const TOUCH_LABEL_SIZE = 0.75;
 const ANIMATIONS: Readonly<Record<string, number>> = { space_mine: 0.8, leviathan: 1.6, plasma_orb: 0.3, plasma_bolt: 0.2, booster_repair: 1.2, booster_speed: 1.2, dark_matter_shield: 1.2 };
 
 type LayerName = 'zones' | 'ground' | 'beams' | 'ships' | 'bullets' | 'effects' | 'labels';
@@ -45,6 +47,7 @@ interface EntityView {
 export interface RenderView {
   readonly camera: { readonly x: number; readonly y: number };
   readonly entities: readonly EntityState[];
+  readonly selfId: number;
 }
 
 function generatedStars(app: Application): Texture {
@@ -81,6 +84,9 @@ export class Renderer {
   private readonly miningBeams: MiningBeams;
   private readonly particles: Particles;
   private camera = { x: 0, y: 0 };
+  private selfId = 0;
+  // Name tags keep the same on-screen size however far the camera zooms out, so they stay readable on phones.
+  private labelScale = 1;
   private readonly touch = matchMedia('(any-pointer: coarse)');
 
   private constructor(
@@ -122,6 +128,7 @@ export class Renderer {
 
   render(view: RenderView): void {
     this.camera = { x: view.camera.x, y: view.camera.y };
+    this.selfId = view.selfId;
     this.positionCamera();
     const seen = new Set<number>();
     for (const entity of view.entities) {
@@ -152,6 +159,7 @@ export class Renderer {
     const { width, height } = this.app.screen;
     const scale = cameraScale(width, height, this.touch.matches);
     this.world.scale.set(scale);
+    this.labelScale = (this.touch.matches ? TOUCH_LABEL_SIZE : 1) / scale;
     this.world.pivot.set(this.camera.x, this.camera.y);
     this.world.position.set(width / 2, height / 2);
     this.starfield.width = width;
@@ -212,6 +220,7 @@ export class Renderer {
     if (view.darkMatter && entity.kind === 'ship') view.darkMatter.visible = entity.darkMatter === true;
     if (view.shield && entity.kind === 'ship') view.shield.visible = entity.shieldUp;
     view.label?.position.set(entity.x, entity.y + view.labelOffset);
+    view.label?.scale.set(this.labelScale);
     if (view.health && entity.kind === 'ship') this.drawHealth(view.health, entity.x, entity.y + view.labelOffset + 12, entity.health ?? 1);
   }
 
@@ -251,9 +260,10 @@ export class Renderer {
   }
 
   private createLabel(entity: EntityState): Text | null {
-    if (entity.kind !== 'ship' || !entity.npc) return null;
-    const label = new Text({ text: NPC_NAMES[entity.npc], style: { fill: entity.npc === 'leviathan' ? 0xc04bff : 0xff5a4f, fontSize: 12, fontFamily: 'system-ui' } });
-    label.anchor.set(0.5);
+    const tag = nameTagFor(entity, this.selfId);
+    if (!tag) return null;
+    const label = new Text({ text: tag.text, resolution: LABEL_RESOLUTION, style: { fill: tag.color, fontSize: 13, fontWeight: '600', fontFamily: 'system-ui', stroke: { color: 0x05060d, width: 3 } } });
+    label.anchor.set(0.5, 1);
     this.layers.labels.addChild(label);
     return label;
   }

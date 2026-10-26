@@ -6,7 +6,7 @@ function bulletSprite(weaponId: GearId, mk: Mk): string {
   return weaponId === 'heavy_cannon' ? 'bullet_cannon' : PULSE_SPRITES[mk];
 }
 
-const HIT_EFFECTS: Readonly<Record<HitBlock, string>> = { hull: 'hull_hit', shield: 'shield_impact', dark_matter: 'dark_matter_impact' };
+const HIT_EFFECTS: Readonly<Record<HitBlock, string>> = { hull: 'hull_hit', shield: 'shield_impact', dark_matter: 'dark_matter_impact', rock: 'rock_hit' };
 
 export function hitEffectFor(block: HitBlock): string {
   return HIT_EFFECTS[block];

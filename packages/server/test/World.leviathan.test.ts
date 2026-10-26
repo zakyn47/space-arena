@@ -48,7 +48,7 @@ describe('plasma orbs', () => {
     const events = Array.from({ length: Math.ceil(2 / TICK_DT) }, () => world.tick(TICK_DT));
     expect(target.hull).toBe(target.stats.maxHull - ORB_DAMAGE);
     expect(target.lastHitBy).toBe(boss.id);
-    expect(events.flatMap((tick) => tick.hits)).toContainEqual(expect.objectContaining({ shipId: target.id, block: 'hull' }));
+    expect(events.flatMap((tick) => tick.hits)).toContainEqual(expect.objectContaining({ targetId: target.id, block: 'hull' }));
   });
 
   it('hit pilots hugging the boss inside its radius', () => {

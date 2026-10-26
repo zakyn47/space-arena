@@ -65,6 +65,6 @@ describe('World plasma blaster', () => {
     const hits = ticks(world, 1.5);
     expect(bob.darkMatter).toBe(DARK_MATTER_SHIELD - PLASMA_DAMAGE);
     expect(bob.hull).toBe(bob.stats.maxHull);
-    expect(hits).toContainEqual(expect.objectContaining({ shipId: bob.id, block: 'dark_matter' }));
+    expect(hits).toContainEqual(expect.objectContaining({ targetId: bob.id, block: 'dark_matter' }));
   });
 });

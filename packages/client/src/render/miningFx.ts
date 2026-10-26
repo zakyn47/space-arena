@@ -35,8 +35,8 @@ export function beamGeometry(from: Point, target: Point & { readonly radius: num
   return { endX: from.x + dx * scale, endY: from.y + dy * scale, length, rotation: Math.atan2(dx, -dy) };
 }
 
-export function sprayVelocity(beamRotation: number, speed: number, random: () => number): { vx: number; vy: number } {
-  const angle = beamRotation + Math.PI + (random() - 0.5) * 2 * SPRAY_CONE;
+export function sprayVelocity(direction: number, speed: number, random: () => number): { vx: number; vy: number } {
+  const angle = direction + (random() - 0.5) * 2 * SPRAY_CONE;
   return { vx: Math.sin(angle) * speed, vy: -Math.cos(angle) * speed };
 }
 

@@ -15,7 +15,7 @@ interface ActiveEffect {
 }
 
 export interface HitEffect {
-  readonly ship: Container;
+  readonly target: Container;
   readonly angle: number;
   readonly block: HitBlock;
   readonly offset: number;
@@ -37,17 +37,17 @@ export class Effects {
     this.active.push({ view, duration: EXPLOSION_SECONDS, remaining: EXPLOSION_SECONDS, delay: 0, attach: () => undefined });
   }
 
-  // Hits ride on the ship's container so they stay on the hull while it flies; the delay lines
+  // Hits ride on the target's container so they stay on the hull while it flies; the delay lines
   // them up with the interpolated bullets, which are drawn slightly in the past.
-  hit({ ship, angle, block, offset: hullOffset, delaySeconds }: HitEffect): void {
+  hit({ target, angle, block, offset: surface, delaySeconds }: HitEffect): void {
     const view = this.sprites.animate(hitEffectFor(block), HIT_SECONDS, false);
     const attach = (): void => {
-      if (ship.destroyed) return;
-      const local = angle - ship.rotation;
-      const offset = block === 'hull' ? hullOffset : 0;
+      if (target.destroyed) return;
+      const local = angle - target.rotation;
+      const offset = block === 'hull' || block === 'rock' ? surface : 0;
       view.rotation = local;
       view.position.set(Math.sin(local) * offset, -Math.cos(local) * offset);
-      ship.addChild(view);
+      target.addChild(view);
     };
     const effect: ActiveEffect = { view, duration: HIT_SECONDS, remaining: HIT_SECONDS, delay: delaySeconds, attach };
     this.active.push(effect);

@@ -1,25 +1,17 @@
 import type { EntityState } from '@arena/shared';
 import { Container, TilingSprite } from 'pixi.js';
 import type { SpriteFactory } from './SpriteFactory';
-import { beamGeometry, sprayVelocity, stepParticle, type BeamGeometry, type Particle } from './miningFx';
+import { beamGeometry, type BeamGeometry } from './miningFx';
+import type { ParticleStyle, Particles } from './Particles';
 
 const SCROLL_SPEED = 260;
 const IGNITE_SECONDS = 0.12;
 const IMPACT_LOOP_SECONDS = 0.32;
 const SPARKS_PER_SECOND = 45;
 const DEBRIS_PER_SECOND = 9;
-const MAX_PARTICLES = 260;
 
-interface ParticleKind {
-  readonly spriteId: string;
-  readonly speed: readonly [number, number];
-  readonly life: readonly [number, number];
-  readonly spin: number;
-  readonly additive: boolean;
-}
-
-const SPARK: ParticleKind = { spriteId: 'mining_spark', speed: [70, 180], life: [0.2, 0.45], spin: 0, additive: true };
-const DEBRIS: ParticleKind = { spriteId: 'mining_debris', speed: [20, 60], life: [0.6, 1.1], spin: 6, additive: false };
+const SPARK: ParticleStyle = { spriteId: 'mining_spark', speed: [70, 180], life: [0.2, 0.45], spin: 0, additive: true, grows: false };
+const DEBRIS: ParticleStyle = { spriteId: 'mining_debris', speed: [20, 60], life: [0.6, 1.1], spin: 6, additive: false, grows: false };
 
 interface Beam {
   readonly root: Container;
@@ -31,28 +23,15 @@ interface Beam {
   debrisDebt: number;
 }
 
-interface LiveParticle {
-  readonly view: Container;
-  readonly state: Particle;
-  readonly fadeScale: number;
-}
-
-function between([min, max]: readonly [number, number]): number {
-  return min + Math.random() * (max - min);
-}
-
 export class MiningBeams {
   private readonly beams = new Map<number, Beam>();
-  private readonly particles: LiveParticle[] = [];
-  private readonly particleLayer = new Container();
   private time = 0;
 
   constructor(
     private readonly layer: Container,
     private readonly sprites: SpriteFactory,
-  ) {
-    layer.addChild(this.particleLayer);
-  }
+    private readonly particles: Particles,
+  ) {}
 
   sync(entities: readonly EntityState[]): void {
     const byId = new Map(entities.map((entity) => [entity.id, entity]));
@@ -77,7 +56,6 @@ export class MiningBeams {
   update(dtSeconds: number): void {
     this.time += dtSeconds;
     for (const beam of this.beams.values()) this.animate(beam, dtSeconds);
-    this.stepParticles(dtSeconds);
   }
 
   private createBeam(id: number): Beam {
@@ -121,41 +99,9 @@ export class MiningBeams {
     beam.debrisDebt = this.emit(beam, DEBRIS, beam.debrisDebt + DEBRIS_PER_SECOND * dtSeconds);
   }
 
-  private emit(beam: Beam, kind: ParticleKind, debt: number): number {
-    let remaining = debt;
-    for (; remaining >= 1; remaining -= 1) {
-      if (this.particles.length >= MAX_PARTICLES) return 0;
-      this.spawn(beam.geometry, kind);
-    }
-    return remaining;
-  }
-
-  private spawn(geometry: BeamGeometry, kind: ParticleKind): void {
-    const view = this.sprites.create(kind.spriteId);
-    if (kind.additive) view.blendMode = 'add';
-    const { vx, vy } = sprayVelocity(geometry.rotation, between(kind.speed), Math.random);
-    const life = between(kind.life);
-    const state: Particle = { x: geometry.endX, y: geometry.endY, vx, vy, angle: Math.random() * Math.PI * 2, spin: (Math.random() - 0.5) * 2 * kind.spin, life, maxLife: life };
-    this.particleLayer.addChild(view);
-    this.particles.push({ view, state, fadeScale: 0.6 + Math.random() * 0.8 });
-  }
-
-  // Beam geometry is in world space but the beam root sits on the ship, so particles spawn from the
-  // world-space end point and live in their own layer, unaffected when the ship moves or the beam stops.
-  private stepParticles(dtSeconds: number): void {
-    for (let i = this.particles.length - 1; i >= 0; i -= 1) {
-      const particle = this.particles[i];
-      if (!particle) continue;
-      if (!stepParticle(particle.state, dtSeconds)) {
-        particle.view.destroy();
-        this.particles.splice(i, 1);
-        continue;
-      }
-      const remaining = particle.state.life / particle.state.maxLife;
-      particle.view.position.set(particle.state.x, particle.state.y);
-      particle.view.rotation = particle.state.angle;
-      particle.view.alpha = remaining;
-      particle.view.scale.set(particle.fadeScale * (0.4 + 0.6 * remaining));
-    }
+  private emit(beam: Beam, style: ParticleStyle, debt: number): number {
+    const count = Math.floor(debt);
+    if (count > 0) this.particles.emit({ style, x: beam.geometry.endX, y: beam.geometry.endY, direction: beam.geometry.rotation + Math.PI, count });
+    return debt - count;
   }
 }

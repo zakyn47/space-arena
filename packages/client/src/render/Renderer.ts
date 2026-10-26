@@ -3,6 +3,8 @@ import { Application, Container, Graphics, Rectangle, Text, TilingSprite, type T
 import { Effects } from './Effects';
 import { EngineFlames } from './EngineFlames';
 import { MiningBeams } from './MiningBeams';
+import { Particles } from './Particles';
+import { rockImpactBursts } from './rockImpact';
 import type { SpriteFactory } from './SpriteFactory';
 import { headingFor, spriteIdFor, vanishEffectFor } from './spriteIds';
 
@@ -35,6 +37,7 @@ interface EntityView {
   readonly label: Text | null;
   readonly health: Graphics | null;
   readonly labelOffset: number;
+  readonly surface: number;
   x: number;
   y: number;
 }
@@ -50,6 +53,12 @@ function generatedStars(app: Application): Texture {
     stars.circle(Math.random() * 512, Math.random() * 512, Math.random() * 1.5 + 0.3).fill({ color: 0xffffff, alpha: Math.random() });
   }
   return app.renderer.generateTexture({ target: stars, frame: new Rectangle(0, 0, 512, 512) });
+}
+
+// Where impacts sit: on the hull plating of ships, a little inside the rock's outline for asteroids.
+function surfaceRadius(entity: EntityState): number {
+  if (entity.kind === 'asteroid') return entity.radius * 0.85;
+  return entity.kind === 'ship' && entity.npc === 'leviathan' ? 70 : 18;
 }
 
 export function cameraScale(width: number, height: number, touch: boolean): number {
@@ -70,6 +79,7 @@ export class Renderer {
   private readonly views = new Map<number, EntityView>();
   private readonly effects: Effects;
   private readonly miningBeams: MiningBeams;
+  private readonly particles: Particles;
   private camera = { x: 0, y: 0 };
   private readonly touch = matchMedia('(any-pointer: coarse)');
 
@@ -79,12 +89,14 @@ export class Renderer {
     private readonly starfield: TilingSprite,
   ) {
     this.effects = new Effects(this.layers.effects, sprites);
-    this.miningBeams = new MiningBeams(this.layers.beams, sprites);
+    this.particles = new Particles(this.layers.beams, sprites);
+    this.miningBeams = new MiningBeams(this.layers.beams, sprites, this.particles);
     for (const layer of Object.values(this.layers)) this.world.addChild(layer);
     app.stage.addChild(starfield, this.world);
     app.ticker.add((ticker) => {
       this.effects.update(ticker.deltaMS / 1_000);
       this.miningBeams.update(ticker.deltaMS / 1_000);
+      this.particles.update(ticker.deltaMS / 1_000);
       for (const view of this.views.values()) view.engines?.update(ticker.deltaMS / 1_000);
     });
   }
@@ -122,8 +134,13 @@ export class Renderer {
 
   showHits(hits: readonly HitEvent[], delaySeconds: number): void {
     for (const hit of hits) {
-      const view = this.views.get(hit.shipId);
-      if (view) this.effects.hit({ ship: view.container, angle: hit.angle, block: hit.block, offset: view.spriteId === 'leviathan' ? 70 : 18, delaySeconds });
+      const view = this.views.get(hit.targetId);
+      if (!view) continue;
+      this.effects.hit({ target: view.container, angle: hit.angle, block: hit.block, offset: view.surface, delaySeconds });
+      if (hit.block !== 'rock') continue;
+      const x = view.x + Math.sin(hit.angle) * view.surface;
+      const y = view.y - Math.cos(hit.angle) * view.surface;
+      for (const burst of rockImpactBursts(x, y, hit.angle)) this.particles.emit(burst, delaySeconds);
     }
   }
 
@@ -228,7 +245,7 @@ export class Renderer {
     const health = isLeviathan ? new Graphics() : null;
     if (health) this.layers.labels.addChild(health);
     const labelOffset = isLeviathan ? -(this.sprites.size(spriteId).height / 2 + 14) : LABEL_OFFSET_Y;
-    const view: EntityView = { spriteId, container, engines, darkMatter, shield, label, health, labelOffset, x: entity.x, y: entity.y };
+    const view: EntityView = { spriteId, container, engines, darkMatter, shield, label, health, labelOffset, surface: surfaceRadius(entity), x: entity.x, y: entity.y };
     this.views.set(entity.id, view);
     return view;
   }

@@ -99,6 +99,6 @@ export function buildSnapshot(
 function hitsInView(nearby: readonly WorldEntity[], hits: readonly HitEvent[]): HitEvent[] {
   const ids = new Set(nearby.map((entity) => entity.id));
   return hits
-    .filter((hit) => ids.has(hit.shipId))
+    .filter((hit) => ids.has(hit.targetId))
     .map((hit) => ({ ...hit, angle: Math.round(hit.angle * 100) / 100 }));
 }

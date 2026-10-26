@@ -13,10 +13,10 @@ function count(world: World, kind: string): number {
 
 function minerOnAsteroid(oreYield: number, hp = 1) {
   const world = new World({ asteroidTarget: 0, rng: seeded(7) });
-  world.addAsteroid({ x: OPEN_SPACE.x, y: OPEN_SPACE.y, radius: 40, hp, oreYield, variant: 1 });
+  const asteroid = world.addAsteroid({ x: OPEN_SPACE.x, y: OPEN_SPACE.y, radius: 40, hp, oreYield, variant: 1 });
   const ship = world.addShip(1, 'alice', shipRecord(OPEN_SPACE.x, OPEN_SPACE.y, 1));
   world.setInput(ship.id, 1, { ...IDLE_INPUT, fire: true });
-  return { world, ship };
+  return { world, ship, asteroid };
 }
 
 describe('World mining', () => {
@@ -37,6 +37,12 @@ describe('World mining', () => {
     const { world } = minerOnAsteroid(3, 20);
     ticks(world, 30);
     expect(count(world, 'asteroid')).toBe(1);
+  });
+
+  it('reports where shots strike rock so clients can show the impact', () => {
+    const { world, asteroid } = minerOnAsteroid(3, 20);
+    const hits = Array.from({ length: 30 }, () => world.tick(TICK_DT).hits).flat();
+    expect(hits).toContainEqual(expect.objectContaining({ targetId: asteroid.id, block: 'rock' }));
   });
 
   it('respects cargo capacity', () => {

@@ -53,6 +53,7 @@ describe('hitEffectFor', () => {
     expect(hitEffectFor('hull')).toBe('hull_hit');
     expect(hitEffectFor('shield')).toBe('shield_impact');
     expect(hitEffectFor('dark_matter')).toBe('dark_matter_impact');
+    expect(hitEffectFor('rock')).toBe('rock_hit');
   });
 });
 

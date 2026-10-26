@@ -35,13 +35,13 @@ describe('snapshot', () => {
     const self = createShip(1, 1, 'alice', shipRecord(10, 20, 1));
     const other = createShip(2, 2, 'bob', shipRecord(30, 40, 2));
     const hits: HitEvent[] = [
-      { shipId: 1, angle: 1.23456, block: 'hull' },
-      { shipId: 2, angle: -3.14159, block: 'shield' },
-      { shipId: 9, angle: 0, block: 'hull' },
+      { targetId: 1, angle: 1.23456, block: 'hull' },
+      { targetId: 2, angle: -3.14159, block: 'shield' },
+      { targetId: 9, angle: 0, block: 'hull' },
     ];
     expect(buildSnapshot(self, [self, other], 1, 100, undefined, hits).hits).toEqual([
-      { shipId: 1, angle: 1.23, block: 'hull' },
-      { shipId: 2, angle: -3.14, block: 'shield' },
+      { targetId: 1, angle: 1.23, block: 'hull' },
+      { targetId: 2, angle: -3.14, block: 'shield' },
     ]);
     expect(buildSnapshot(self, [self, other], 1, 100).hits).toBeUndefined();
   });

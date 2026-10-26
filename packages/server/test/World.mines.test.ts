@@ -45,7 +45,7 @@ describe('World space mines', () => {
     const events = world.tick(TICK_DT);
     expect(bob.hull).toBe(bob.stats.maxHull - MINE_DAMAGE);
     expect(bob.lastHitBy).toBe(alice.id);
-    expect(events.hits).toContainEqual(expect.objectContaining({ shipId: bob.id, block: 'hull' }));
+    expect(events.hits).toContainEqual(expect.objectContaining({ targetId: bob.id, block: 'hull' }));
     world.tick(TICK_DT);
     expect(bob.hull).toBe(bob.stats.maxHull - MINE_DAMAGE);
     expect(mines(world)).toHaveLength(0);
@@ -59,7 +59,7 @@ describe('World space mines', () => {
     Object.assign(bob, { x: mine.x, y: mine.y });
     const events = world.tick(TICK_DT);
     expect(bob.hull).toBe(bob.stats.maxHull);
-    expect(events.hits).toContainEqual(expect.objectContaining({ shipId: bob.id, block: 'shield' }));
+    expect(events.hits).toContainEqual(expect.objectContaining({ targetId: bob.id, block: 'shield' }));
     world.tick(TICK_DT);
     expect(mines(world)).toHaveLength(0);
   });

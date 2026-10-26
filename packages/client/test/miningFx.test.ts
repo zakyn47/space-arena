@@ -23,10 +23,10 @@ describe('beamGeometry', () => {
 });
 
 describe('sprayVelocity', () => {
-  it('sprays back toward the ship within the cone', () => {
-    const towardAsteroid = 0;
+  it('sprays within a cone around the direction', () => {
+    const down = Math.PI;
     for (const roll of [0, 0.5, 0.999]) {
-      const { vx, vy } = sprayVelocity(towardAsteroid, 100, () => roll);
+      const { vx, vy } = sprayVelocity(down, 100, () => roll);
       expect(vy).toBeGreaterThan(0);
       expect(Math.hypot(vx, vy)).toBeCloseTo(100);
     }

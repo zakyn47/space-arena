@@ -319,7 +319,7 @@ export class World {
       this.mines.delete(mine.id);
       for (const ship of blastVictims(mine, nearby)) {
         const block = applyDamage(ship, MINE_DAMAGE, mine.ownerId, this.elapsed);
-        hits.push({ shipId: ship.id, angle: Math.atan2(mine.x - ship.x, ship.y - mine.y), block });
+        hits.push({ targetId: ship.id, angle: Math.atan2(mine.x - ship.x, ship.y - mine.y), block });
       }
     }
   }
@@ -407,7 +407,7 @@ export class World {
       if (!target) continue;
       collection.delete(projectile.id);
       if (target.kind === 'ship') hits.push(this.hitShip(target, projectile));
-      if (target.kind === 'asteroid') this.damageAsteroid(target, projectile.damage * ASTEROID_PROJECTILE_DAMAGE_FACTOR);
+      if (target.kind === 'asteroid') hits.push(this.hitAsteroid(target, projectile));
     }
   }
 
@@ -430,7 +430,12 @@ export class World {
     const block = applyDamage(ship, projectile.damage, projectile.ownerId, this.elapsed);
     if (projectile.kind === 'plasma') disruptShield(ship, this.elapsed);
     const angle = Math.atan2(projectile.prevX - ship.x, ship.y - projectile.prevY);
-    return { shipId: ship.id, angle, block };
+    return { targetId: ship.id, angle, block };
+  }
+
+  private hitAsteroid(asteroid: AsteroidEntity, projectile: Projectile): HitEvent {
+    this.damageAsteroid(asteroid, projectile.damage * ASTEROID_PROJECTILE_DAMAGE_FACTOR);
+    return { targetId: asteroid.id, angle: Math.atan2(projectile.prevX - asteroid.x, asteroid.y - projectile.prevY), block: 'rock' };
   }
 
   private damageAsteroid(asteroid: AsteroidEntity, damage: number): void {

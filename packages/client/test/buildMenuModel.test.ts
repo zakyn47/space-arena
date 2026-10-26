@@ -121,6 +121,13 @@ describe('hullCards', () => {
 });
 
 describe('ordnanceOffers', () => {
+  it('describes what every ammunition type does', () => {
+    const offers = ordnanceOffers(selfState({}));
+    expect(offers.find((offer) => offer.ordnance === 'rockets')?.description).toContain('Homing');
+    expect(offers.find((offer) => offer.ordnance === 'mines')?.description).toContain('behind you');
+    expect(offers.find((offer) => offer.ordnance === 'plasma')?.description).toContain('shield');
+  });
+
   it('prices the missing ammo of the carried type', () => {
     const [rockets] = ordnanceOffers(selfState({ rockets: 6, bankedCredits: 60 }));
     expect(rockets).toMatchObject({ ordnance: 'rockets', carried: true, held: 6, missing: 4, fillPrice: 100, refund: 0, canBuyOne: true, canFill: false });

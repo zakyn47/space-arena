@@ -321,10 +321,10 @@ export class BuildMenu {
         element('span', `${offer.name} ${status}`),
         button('+1', offer.canBuyOne, buy(1)),
         button(`Fill (${offer.fillPrice} cr)`, offer.canFill, buy(Math.min(offer.missing, MAX_ROCKETS_PER_PURCHASE))),
+        element('p', offer.description, 'muted ammo-note'),
       );
       body.append(line);
     }
-    body.append(element('p', 'You carry one ammunition type at a time. Buying the other type sells your current ammo back at 50%. R fires rockets or drops a mine behind you.', 'muted'));
     return body;
   }
 }

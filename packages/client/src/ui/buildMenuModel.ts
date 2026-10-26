@@ -11,11 +11,21 @@ import {
   GEAR_IDS,
   HULLS,
   HULL_IDS,
+  MINE_ARM_TIME,
+  MINE_BLAST_RADIUS,
+  MINE_COOLDOWN,
+  MINE_DAMAGE,
   MK_LEVELS,
   ORDNANCE_NAMES,
   PLAYER_HULL_BONUS,
   ORDNANCE_PRICE,
   ORDNANCE_TYPES,
+  PLASMA_COOLDOWN,
+  PLASMA_DAMAGE,
+  ROCKET_COOLDOWN,
+  ROCKET_DAMAGE,
+  ROCKET_LOCK_RANGE,
+  SHIELD_DISRUPTION,
   SLOT_TYPES,
   gearAt,
   gearCost,
@@ -178,9 +188,16 @@ export function hullCards(build: Build, banked: number): HullCard[] {
   });
 }
 
+const ORDNANCE_DESCRIPTIONS: Readonly<Record<Ordnance, string>> = {
+  rockets: `Homing missile that locks onto a ship ahead of you within ${ROCKET_LOCK_RANGE} px and deals ${ROCKET_DAMAGE} damage. Hold R to fire one every ${ROCKET_COOLDOWN} s.`,
+  mines: `Dropped behind you, arms after ${MINE_ARM_TIME} s and blasts every enemy within ${MINE_BLAST_RADIUS} px for ${MINE_DAMAGE} damage. Raised shields block it. Hold R to drop one every ${MINE_COOLDOWN} s.`,
+  plasma: `Straight bolt that deals ${PLASMA_DAMAGE} damage and knocks out the target's shield for ${SHIELD_DISRUPTION} s: it drops and cannot recharge. Hold R to fire one every ${PLASMA_COOLDOWN} s.`,
+};
+
 export interface OrdnanceOffer {
   readonly ordnance: Ordnance;
   readonly name: string;
+  readonly description: string;
   readonly carried: boolean;
   readonly held: number;
   readonly missing: number;
@@ -201,6 +218,7 @@ export function ordnanceOffers(self: SelfState): OrdnanceOffer[] {
     return {
       ordnance,
       name: ORDNANCE_NAMES[ordnance],
+      description: ORDNANCE_DESCRIPTIONS[ordnance],
       carried,
       held,
       missing,

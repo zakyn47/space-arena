@@ -62,6 +62,14 @@ describe('snapshot', () => {
     expect(toEntityState(ship)).toMatchObject({ thrusting: true });
   });
 
+  it('shows a prestige skin to others and kill progress to its owner', () => {
+    const ship = createShip(1, 1, 'alice', { ...shipRecord(10, 20, 1), pvpKills: 140, skin: 'chrome' });
+    expect(toEntityState(ship)).toMatchObject({ skin: 'chrome' });
+    expect(buildSnapshot(ship, [ship], 1, 100).self).toMatchObject({ skin: 'chrome', pvpKills: 140 });
+    ship.skin = 'standard';
+    expect(toEntityState(ship)).not.toHaveProperty('skin');
+  });
+
   it('does not leak private fields of other ships', () => {
     const other = createShip(2, 2, 'bob', shipRecord(30, 40, 2));
     expect(Object.keys(toEntityState(other))).not.toContain('rockets');

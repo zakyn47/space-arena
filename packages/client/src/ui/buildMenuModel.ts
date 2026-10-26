@@ -20,6 +20,10 @@ import {
   PLAYER_HULL_BONUS,
   ORDNANCE_PRICE,
   ORDNANCE_TYPES,
+  SKIN_UNLOCK_KILLS,
+  SKIN_IDS,
+  SKIN_NAMES,
+  skinUnlocked,
   PLASMA_COOLDOWN,
   PLASMA_DAMAGE,
   ROCKET_COOLDOWN,
@@ -42,8 +46,10 @@ import {
   type SelfState,
   type ShipStats,
   type SlotRef,
+  type SkinId,
   type SlotType,
 } from '@arena/shared';
+import { shipSpriteId } from '../render/spriteIds';
 
 const SLOT_LABELS: Readonly<Record<SlotType, string>> = {
   weapon: 'Weapon',
@@ -251,6 +257,29 @@ export function captainRows(self: SelfState): CaptainRow[] {
       rank: self.captain.skills[skill],
       canTrain: self.docked && captainPoints(self.captain) > 0 && self.captain.skills[skill] < MAX_SKILL_RANK,
       delta: next ? describeDelta(before, statsFor(self.build, next)) : 'No upgrade available',
+    };
+  });
+}
+
+export interface SkinCard {
+  readonly skin: SkinId;
+  readonly name: string;
+  readonly image: string;
+  readonly unlocked: boolean;
+  readonly current: boolean;
+  readonly progress: string;
+}
+
+export function skinCards(self: SelfState): SkinCard[] {
+  return SKIN_IDS.map((skin) => {
+    const unlocked = skinUnlocked(skin, self.pvpKills);
+    return {
+      skin,
+      name: SKIN_NAMES[skin],
+      image: `/ships/${shipSpriteId(self.build.hullId, skin)}.png`,
+      unlocked,
+      current: self.skin === skin,
+      progress: unlocked ? 'Unlocked' : `${self.pvpKills} / ${SKIN_UNLOCK_KILLS[skin]} PvP kills`,
     };
   });
 }

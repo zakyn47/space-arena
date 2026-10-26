@@ -146,6 +146,8 @@ kbd { color: #c0d8e9; font-family: inherit; }
 .hull-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
 .hull-card { padding: 18px; border: 1px solid var(--line); border-radius: 6px; background: #0d1b29; }
 .hull-card.current { border-color: #5ec8ff80; background: #102639; }
+.skin-grid { grid-template-columns: repeat(3, minmax(0, 260px)); }
+.hull-card.locked > img { filter: grayscale(0.85) brightness(0.6); }
 #shop .hull-card > img { display: block; width: 120px; height: 120px; margin: 0 auto 16px; image-rendering: pixelated; }
 .hull-card .eyebrow { font-size: 8px; }
 .hull-card h3 { margin: 6px 0; }

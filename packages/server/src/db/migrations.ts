@@ -1,7 +1,7 @@
 import { NEW_CAPTAIN, NEW_ACCOUNT_ROCKETS, STARTER_BUILD } from '@arena/shared';
 import type Database from 'better-sqlite3';
 
-export const SCHEMA_VERSION = 6;
+export const SCHEMA_VERSION = 7;
 
 export const BASE_SCHEMA = `
 CREATE TABLE IF NOT EXISTS accounts (
@@ -115,6 +115,10 @@ function toVersion6(db: Database.Database): void {
   db.exec('ALTER TABLE ships ADD COLUMN pvp_kills INTEGER NOT NULL DEFAULT 0');
 }
 
+function toVersion7(db: Database.Database): void {
+  db.exec("ALTER TABLE ships ADD COLUMN skin TEXT NOT NULL DEFAULT 'standard'");
+}
+
 export function migrate(db: Database.Database): void {
   db.exec(BASE_SCHEMA);
   const from = userVersion(db);
@@ -125,6 +129,7 @@ export function migrate(db: Database.Database): void {
     if (from < 4) toVersion4(db);
     if (from < 5) toVersion5(db);
     if (from < 6) toVersion6(db);
+    if (from < 7) toVersion7(db);
     db.pragma(`user_version = ${SCHEMA_VERSION}`);
   })();
 }

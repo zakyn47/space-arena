@@ -163,3 +163,26 @@ describe('salvage', () => {
     expect(ship.salvage).toEqual([]);
   });
 });
+
+describe('selectSkin', () => {
+  it('keeps each skin locked until its PvP kill threshold', () => {
+    const ship = dockedShip(0);
+    ship.pvpKills = 99;
+    expect(applyShopAction(ship, buy({ type: 'selectSkin', skin: 'chrome' }))).toEqual({ ok: false, reason: 'skin_locked' });
+    ship.pvpKills = 999;
+    expect(applyShopAction(ship, buy({ type: 'selectSkin', skin: 'chrome' }))).toEqual({ ok: true });
+    expect(applyShopAction(ship, buy({ type: 'selectSkin', skin: 'stealth' }))).toEqual({ ok: false, reason: 'skin_locked' });
+    expect(ship.skin).toBe('chrome');
+  });
+
+  it('switches skins freely once unlocked without touching the build', () => {
+    const ship = dockedShip(0);
+    ship.pvpKills = 1_000;
+    const stats = ship.stats;
+    expect(applyShopAction(ship, buy({ type: 'selectSkin', skin: 'stealth' }))).toEqual({ ok: true });
+    expect(ship.skin).toBe('stealth');
+    expect(ship.stats).toEqual(stats);
+    expect(applyShopAction(ship, buy({ type: 'selectSkin', skin: 'standard' }))).toEqual({ ok: true });
+    expect(ship.skin).toBe('standard');
+  });
+});

@@ -21,15 +21,16 @@ import {
 } from '@arena/shared';
 import { hasUndockedBefore, markUndocked, showUndockGuide } from './firstFlight';
 import { ORDNANCE_ICONS } from './Hud';
-import { captainRows, gearLabel, gearOptions, hullCards, ordnanceOffers, salvageRows, slotRows, statSummary } from './buildMenuModel';
+import { captainRows, gearLabel, gearOptions, hullCards, ordnanceOffers, salvageRows, skinCards, slotRows, statSummary } from './buildMenuModel';
 
-type Tab = 'ship' | 'hulls' | 'rockets' | 'captain';
+type Tab = 'ship' | 'hulls' | 'rockets' | 'captain' | 'skins';
 
 const TABS: readonly { readonly id: Tab; readonly label: string }[] = [
   { id: 'ship', label: 'Loadout' },
   { id: 'hulls', label: 'Hull exchange' },
   { id: 'rockets', label: 'Ammunition' },
   { id: 'captain', label: 'Captain' },
+  { id: 'skins', label: 'Skins' },
 ];
 
 const HULL_ROLES: Readonly<Record<HullId, string>> = {
@@ -47,6 +48,7 @@ const FAILURE_TEXT: Readonly<Record<ShopFailure, string>> = {
   unknown_item: 'Not available',
   no_skill_points: 'No captain skill points available',
   skill_maxed: 'That captain skill is at maximum rank',
+  skin_locked: 'That skin is still locked',
 };
 
 function element<K extends keyof HTMLElementTagNameMap>(tag: K, text = '', className = ''): HTMLElementTagNameMap[K] {
@@ -97,7 +99,7 @@ export class BuildMenu {
   private render(force = false): void {
     const self = this.self;
     if (!self) return;
-    const key = JSON.stringify([self.captain, self.build, self.salvage, self.bankedCredits, self.rockets, this.tab, this.selectedSlot, this.resultText]);
+    const key = JSON.stringify([self.captain, self.build, self.salvage, self.bankedCredits, self.rockets, self.skin, self.pvpKills, this.tab, this.selectedSlot, this.resultText]);
     if (!force && key === this.renderedKey) return;
     this.renderedKey = key;
     const focusKey = document.activeElement instanceof HTMLElement ? document.activeElement.dataset.focus : undefined;
@@ -146,6 +148,7 @@ export class BuildMenu {
     if (this.tab === 'captain') return this.captainTab(self);
     if (this.tab === 'hulls') return this.hullsTab(self);
     if (this.tab === 'rockets') return this.rocketsTab(self);
+    if (this.tab === 'skins') return this.skinsTab(self);
     return this.shipTab(self);
   }
 
@@ -304,6 +307,26 @@ export class BuildMenu {
     }
     const stats = statsFor(self.build, self.captain);
     body.append(skills, element('p', `Current handling: thrust ${Math.round(stats.thrust)} · turn ${stats.turnRate.toFixed(2)} rad/s · shield regeneration ${stats.shieldRegen.toFixed(1)}/s`, 'muted'), element('p', 'Earn 10 XP per ore banked; pirate kills give 50 / 100 / 250 XP by tier; player kills give 100 XP. Each level grants 1 point, up to level 20. Training is available only while docked.', 'muted'));
+    return body;
+  }
+
+  private skinsTab(self: SelfState): HTMLElement {
+    const body = element('div', '', 'hull-grid skin-grid');
+    for (const card of skinCards(self)) {
+      const panel = element('section', '', `hull-card${card.current ? ' current' : ''}${card.unlocked ? '' : ' locked'}`);
+      const icon = element('img');
+      icon.src = card.image;
+      icon.alt = card.name;
+      const label = card.current ? 'Equipped' : card.unlocked ? 'Equip skin' : 'Locked';
+      panel.append(
+        icon,
+        element('div', card.current ? 'EQUIPPED' : card.progress.toUpperCase(), 'eyebrow'),
+        element('h3', card.name),
+        button(label, card.unlocked && !card.current, () => this.send({ type: 'selectSkin', skin: card.skin })),
+      );
+      body.append(panel);
+    }
+    body.append(element('p', 'Skins only change how your ship looks and apply to every hull you fly. Unlock them with PvP kills.', 'muted hull-note'));
     return body;
   }
 

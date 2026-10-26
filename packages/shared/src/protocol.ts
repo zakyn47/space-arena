@@ -3,6 +3,7 @@ import { CAPTAIN_SKILLS, type Captain } from './captain';
 import { MkSchema, type Build, type InstalledGear } from './build';
 import { GEAR_IDS, type GearId, type Mk } from './catalog/gear';
 import { ORDNANCE_TYPES, type Ordnance } from './catalog/ordnance';
+import { SKIN_IDS, type PrestigeSkinId, type SkinId } from './catalog/skins';
 import { HULL_IDS, SLOT_TYPES, type HullId } from './catalog/hulls';
 import type { NpcKind } from './catalog/leviathan';
 import { MAX_ROCKETS_PER_PURCHASE, SALVAGE_CAPACITY } from './constants';
@@ -53,6 +54,8 @@ const InstallSalvageSchema = z
 
 const SellSalvageSchema = z.object({ type: z.literal('sellSalvage'), index: SalvageIndexSchema }).strict();
 
+const SelectSkinSchema = z.object({ type: z.literal('selectSkin'), skin: z.enum(SKIN_IDS) }).strict();
+
 const TrainCaptainSchema = z.object({ type: z.literal('trainCaptain'), skill: z.enum(CAPTAIN_SKILLS) }).strict();
 
 const ClientMessageSchema = z.discriminatedUnion('type', [
@@ -66,11 +69,12 @@ const ClientMessageSchema = z.discriminatedUnion('type', [
   TrainCaptainSchema,
   InstallSalvageSchema,
   SellSalvageSchema,
+  SelectSkinSchema,
 ]);
 
 export type ClientMessage = z.infer<typeof ClientMessageSchema>;
 export type InputMessage = z.infer<typeof InputSchema>;
-export type ShopAction = Extract<ClientMessage, { type: 'trainCaptain' | 'buyHull' | 'buyGear' | 'sellGear' | 'buyOrdnance' | 'installSalvage' | 'sellSalvage' }>;
+export type ShopAction = Extract<ClientMessage, { type: 'trainCaptain' | 'buyHull' | 'buyGear' | 'sellGear' | 'buyOrdnance' | 'installSalvage' | 'sellSalvage' | 'selectSkin' }>;
 
 export function parseClientMessage(raw: string): ClientMessage | null {
   let json: unknown;
@@ -99,6 +103,7 @@ export interface ShipState {
   readonly health?: number;
   readonly darkMatter?: true;
   readonly thrusting?: true;
+  readonly skin?: PrestigeSkinId;
 }
 
 export interface BulletState {
@@ -213,6 +218,8 @@ export interface SelfState {
   readonly dockCooldown: number;
   readonly salvage: readonly InstalledGear[];
   readonly miningTargetId: number | null;
+  readonly pvpKills: number;
+  readonly skin: SkinId;
 }
 
 export interface WelcomeMessage {
@@ -261,7 +268,7 @@ export interface DiedMessage {
   readonly killer: string | null;
 }
 
-export type ShopFailure = 'not_docked' | 'insufficient_credits' | 'slot_mismatch' | 'ammo_cap' | 'unknown_item' | 'no_skill_points' | 'skill_maxed';
+export type ShopFailure = 'not_docked' | 'insufficient_credits' | 'slot_mismatch' | 'ammo_cap' | 'unknown_item' | 'no_skill_points' | 'skill_maxed' | 'skin_locked';
 
 export type ShopResultMessage =
   | { readonly type: 'shopResult'; readonly ok: true }

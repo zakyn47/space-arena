@@ -1,9 +1,11 @@
+import { SKIN_IDS } from '@arena/shared';
 import type { Point } from './miningFx';
 
 const SPOOL_UP_PER_SECOND = 9;
+const SKIN_SUFFIX = new RegExp(`_(?:${SKIN_IDS.join('|')})$`);
 const SPOOL_DOWN_PER_SECOND = 4;
 
-// Offsets from the sprite centre, measured on the nozzles painted into each 64×64 hull sprite.
+// Offsets from the sprite centre, measured on the nozzles painted into each 64×64 hull sprite; skins keep them.
 const ENGINE_MOUNTS: Readonly<Record<string, readonly Point[]>> = {
   ship_scout: [{ x: -6, y: 26 }, { x: 6, y: 26 }],
   ship_fighter: [{ x: -5, y: 27 }, { x: 5, y: 27 }],
@@ -15,7 +17,7 @@ const ENGINE_MOUNTS: Readonly<Record<string, readonly Point[]>> = {
 };
 
 export function engineMountsFor(spriteId: string): readonly Point[] {
-  return ENGINE_MOUNTS[spriteId] ?? [];
+  return ENGINE_MOUNTS[spriteId.replace(SKIN_SUFFIX, '')] ?? [];
 }
 
 export function stepThrottle(current: number, thrusting: boolean, dtSeconds: number): number {

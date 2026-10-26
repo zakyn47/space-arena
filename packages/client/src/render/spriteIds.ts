@@ -1,4 +1,4 @@
-import { NPC_NAMES, type EntityState, type GearId, type HitBlock, type Mk } from '@arena/shared';
+import { NPC_NAMES, type EntityState, type GearId, type HitBlock, type HullId, type Mk, type SkinId } from '@arena/shared';
 
 const PULSE_SPRITES: Readonly<Record<Mk, string>> = { 1: 'bullet_t0', 2: 'bullet_t2', 3: 'bullet_t4' };
 
@@ -18,11 +18,15 @@ export function vanishEffectFor(spriteId: string): string | null {
   return spriteId.startsWith('ship_') || spriteId.startsWith('pirate_') ? 'explosion' : null;
 }
 
+export function shipSpriteId(hullId: HullId, skin: SkinId): string {
+  return skin === 'standard' ? `ship_${hullId}` : `ship_${hullId}_${skin}`;
+}
+
 export function spriteIdFor(entity: EntityState): string {
   switch (entity.kind) {
     case 'ship':
       if (entity.npc === 'leviathan') return 'leviathan';
-      return entity.npc ? `pirate_${entity.npc}` : `ship_${entity.hullId}`;
+      return entity.npc ? `pirate_${entity.npc}` : shipSpriteId(entity.hullId, entity.skin ?? 'standard');
     case 'bullet':
       return bulletSprite(entity.weaponId, entity.mk);
     case 'orb':

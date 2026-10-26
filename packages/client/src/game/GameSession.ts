@@ -137,6 +137,7 @@ class ActiveGame {
       miningTargetId: self.miningTargetId,
       ...(self.darkMatter > 0 ? { darkMatter: true as const } : {}),
       ...(this.thrusting ? { thrusting: true as const } : {}),
+      ...(self.skin !== 'standard' ? { skin: self.skin } : {}),
     };
     const others = this.interpolator.sample(performance.now() - INTERPOLATION_DELAY_MS);
     this.renderer.render({ camera: motion, entities: [ownShip, ...others], selfId: self.id });

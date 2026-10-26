@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { headingFor, hitEffectFor, nameTagFor, spriteIdFor, vanishEffectFor } from '../src/render/spriteIds';
+import { headingFor, hitEffectFor, nameTagFor, shipSpriteId, spriteIdFor, vanishEffectFor } from '../src/render/spriteIds';
 
 const bullet = (weaponId: 'pulse_laser' | 'heavy_cannon', mk: 1 | 2 | 3) =>
   spriteIdFor({ kind: 'bullet', id: 1, x: 0, y: 0, vx: 0, vy: 0, weaponId, mk });
@@ -7,6 +7,11 @@ const bullet = (weaponId: 'pulse_laser' | 'heavy_cannon', mk: 1 | 2 | 3) =>
 describe('spriteIdFor', () => {
   it('maps ships by hull', () => {
     expect(spriteIdFor({ kind: 'ship', id: 1, name: 'a', x: 0, y: 0, vx: 0, vy: 0, angle: 0, shieldUp: false, hullId: 'gunship', npc: null, miningTargetId: null })).toBe('ship_gunship');
+  });
+
+  it('dresses players in their prestige skin', () => {
+    expect(spriteIdFor({ kind: 'ship', id: 1, name: 'a', x: 0, y: 0, vx: 0, vy: 0, angle: 0, shieldUp: false, hullId: 'fighter', npc: null, miningTargetId: null, skin: 'stealth' })).toBe('ship_fighter_stealth');
+    expect(shipSpriteId('scout', 'standard')).toBe('ship_scout');
   });
 
   it('maps pirates by tier', () => {

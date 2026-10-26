@@ -6,6 +6,7 @@ export * from './assets';
 export * from './catalog/hulls';
 export * from './catalog/gear';
 export * from './catalog/ordnance';
+export * from './catalog/skins';
 export * from './build';
 export * from './catalog/pirates';
 export * from './catalog/leviathan';

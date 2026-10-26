@@ -9,6 +9,7 @@ import {
   gearCost,
   refitToHull,
   resaleValue,
+  skinUnlocked,
   slotExists,
   statsFor,
   withGear,
@@ -19,6 +20,7 @@ import {
   type Ordnance,
   type ShopAction,
   type ShopFailure,
+  type SkinId,
   type SlotRef,
 } from '@arena/shared';
 import type { ShipEntity } from './entities';
@@ -113,6 +115,12 @@ function sellSalvage(ship: ShipEntity, index: number): ShopOutcome {
   return OK;
 }
 
+function selectSkin(ship: ShipEntity, skin: SkinId): ShopOutcome {
+  if (!skinUnlocked(skin, ship.pvpKills)) return fail('skin_locked');
+  ship.skin = skin;
+  return OK;
+}
+
 export function applyShopAction(ship: ShipEntity, action: ShopAction): ShopOutcome {
   if (!ship.docked) return fail('not_docked');
   switch (action.type) {
@@ -130,5 +138,7 @@ export function applyShopAction(ship: ShipEntity, action: ShopAction): ShopOutco
       return installSalvage(ship, action.index, action.slot);
     case 'sellSalvage':
       return sellSalvage(ship, action.index);
+    case 'selectSkin':
+      return selectSkin(ship, action.skin);
   }
 }

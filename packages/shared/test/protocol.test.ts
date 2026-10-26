@@ -29,6 +29,8 @@ describe('parseClientMessage', () => {
     expect(parse({ type: 'sellGear', slot: { type: 'weapon', index: 1 } })).not.toBeNull();
     expect(parse({ type: 'buyOrdnance', ordnance: 'rockets', count: 5 })).not.toBeNull();
     expect(parse({ type: 'buyOrdnance', ordnance: 'mines', count: 1 })).not.toBeNull();
+    expect(parse({ type: 'selectSkin', skin: 'stealth' })).not.toBeNull();
+    expect(parse({ type: 'selectSkin', skin: 'golden' })).toBeNull();
   });
 
   it('accepts salvage actions and the mine flag', () => {

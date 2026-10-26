@@ -42,6 +42,7 @@ describe('ships', () => {
       ordnance: 'rockets',
       rockets: NEW_ACCOUNT_ROCKETS,
       pvpKills: 0,
+      skin: 'standard',
       salvage: [],
       x: SAFE_ZONES[0]?.x,
       y: SAFE_ZONES[0]?.y,
@@ -51,7 +52,7 @@ describe('ships', () => {
   it('round-trips builds and rockets', () => {
     const id = repo.createAccount('alice', 'hash', 1);
     const build = { ...STARTER_BUILD, slots: { ...STARTER_BUILD.slots, utility: [{ gearId: 'armor' as const, mk: 2 as const }] } };
-    const record = { captain: NEW_CAPTAIN, accountId: id, bankedCredits: 500, build, ordnance: 'rockets' as const, pvpKills: 0, rockets: 3, salvage: [{ gearId: 'armor' as const, mk: 2 as const }], x: 10, y: 20 };
+    const record = { captain: NEW_CAPTAIN, accountId: id, bankedCredits: 500, build, ordnance: 'rockets' as const, pvpKills: 0, skin: 'standard' as const, rockets: 3, salvage: [{ gearId: 'armor' as const, mk: 2 as const }], x: 10, y: 20 };
     repo.saveShips([record], 5);
     expect(repo.loadShip(id)).toEqual(record);
   });
@@ -83,6 +84,7 @@ describe('migration from version 1', () => {
       ordnance: 'rockets',
       rockets: 10,
       pvpKills: 0,
+      skin: 'standard',
       salvage: [],
       x: 50,
       y: 60,
@@ -105,7 +107,7 @@ describe('invalid stored builds', () => {
     const warnings: string[] = [];
     const first = PlayerRepository.open(path);
     const id = first.createAccount('alice', 'hash', 1);
-    first.saveShips([{ captain: NEW_CAPTAIN, accountId: id, bankedCredits: 0, build: STARTER_BUILD, ordnance: 'rockets' as const, pvpKills: 0, rockets: 4, salvage: [], x: 1, y: 2 }], 1);
+    first.saveShips([{ captain: NEW_CAPTAIN, accountId: id, bankedCredits: 0, build: STARTER_BUILD, ordnance: 'rockets' as const, pvpKills: 0, skin: 'standard' as const, rockets: 4, salvage: [], x: 1, y: 2 }], 1);
     first.close();
     const db = new Database(path);
     db.prepare("UPDATE ships SET gear_json = '{\"weapon\":[{\"gearId\":\"laser9000\",\"mk\":1}]}'").run();
@@ -141,7 +143,7 @@ describe('migration to version 3', () => {
     const warnings: string[] = [];
     const first = PlayerRepository.open(path);
     const id = first.createAccount('alice', 'hash', 1);
-    first.saveShips([{ captain: NEW_CAPTAIN, accountId: id, bankedCredits: 0, build: STARTER_BUILD, ordnance: 'rockets' as const, pvpKills: 0, rockets: 4, salvage: [], x: 1, y: 2 }], 1);
+    first.saveShips([{ captain: NEW_CAPTAIN, accountId: id, bankedCredits: 0, build: STARTER_BUILD, ordnance: 'rockets' as const, pvpKills: 0, skin: 'standard' as const, rockets: 4, salvage: [], x: 1, y: 2 }], 1);
     first.close();
     const db = new Database(path);
     db.prepare("UPDATE ships SET salvage_json = '[{\"gearId\":\"x\",\"mk\":9}]'").run();
@@ -169,7 +171,7 @@ describe('captain persistence', () => {
     first.saveShips([{ ...first.loadShip(id), bankedCredits: 700 }], 1);
     first.close();
     const db = new Database(path);
-    db.exec('ALTER TABLE ships DROP COLUMN captain_json; ALTER TABLE ships DROP COLUMN ordnance; ALTER TABLE ships DROP COLUMN pvp_kills; PRAGMA user_version = 3');
+    db.exec('ALTER TABLE ships DROP COLUMN captain_json; ALTER TABLE ships DROP COLUMN ordnance; ALTER TABLE ships DROP COLUMN pvp_kills; ALTER TABLE ships DROP COLUMN skin; PRAGMA user_version = 3');
     db.close();
     const migrated = PlayerRepository.open(path);
     expect(migrated.loadShip(id)).toMatchObject({ bankedCredits: 700, captain: NEW_CAPTAIN });
@@ -213,7 +215,7 @@ describe('ordnance persistence', () => {
     first.saveShips([{ ...first.loadShip(id), bankedCredits: 900, rockets: 3 }], 1);
     first.close();
     const db = new Database(path);
-    db.exec('ALTER TABLE ships DROP COLUMN ordnance; ALTER TABLE ships DROP COLUMN pvp_kills; PRAGMA user_version = 4');
+    db.exec('ALTER TABLE ships DROP COLUMN ordnance; ALTER TABLE ships DROP COLUMN pvp_kills; ALTER TABLE ships DROP COLUMN skin; PRAGMA user_version = 4');
     db.close();
     const migrated = PlayerRepository.open(path);
     expect(migrated.loadShip(id)).toMatchObject({ bankedCredits: 900, rockets: 3, ordnance: 'rockets' });
@@ -234,6 +236,44 @@ describe('ordnance persistence', () => {
     expect(second.loadShip(id)).toMatchObject({ ordnance: 'rockets', rockets: 0 });
     expect(warnings[0]).toContain(`ordnance for account ${id}`);
     second.close();
+  });
+});
+
+describe('ship skins', () => {
+  it('round-trips the chosen skin', () => {
+    const id = repo.createAccount('ace', 'hash', 1);
+    repo.saveShips([{ ...repo.loadShip(id), skin: 'stealth' }], 1);
+    expect(repo.loadShip(id).skin).toBe('stealth');
+  });
+
+  it('migrates version 6 ships to the standard skin without changing ship data', async () => {
+    const path = join(await mkdtemp(join(tmpdir(), 'v6-')), 'arena.db');
+    const first = PlayerRepository.open(path);
+    const id = first.createAccount('pilot', 'hash', 1);
+    first.saveShips([{ ...first.loadShip(id), bankedCredits: 300, pvpKills: 120 }], 1);
+    first.close();
+    const db = new Database(path);
+    db.exec('ALTER TABLE ships DROP COLUMN skin; PRAGMA user_version = 6');
+    db.close();
+    const migrated = PlayerRepository.open(path);
+    expect(migrated.loadShip(id)).toMatchObject({ bankedCredits: 300, pvpKills: 120, skin: 'standard' });
+    migrated.close();
+  });
+
+  it('warns and falls back to the standard skin for an unknown stored skin', async () => {
+    const path = join(await mkdtemp(join(tmpdir(), 'skin-')), 'arena.db');
+    const first = PlayerRepository.open(path);
+    const id = first.createAccount('pilot', 'hash', 1);
+    first.saveShips([first.loadShip(id)], 1);
+    first.close();
+    const db = new Database(path);
+    db.exec("UPDATE ships SET skin = 'golden'");
+    db.close();
+    const warnings: string[] = [];
+    const reopened = PlayerRepository.open(path, (message) => warnings.push(message));
+    expect(reopened.loadShip(id).skin).toBe('standard');
+    expect(warnings).toHaveLength(1);
+    reopened.close();
   });
 });
 
@@ -276,7 +316,7 @@ describe('pvp highscores', () => {
     first.saveShips([{ ...first.loadShip(id), bankedCredits: 300 }], 1);
     first.close();
     const db = new Database(path);
-    db.exec('ALTER TABLE ships DROP COLUMN pvp_kills; PRAGMA user_version = 5');
+    db.exec('ALTER TABLE ships DROP COLUMN pvp_kills; ALTER TABLE ships DROP COLUMN skin; PRAGMA user_version = 5');
     db.close();
     const migrated = PlayerRepository.open(path);
     expect(migrated.loadShip(id)).toMatchObject({ bankedCredits: 300, pvpKills: 0 });

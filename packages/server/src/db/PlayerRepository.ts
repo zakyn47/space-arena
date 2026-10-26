@@ -1,4 +1,4 @@
-import { NEW_CAPTAIN, ORDNANCE_TYPES, parseCaptain, type Captain, NEW_ACCOUNT_ROCKETS, SAFE_ZONES, STARTER_BUILD, parseBuild, parseSalvage, type Build, type HighscoreEntry, type InstalledGear, type Ordnance } from '@arena/shared';
+import { NEW_CAPTAIN, ORDNANCE_TYPES, SKIN_IDS, type SkinId, parseCaptain, type Captain, NEW_ACCOUNT_ROCKETS, SAFE_ZONES, STARTER_BUILD, parseBuild, parseSalvage, type Build, type HighscoreEntry, type InstalledGear, type Ordnance } from '@arena/shared';
 import Database from 'better-sqlite3';
 import { migrate } from './migrations';
 
@@ -21,6 +21,7 @@ export interface ShipRecord {
   readonly ordnance: Ordnance;
   readonly rockets: number;
   readonly pvpKills: number;
+  readonly skin: SkinId;
   readonly salvage: readonly InstalledGear[];
   readonly x: number;
   readonly y: number;
@@ -51,16 +52,17 @@ interface ShipDbRow {
   ordnance: string;
   rockets: number;
   pvp_kills: number;
+  skin: string;
   salvage_json: string;
   pos_x: number;
   pos_y: number;
 }
 
-type ShipParams = [number, number, string, string, string, number, number, string, string, number, number, number];
+type ShipParams = [number, number, string, string, string, number, number, string, string, string, number, number, number];
 
 const UPSERT_SHIP = `
-INSERT INTO ships (account_id, banked_credits, hull_id, gear_json, ordnance, rockets, pvp_kills, salvage_json, captain_json, pos_x, pos_y, updated_at)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+INSERT INTO ships (account_id, banked_credits, hull_id, gear_json, ordnance, rockets, pvp_kills, skin, salvage_json, captain_json, pos_x, pos_y, updated_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 ON CONFLICT(account_id) DO UPDATE SET
   banked_credits = excluded.banked_credits,
   hull_id = excluded.hull_id,
@@ -68,6 +70,7 @@ ON CONFLICT(account_id) DO UPDATE SET
   ordnance = excluded.ordnance,
   rockets = excluded.rockets,
   pvp_kills = excluded.pvp_kills,
+  skin = excluded.skin,
   salvage_json = excluded.salvage_json,
   captain_json = excluded.captain_json,
   pos_x = excluded.pos_x,
@@ -94,6 +97,7 @@ function defaultShip(accountId: number): ShipRecord {
     ordnance: 'rockets',
     rockets: NEW_ACCOUNT_ROCKETS,
     pvpKills: 0,
+    skin: 'standard',
     salvage: [],
     x: spawn?.x ?? 0,
     y: spawn?.y ?? 0,
@@ -109,6 +113,7 @@ function shipParams(record: ShipRecord, now: number): ShipParams {
     record.ordnance,
     record.rockets,
     record.pvpKills,
+    record.skin,
     JSON.stringify(record.salvage),
     JSON.stringify(record.captain),
     record.x,
@@ -195,7 +200,7 @@ export class PlayerRepository {
   loadShip(accountId: number): ShipRecord {
     const row = this.db
       .prepare<[number], ShipDbRow>(
-        'SELECT banked_credits, hull_id, gear_json, ordnance, rockets, pvp_kills, salvage_json, captain_json, pos_x, pos_y FROM ships WHERE account_id = ?',
+        'SELECT banked_credits, hull_id, gear_json, ordnance, rockets, pvp_kills, skin, salvage_json, captain_json, pos_x, pos_y FROM ships WHERE account_id = ?',
       )
       .get(accountId);
     if (!row) return defaultShip(accountId);
@@ -206,6 +211,7 @@ export class PlayerRepository {
       captain: this.decodeCaptain(accountId, row),
       ...this.decodeOrdnance(accountId, row),
       pvpKills: row.pvp_kills,
+      skin: this.decodeSkin(accountId, row),
       salvage: this.decodeSalvage(accountId, row),
       x: row.pos_x,
       y: row.pos_y,
@@ -218,6 +224,13 @@ export class PlayerRepository {
     if (ordnance) return { ordnance, rockets: row.rockets };
     this.warn(`invalid stored ordnance for account ${accountId}; using rockets`);
     return { ordnance: 'rockets', rockets: 0 };
+  }
+
+  private decodeSkin(accountId: number, row: ShipDbRow): SkinId {
+    const skin = SKIN_IDS.find((id) => id === row.skin);
+    if (skin) return skin;
+    this.warn(`invalid stored skin for account ${accountId}; using standard`);
+    return 'standard';
   }
 
   private decodeCaptain(accountId: number, row: ShipDbRow): Captain {

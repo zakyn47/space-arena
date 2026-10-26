@@ -8,6 +8,11 @@ describe('engineMountsFor', () => {
     for (const mount of engineMountsFor('pirate_warlord')) expect(mount.y).toBeGreaterThan(0);
   });
 
+  it('keeps the same nozzles for every skin', () => {
+    expect(engineMountsFor('ship_gunship_chrome')).toEqual(engineMountsFor('ship_gunship'));
+    expect(engineMountsFor('ship_scout_stealth')).toEqual(engineMountsFor('ship_scout'));
+  });
+
   it('gives no flames to things without engines', () => {
     expect(engineMountsFor('leviathan')).toEqual([]);
   });

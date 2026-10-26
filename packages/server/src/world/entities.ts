@@ -22,6 +22,7 @@ import {
   type PirateTier,
   type ShipInput,
   type ShipStats,
+  type SkinId,
 } from '@arena/shared';
 import type { ShipRecord } from '../db/PlayerRepository';
 import { PIRATE_SPECS } from './pirates/tiers';
@@ -61,6 +62,7 @@ export interface ShipEntity {
   rockets: number;
   rocketCooldown: number;
   pvpKills: number;
+  skin: SkinId;
   dockCooldownUntil: number;
   lastDamagedAt: number;
   lastHitBy: number | null;
@@ -226,6 +228,7 @@ export function createShip(id: number, accountId: number, name: string, record: 
     rockets: record.rockets,
     rocketCooldown: 0,
     pvpKills: record.pvpKills,
+    skin: record.skin,
     dockCooldownUntil: -Infinity,
     lastDamagedAt: -Infinity,
     lastHitBy: null,
@@ -250,6 +253,7 @@ export function createPirateShip(id: number, tier: PirateTier, x: number, y: num
     ordnance: 'rockets',
     rockets: spec.rockets,
     pvpKills: 0,
+    skin: 'standard',
     salvage: [],
     x,
     y,
@@ -302,6 +306,7 @@ export function toShipRecord(ship: ShipEntity): ShipRecord {
     ordnance: ship.ordnance,
     rockets: ship.rockets,
     pvpKills: ship.pvpKills,
+    skin: ship.skin,
     salvage: ship.salvage,
     x: ship.x,
     y: ship.y,
@@ -332,6 +337,7 @@ export function createLeviathan(id: number, x: number, y: number): ShipEntity {
     ordnance: 'rockets',
     rockets: 0,
     pvpKills: 0,
+    skin: 'standard',
     salvage: [],
     x,
     y,

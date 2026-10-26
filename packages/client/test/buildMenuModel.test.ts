@@ -1,6 +1,6 @@
 import { NEW_CAPTAIN, HULLS, HULL_IDS, STARTER_BUILD, refitToHull, statsFor } from '@arena/shared';
 import { describe, expect, it } from 'vitest';
-import { captainRows, describeDelta, gearOptions, hullCards, ordnanceOffers, salvageRows, slotRows, statSummary } from '../src/ui/buildMenuModel';
+import { captainRows, describeDelta, gearOptions, hullCards, ordnanceOffers, salvageRows, skinCards, slotRows, statSummary } from '../src/ui/buildMenuModel';
 import { selfState } from './support/self';
 
 describe('statSummary', () => {
@@ -158,5 +158,20 @@ describe('captainRows', () => {
     const captain = { xp: 100, skills: { gunnery: 4, engineering: 0, piloting: 0, mining: 0 } };
     const mk2 = gearOptions(STARTER_BUILD, { type: 'weapon', index: 0 }, 10000, captain)[1];
     expect(mk2?.delta).toBe('Damage/s +28');
+  });
+});
+
+describe('skinCards', () => {
+  it('shows progress toward each skin while locked', () => {
+    const [standard, chrome, stealth] = skinCards(selfState({ pvpKills: 37 }));
+    expect(standard).toMatchObject({ skin: 'standard', current: true, unlocked: true, image: '/ships/ship_scout.png' });
+    expect(chrome).toMatchObject({ skin: 'chrome', unlocked: false, progress: '37 / 100 PvP kills', image: '/ships/ship_scout_chrome.png' });
+    expect(stealth).toMatchObject({ skin: 'stealth', unlocked: false, progress: '37 / 1000 PvP kills' });
+  });
+
+  it('unlocks skins at their thresholds and marks the worn one', () => {
+    const [, chrome, stealth] = skinCards(selfState({ pvpKills: 250, skin: 'chrome' }));
+    expect(chrome).toMatchObject({ unlocked: true, current: true, progress: 'Unlocked' });
+    expect(stealth).toMatchObject({ unlocked: false, current: false });
   });
 });

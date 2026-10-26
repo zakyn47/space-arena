@@ -95,3 +95,8 @@ The two must be instantly distinguishable by color and symbol.
 ## Engine flame update
 
 - `engine_flame` (horizontal spritesheet, 4 frames of 16×32, loops): one engine exhaust plume pointing DOWN. The code pins the TOP CENTER of each frame on a ship's nozzle and scales it: short and dim when idle, full length when thrusting. Its root sits at the top edge: a white-hot core ~4 px wide, then an orange `#FF9A3C` flame that tapers to a point ~26 px below the top and fades to fully transparent before the bottom edge, plus a soft orange glow ~10 px wide. Frames flicker: the length and the tip wobble slightly (±3 px) and the core stays fixed at the top centre in every frame, so the loop never jumps (frame 4 flows into frame 1). Drawn with additive blending; everything outside the flame is transparent.
+
+## Ship set 3 (worn industrial)
+
+- All player hulls and pirates now use the chunkier, worn military look: heavier armor plates, weathering and scuffs, same silhouettes, palette and size classes as above.
+- Engine nozzles are dark exhaust ports with a faint orange rim and no baked flames; `engine_flame` is drawn by code. Nozzle positions are fixed because the client pins flames there (offsets from the sprite centre): scout (-6,26) (6,26); fighter (-5,27) (5,27); freighter (-5,22) (0,22) (5,22); gunship (-11,22) (0,26) (11,22); raider (0,17); marauder (-5,20) (5,20); warlord (-8,24) (0,27) (8,24). Keep them when redrawing a ship.

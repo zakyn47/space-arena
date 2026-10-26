@@ -43,3 +43,9 @@ export function spriteIdFor(entity: EntityState): string {
       return 'loot_crate';
   }
 }
+
+// Bullets carry no angle on the wire to keep snapshots small; their velocity already says where they point.
+export function headingFor(entity: EntityState): number | null {
+  if ('angle' in entity) return entity.angle;
+  return entity.kind === 'bullet' ? Math.atan2(entity.vx, -entity.vy) : null;
+}

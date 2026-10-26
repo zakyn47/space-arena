@@ -3,7 +3,7 @@ import { Application, Container, Graphics, Rectangle, Text, TilingSprite, type T
 import { Effects } from './Effects';
 import { MiningBeams } from './MiningBeams';
 import type { SpriteFactory } from './SpriteFactory';
-import { spriteIdFor, vanishEffectFor } from './spriteIds';
+import { headingFor, spriteIdFor, vanishEffectFor } from './spriteIds';
 
 const STARFIELD_PARALLAX = 0.3;
 const EXPLOSION_VISIBLE_FRACTION = 0.8;
@@ -186,7 +186,8 @@ export class Renderer {
     view.x = entity.x;
     view.y = entity.y;
     view.container.position.set(entity.x, entity.y);
-    if ('angle' in entity) view.container.rotation = entity.angle;
+    const heading = headingFor(entity);
+    if (heading !== null) view.container.rotation = heading;
     if (view.darkMatter && entity.kind === 'ship') view.darkMatter.visible = entity.darkMatter === true;
     if (view.shield && entity.kind === 'ship') view.shield.visible = entity.shieldUp;
     view.label?.position.set(entity.x, entity.y + view.labelOffset);
@@ -204,6 +205,7 @@ export class Renderer {
     const loop = ANIMATIONS[spriteId];
     const body = loop === undefined ? this.sprites.create(spriteId) : this.sprites.animate(spriteId, loop, true);
     if (entity.kind === 'asteroid') body.scale.set((entity.radius * 2) / this.sprites.size(spriteId).width);
+    if (entity.kind === 'bullet' || entity.kind === 'plasma') body.blendMode = 'add';
     container.addChild(body);
     const isLeviathan = entity.kind === 'ship' && entity.npc === 'leviathan';
     const darkMatter = entity.kind === 'ship' && !isLeviathan ? this.sprites.animate('dark_matter_shield', ANIMATIONS.dark_matter_shield ?? 1.2, true) : null;

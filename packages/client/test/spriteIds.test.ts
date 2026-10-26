@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { hitEffectFor, spriteIdFor, vanishEffectFor } from '../src/render/spriteIds';
+import { headingFor, hitEffectFor, spriteIdFor, vanishEffectFor } from '../src/render/spriteIds';
 
 const bullet = (weaponId: 'pulse_laser' | 'heavy_cannon', mk: 1 | 2 | 3) =>
   spriteIdFor({ kind: 'bullet', id: 1, x: 0, y: 0, vx: 0, vy: 0, weaponId, mk });
@@ -53,5 +53,17 @@ describe('hitEffectFor', () => {
     expect(hitEffectFor('hull')).toBe('hull_hit');
     expect(hitEffectFor('shield')).toBe('shield_impact');
     expect(hitEffectFor('dark_matter')).toBe('dark_matter_impact');
+  });
+});
+
+describe('headingFor', () => {
+  it('points bullets along their velocity', () => {
+    expect(headingFor({ kind: 'bullet', id: 1, x: 0, y: 0, vx: 0, vy: -500, weaponId: 'pulse_laser', mk: 1 })).toBeCloseTo(0);
+    expect(headingFor({ kind: 'bullet', id: 1, x: 0, y: 0, vx: 500, vy: 0, weaponId: 'pulse_laser', mk: 1 })).toBeCloseTo(Math.PI / 2);
+  });
+
+  it('uses the angle of entities that carry one and leaves round ones alone', () => {
+    expect(headingFor({ kind: 'rocket', id: 1, x: 0, y: 0, vx: 0, vy: 0, angle: 1.2 })).toBe(1.2);
+    expect(headingFor({ kind: 'orb', id: 2, x: 0, y: 0, vx: 1, vy: 1 })).toBeNull();
   });
 });

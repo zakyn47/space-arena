@@ -11,9 +11,9 @@ function count(world: World, kind: string): number {
   return world.entitiesNear(10_000, 10_000, 30_000).filter((e) => e.kind === kind).length;
 }
 
-function minerOnAsteroid(oreYield: number) {
+function minerOnAsteroid(oreYield: number, hp = 1) {
   const world = new World({ asteroidTarget: 0, rng: seeded(7) });
-  world.addAsteroid({ x: OPEN_SPACE.x, y: OPEN_SPACE.y, radius: 40, hp: 20, oreYield, variant: 1 });
+  world.addAsteroid({ x: OPEN_SPACE.x, y: OPEN_SPACE.y, radius: 40, hp, oreYield, variant: 1 });
   const ship = world.addShip(1, 'alice', shipRecord(OPEN_SPACE.x, OPEN_SPACE.y, 1));
   world.setInput(ship.id, 1, { ...IDLE_INPUT, fire: true });
   return { world, ship };
@@ -31,6 +31,12 @@ describe('World mining', () => {
     ticks(world, 30);
     expect(count(world, 'asteroid')).toBe(0);
     expect(ship.ore).toBe(3);
+  });
+
+  it('makes guns a slow way to break rock compared to the mining laser', () => {
+    const { world } = minerOnAsteroid(3, 20);
+    ticks(world, 30);
+    expect(count(world, 'asteroid')).toBe(1);
   });
 
   it('respects cargo capacity', () => {

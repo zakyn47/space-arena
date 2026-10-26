@@ -22,6 +22,8 @@ export const CRATE_LIFETIME = 120;
 export const ASTEROID_TARGET_COUNT = 600;
 export const ASTEROID_MIN_RADIUS = 30;
 export const ASTEROID_MAX_RADIUS = 70;
+// Shooting rock for ore should earn about a tenth of what a Mk1 mining laser drills, so the laser stays the way to mine.
+export const ASTEROID_PROJECTILE_DAMAGE_FACTOR = 0.05;
 export const DOCK_RANGE = 200;
 export const DOCK_COOLDOWN = 30;
 export const ROCKET_COOLDOWN = 1;

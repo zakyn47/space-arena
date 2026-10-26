@@ -56,7 +56,7 @@ Keys use physical positions, so they work the same on any keyboard layout.
 - **Salvage:** gear from crates goes into your salvage hold (3 items, lost on death). While docked, install it for free or sell it for 50% in the build menu's Ship tab.
 - **Arena edge:** the arena is a 20 000 × 20 000 square bounded by a red energy barrier; the void beyond is darkened and the minimap has a red border. You cannot fly through the barrier — your ship stops against it.
 - **Minimap:** you are the cyan square, stations are green circles, other pilots within 4 000 px are white dots, and every pirate on the map is a red dot.
-- **Mining:** shoot asteroids, then fly over the ore they drop to collect it (up to your cargo capacity).
+- **Mining:** the mining laser is the way to get ore. Weapons only scratch asteroids (1/20 of their normal damage); a rock you do break apart drops ore you can fly over to collect (up to your cargo capacity).
 - **Death** costs all installed upgrades, carried ore, and unbanked credits. Banked credits are safe.
 
 On mobile, tap **Landscape ⛶** to enter fullscreen landscape; tap **Exit fullscreen** to return. If orientation locking is unavailable, enable Android auto-rotate and turn the phone sideways. Mobile flight uses a wider, zoomed-out camera while controls and HUD keep their normal size.

@@ -1,5 +1,6 @@
 import {
   ASTEROID_MAX_RADIUS,
+  ASTEROID_PROJECTILE_DAMAGE_FACTOR,
   BOOSTER_COUNT,
   BOOSTER_RESPAWN,
   boostStats,
@@ -406,7 +407,7 @@ export class World {
       if (!target) continue;
       collection.delete(projectile.id);
       if (target.kind === 'ship') hits.push(this.hitShip(target, projectile));
-      if (target.kind === 'asteroid') this.damageAsteroid(target, projectile.damage);
+      if (target.kind === 'asteroid') this.damageAsteroid(target, projectile.damage * ASTEROID_PROJECTILE_DAMAGE_FACTOR);
     }
   }
 
